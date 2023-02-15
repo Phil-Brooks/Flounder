@@ -51,7 +51,7 @@ module Perft =
                         let mutable i = 1
                         //TODO:must be better to iterate through promotion types
                         while (i < 5) do 
-                            let pr:Promotion = LanguagePrimitives.EnumOfValue(byte(i))
+                            let pr:Promotion = LanguagePrimitives.EnumOfValue(i)
                             let nbd = board.Clone()
                             let tnp = nbd.Move(MoveUpdateType.Normal, sq, mv, pr)
                             nextCount <- nextCount + ( MoveGeneration(nbd, nextDepth))

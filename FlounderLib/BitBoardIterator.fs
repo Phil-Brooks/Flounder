@@ -19,5 +19,5 @@ type BitBoardIterator =
             let i:int = BitOperations.TrailingZeroCount(this.Value)
             // Subtract 1 and only hold set bits in that mask.
             this.Value <- this.Value &&& (this.Value - 1UL)
-            LanguagePrimitives.EnumOfValue(sbyte(i))
+            LanguagePrimitives.EnumOfValue(i)
     end

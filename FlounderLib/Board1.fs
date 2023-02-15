@@ -48,7 +48,7 @@ type Board1 =
                 Evaluation.NNUE.EfficientlyUpdateAccumulator(AccumulatorOperation.Deactivate, pieceT, colorT, mto)
         if (this.EnPassantTarget = mto && pieceF = Piece.Pawn) then
             // If the attack is an EP attack, we must empty the piece affected by EP.
-            let epPieceSq = if colorF = PieceColor.White then LanguagePrimitives.EnumOfValue(sbyte(int(this.EnPassantTarget) - 8)) else LanguagePrimitives.EnumOfValue(sbyte(int(this.EnPassantTarget) + 8))
+            let epPieceSq = if colorF = PieceColor.White then LanguagePrimitives.EnumOfValue(int(this.EnPassantTarget) - 8) else LanguagePrimitives.EnumOfValue(int(this.EnPassantTarget) + 8)
             let oppositeColor = PieceColor.OppositeColor(colorF)
             this.Map.Empty(moveType, Piece.Pawn, oppositeColor, epPieceSq)
             
@@ -62,7 +62,7 @@ type Board1 =
         if (this.EnPassantTarget<> Square.Na) then Zobrist.HashEp(&this.Map.ZobristHash, this.Map.EnPassantTarget)
         if (pieceF = Piece.Pawn && Math.Abs(int(mto) - int(from)) = 16) then
             // If the pawn push is a 2-push, the square behind it will be EP target.
-            this.Map.EnPassantTarget <- if colorF = PieceColor.White then LanguagePrimitives.EnumOfValue(sbyte(int(from) + 8)) else LanguagePrimitives.EnumOfValue(sbyte(int(from) - 8))
+            this.Map.EnPassantTarget <- if colorF = PieceColor.White then LanguagePrimitives.EnumOfValue(int(from) + 8) else LanguagePrimitives.EnumOfValue(int(from) - 8)
             // Update Zobrist.
             Zobrist.HashEp(&this.Map.ZobristHash, this.Map.EnPassantTarget)
         else this.Map.EnPassantTarget <- Square.Na
@@ -72,11 +72,11 @@ type Board1 =
             Evaluation.NNUE.EfficientlyUpdateAccumulator(pieceF, colorF, from, mto)
         if (promotion <> Promotion.None) then
             this.Map.Empty(moveType, pieceF, colorF, mto)
-            this.Map.InsertPiece(moveType, LanguagePrimitives.EnumOfValue(byte(promotion)), colorF, mto)
+            this.Map.InsertPiece(moveType, LanguagePrimitives.EnumOfValue(int(promotion)), colorF, mto)
             rv.Promotion <- true
             if moveType = MoveUpdateType.NNUpdate then
                 Evaluation.NNUE.EfficientlyUpdateAccumulator(AccumulatorOperation.Deactivate, pieceF, colorF, mto)
-                Evaluation.NNUE.EfficientlyUpdateAccumulator(AccumulatorOperation.Activate,LanguagePrimitives.EnumOfValue(byte(promotion)), colorF, mto)
+                Evaluation.NNUE.EfficientlyUpdateAccumulator(AccumulatorOperation.Activate,LanguagePrimitives.EnumOfValue(int(promotion)), colorF, mto)
         // Update revert move.
         rv.From <- from
         rv.To <- mto
@@ -111,11 +111,11 @@ type Board1 =
                 // In the case the king moved to castle, we must also move the rook accordingly,
                 // making a secondary move. To ensure proper reverting, we must also update our revert move.
                 if (mto > from) then // King-side
-                    rv.SecondaryFrom <- LanguagePrimitives.EnumOfValue(sbyte(int(mto) + 1))
-                    rv.SecondaryTo <- LanguagePrimitives.EnumOfValue(sbyte(int(mto) - 1))
+                    rv.SecondaryFrom <- LanguagePrimitives.EnumOfValue(int(mto) + 1)
+                    rv.SecondaryTo <- LanguagePrimitives.EnumOfValue(int(mto) - 1)
                 else // Queen-side
-                    rv.SecondaryFrom <- LanguagePrimitives.EnumOfValue(sbyte(int(mto) - 2))
-                    rv.SecondaryTo <- LanguagePrimitives.EnumOfValue(sbyte(int(mto) + 1))
+                    rv.SecondaryFrom <- LanguagePrimitives.EnumOfValue(int(mto) - 2)
+                    rv.SecondaryTo <- LanguagePrimitives.EnumOfValue(int(mto) + 1)
                 // Make the secondary move.
                 this.Map.Move(
                     moveType, Piece.Rook, colorF, Piece.Empty, PieceColor.None, 
@@ -184,7 +184,7 @@ type Board1 =
         this.Map.Move(moveType, pF, cF, pT, cT, rv.To, rv.From)
         if (rv.EnPassant) then
             // If it was an EP attack, we must insert a pawn at the affected square.
-            let insertion = if rv.CapturedColor = PieceColor.White then LanguagePrimitives.EnumOfValue(sbyte(int(rv.To) + 8)) else LanguagePrimitives.EnumOfValue(sbyte(int(rv.To) - 8))
+            let insertion = if rv.CapturedColor = PieceColor.White then LanguagePrimitives.EnumOfValue(int(rv.To) + 8) else LanguagePrimitives.EnumOfValue(int(rv.To) - 8)
             this.Map.InsertPiece(moveType, Piece.Pawn, rv.CapturedColor, insertion)
         elif (rv.CapturedPiece <> Piece.Empty) then
             // If a capture happened, we must insert the piece at the relevant square.

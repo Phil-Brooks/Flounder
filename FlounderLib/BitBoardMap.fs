@@ -5,7 +5,7 @@ open System
 type BitBoardMap =
     struct
         val Bb:BitBoard array array
-        val PiecesAndColors:byte array
+        val PiecesAndColors:int array
         val mutable White:BitBoard
         val mutable Black:BitBoard
         val mutable ColorToMove:PieceColor
@@ -36,9 +36,9 @@ type BitBoardMap =
                     [|BitBoard.Default;BitBoard.Default;BitBoard.Default;BitBoard.Default;BitBoard.Default;BitBoard.Default|]
                     [|BitBoard.Default;BitBoard.Default;BitBoard.Default;BitBoard.Default;BitBoard.Default;BitBoard.Default|]
                 |]
-            let piecesAndColors:byte array = Array.zeroCreate 64
+            let piecesAndColors:int array = Array.zeroCreate 64
             for i = 0 to 63 do
-                piecesAndColors[i] <- 0x26uy
+                piecesAndColors[i] <- 0x26
             
             let expandedBoardData:string array = boardFen.Split(FEN_SPR)|>Array.rev
             if expandedBoardData.Length <> 8 then 
@@ -53,41 +53,41 @@ type BitBoardMap =
                         if (Char.IsUpper(p)) then
                             if p = 'P' then
                                 bb.[int(PieceColor.White)].[int(Piece.Pawn)].[v * 8 + h] <- true
-                                piecesAndColors.[v * 8 + h] <- 0x0uy
+                                piecesAndColors.[v * 8 + h] <- 0x0
                             elif p = 'R' then
                                 bb.[int(PieceColor.White)].[int(Piece.Rook)].[v * 8 + h] <- true
-                                piecesAndColors.[v * 8 + h] <- 0x1uy
+                                piecesAndColors.[v * 8 + h] <- 0x1
                             elif p = 'N' then
                                 bb.[int(PieceColor.White)].[int(Piece.Knight)].[v * 8 + h] <- true
-                                piecesAndColors.[v * 8 + h] <- 0x2uy
+                                piecesAndColors.[v * 8 + h] <- 0x2
                             elif p = 'B' then
                                 bb.[int(PieceColor.White)].[int(Piece.Bishop)].[v * 8 + h] <- true
-                                piecesAndColors.[v * 8 + h] <- 0x3uy
+                                piecesAndColors.[v * 8 + h] <- 0x3
                             elif p = 'Q' then
                                 bb.[int(PieceColor.White)].[int(Piece.Queen)].[v * 8 + h] <- true
-                                piecesAndColors.[v * 8 + h] <- 0x4uy
+                                piecesAndColors.[v * 8 + h] <- 0x4
                             elif p = 'K' then
                                 bb.[int(PieceColor.White)].[int(Piece.King)].[v * 8 + h] <- true
-                                piecesAndColors.[v * 8 + h] <- 0x5uy
+                                piecesAndColors.[v * 8 + h] <- 0x5
                         else
                             if p = 'p' then
                                 bb.[int(PieceColor.Black)].[int(Piece.Pawn)].[v * 8 + h] <- true
-                                piecesAndColors.[v * 8 + h] <- 0x10uy
+                                piecesAndColors.[v * 8 + h] <- 0x10
                             elif p = 'r' then
                                 bb.[int(PieceColor.Black)].[int(Piece.Rook)].[v * 8 + h] <- true
-                                piecesAndColors.[v * 8 + h] <- 0x11uy
+                                piecesAndColors.[v * 8 + h] <- 0x11
                             elif p = 'n' then
                                 bb.[int(PieceColor.Black)].[int(Piece.Knight)].[v * 8 + h] <- true
-                                piecesAndColors.[v * 8 + h] <- 0x12uy
+                                piecesAndColors.[v * 8 + h] <- 0x12
                             elif p = 'b' then
                                 bb.[int(PieceColor.Black)].[int(Piece.Bishop)].[v * 8 + h] <- true
-                                piecesAndColors.[v * 8 + h] <- 0x13uy
+                                piecesAndColors.[v * 8 + h] <- 0x13
                             elif p = 'q' then
                                 bb.[int(PieceColor.Black)].[int(Piece.Queen)].[v * 8 + h] <- true
-                                piecesAndColors.[v * 8 + h] <- 0x14uy
+                                piecesAndColors.[v * 8 + h] <- 0x14
                             elif p = 'k' then
                                 bb.[int(PieceColor.Black)].[int(Piece.King)].[v * 8 + h] <- true
-                                piecesAndColors.[v * 8 + h] <- 0x15uy
+                                piecesAndColors.[v * 8 + h] <- 0x15
 
                         h <- h + 1
            
@@ -121,7 +121,7 @@ type BitBoardMap =
                 zobristHash
             let zobristHash = gethash()
             BitBoardMap(bb,piecesAndColors,white,black,colorToMove,whiteKCastle,whiteQCastle,blackKCastle,blackQCastle,enPassantTarget,zobristHash)
-        new(map:BitBoardMap, bb:BitBoard array array, piecesAndColors:byte array) =
+        new(map:BitBoardMap, bb:BitBoard array array, piecesAndColors:int array) =
             let White = map.White
             let Black = map.Black
             let WhiteKCastle = map.WhiteKCastle
@@ -144,7 +144,7 @@ type BitBoardMap =
         member this.Item 
             with get(sq:Square):(Piece*PieceColor) = 
                 let r = this.PiecesAndColors.AA(int(sq))
-                LanguagePrimitives.EnumOfValue(r &&& 0xFuy), LanguagePrimitives.EnumOfValue(r >>> 4)
+                LanguagePrimitives.EnumOfValue(r &&& 0xF), LanguagePrimitives.EnumOfValue(r >>> 4)
         member this.Item 
             with get(color:PieceColor) = 
                 if color = PieceColor.White then this.White
@@ -153,7 +153,7 @@ type BitBoardMap =
                 else raise (InvalidOperationException("Must provide a valid PieceColor."))
         member this.Item 
             with get(piece:Piece, color:PieceColor) = DJAA(int(color), int(piece)) this.Bb
-        member this.PieceOnly(sq:Square):Piece = LanguagePrimitives.EnumOfValue(this.PiecesAndColors.AA(int(sq)) &&& 0xFuy)
+        member this.PieceOnly(sq:Square):Piece = LanguagePrimitives.EnumOfValue(this.PiecesAndColors.AA(int(sq)) &&& 0xF)
         member this.ColorOnly(sq:Square):PieceColor = LanguagePrimitives.EnumOfValue(this.PiecesAndColors.AA(int(sq)) >>> 4)
         member this.Move(moveType:MoveUpdateType, pF:Piece, cF:PieceColor, pT:Piece, cT:PieceColor, from:Square, mto:Square) =
             if (pT <> Piece.Empty) then
@@ -172,7 +172,7 @@ type BitBoardMap =
             (DJAA(int(cF), int(pF)) this.Bb).[mto] <- true
             // Make sure to update the pieces and colors.
             this.PiecesAndColors.AA(int(mto)) <- this.PiecesAndColors.AA(int(from))
-            this.PiecesAndColors.AA(int(from)) <- 0x26uy
+            this.PiecesAndColors.AA(int(from)) <- 0x26
             // Update color bitboards.
             if (cF = PieceColor.White) then
                 this.White.[from] <- false
@@ -191,7 +191,7 @@ type BitBoardMap =
             // Remove from square.
             (DJAA(int(color), int(piece)) this.Bb).[sq] <- false
             // Set empty in pieces and colors.
-            this.PiecesAndColors.AA(int(sq)) <- 0x26uy
+            this.PiecesAndColors.AA(int(sq)) <- 0x26
             // Remove from color bitboards.
             if (color = PieceColor.White) then
                 this.White.[sq] <- false
@@ -212,7 +212,7 @@ type BitBoardMap =
                 this.Black.[sq] <- true
             // Set piece in pieces and colors.
             let offset = if color = PieceColor.White then 0x0 else 0x10
-            this.PiecesAndColors.AA(int(sq)) <- byte(int(piece) ||| offset)
+            this.PiecesAndColors.AA(int(sq)) <- (int(piece) ||| offset)
             // Update Zobrist.
             Zobrist.HashPiece(&this.ZobristHash, piece, color, sq)
         member this.Copy() = BitBoardMap(this, this.Bb, this.PiecesAndColors)
@@ -222,14 +222,14 @@ type BitBoardMap =
                 let mutable rankData = ""
                 let mutable h = 0
                 while h < 8 do
-                    let sq:Square = LanguagePrimitives.EnumOfValue(sbyte(v * 8 + h))
+                    let sq:Square = LanguagePrimitives.EnumOfValue(v * 8 + h)
                     let piece, color = this.[sq]
                     if (piece = Piece.Empty) then
                         let mutable c = 1
                         let mutable fnd = false
                         for i = h + 1 to 7 do
                             if not fnd then
-                                let sq:Square = LanguagePrimitives.EnumOfValue(sbyte(v * 8 + i))
+                                let sq:Square = LanguagePrimitives.EnumOfValue(v * 8 + i)
                                 let pc,_ = this.[sq]
                                 if (pc= Piece.Empty) then c <- c + 1
                                 else fnd <- true

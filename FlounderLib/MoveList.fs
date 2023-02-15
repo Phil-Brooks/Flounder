@@ -158,7 +158,7 @@ type MoveList(board:Board1, from:Square, horizontalVertical:BitBoard, diagonal:B
             if (board.EnPassantTarget <> Square.Na) then
                 // If EP exists, then we need to check if a piece exists on square that's under attack from Ep, not
                 // where we move to.
-                epPieceSq <- if color = PieceColor.White then LanguagePrimitives.EnumOfValue(sbyte(board.EnPassantTarget) - 8y) else LanguagePrimitives.EnumOfValue(sbyte(board.EnPassantTarget) + 8y)
+                epPieceSq <- if color = PieceColor.White then LanguagePrimitives.EnumOfValue(int(board.EnPassantTarget) - 8) else LanguagePrimitives.EnumOfValue(int(board.EnPassantTarget) + 8)
                 let epTargetPieceExists = board.All(Piece.Pawn, oppositeColor).[epPieceSq]
                 // We need to check if a piece of ours exists to actually execute the EP.
                 // We do this by running a reverse pawn mask, to determine whether a piece of ours is on the corner.
@@ -215,7 +215,7 @@ type MoveList(board:Board1, from:Square, horizontalVertical:BitBoard, diagonal:B
         if (board.EnPassantTarget <> Square.Na) then
             // If EP exists, then we need to check if a piece exists on square that's under attack from Ep, not
             // where we move to.
-            epPieceSq <- if color = PieceColor.White then LanguagePrimitives.EnumOfValue(sbyte(board.EnPassantTarget) - 8y) else LanguagePrimitives.EnumOfValue(sbyte(board.EnPassantTarget) + 8y)
+            epPieceSq <- if color = PieceColor.White then LanguagePrimitives.EnumOfValue(int(board.EnPassantTarget) - 8) else LanguagePrimitives.EnumOfValue(int(board.EnPassantTarget) + 8)
             let epTargetPieceExists = board.All(Piece.Pawn, oppositeColor).[epPieceSq]
             // We need to check if a piece of ours exists to actually execute the EP.
             // We do this by running a reverse pawn mask, to determine whether a piece of ours is on the corner.
@@ -331,21 +331,21 @@ type MoveList(board:Board1, from:Square, horizontalVertical:BitBoard, diagonal:B
                 // Get castling rights.
                 let q, k = board.CastlingRight(color)
                 // Make sure castling close-path isn't under attack.
-                if (q <> 0x0uy && kingMoves.[int(from) - 1] && not (MoveList.UnderAttack(board, LanguagePrimitives.EnumOfValue(sbyte(from) - 2y), oppositeColor))) then
+                if (q <> 0x0uy && kingMoves.[int(from) - 1] && not (MoveList.UnderAttack(board, LanguagePrimitives.EnumOfValue(int(from) - 2), oppositeColor))) then
                     // Generate path of castle queen-side.
                     let path:BitBoard = if color = PieceColor.White then BitBoard(MoveList.WHITE_QUEEN_CASTLE) else BitBoard(MoveList.BLACK_QUEEN_CASTLE)
                     // If path is empty, we can castle.
                     let all = ~~~(board.All(PieceColor.None))
                     if ((path &&& all) = BitBoard.Default) then
-                        moves <- moves ||| BitBoard.FromSq(LanguagePrimitives.EnumOfValue(sbyte(from) - 2y))
+                        moves <- moves ||| BitBoard.FromSq(LanguagePrimitives.EnumOfValue(int(from) - 2))
                 // Make sure castling close-path isn't under attack.
-                if (k <> 0x0uy && kingMoves.[int(from) + 1] && not (MoveList.UnderAttack(board, LanguagePrimitives.EnumOfValue(sbyte(from) + 2y), oppositeColor))) then
+                if (k <> 0x0uy && kingMoves.[int(from) + 1] && not (MoveList.UnderAttack(board, LanguagePrimitives.EnumOfValue(int(from) + 2), oppositeColor))) then
                     // Generate path of castle king-side.
                     let path:BitBoard = if color = PieceColor.White then BitBoard(MoveList.WHITE_KING_CASTLE) else BitBoard(MoveList.BLACK_KING_CASTLE)
                     // If path is empty, we can castle.
                     let all = ~~~(board.All(PieceColor.None))
                     if ((path &&& all) = BitBoard.Default) then
-                        moves <- moves ||| BitBoard.FromSq(LanguagePrimitives.EnumOfValue(sbyte(from) + 2y))
+                        moves <- moves ||| BitBoard.FromSq(LanguagePrimitives.EnumOfValue(int(from) + 2))
                 moves
     new(board:Board1, from:Square, piece:Piece, color:PieceColor, horizontalVertical:BitBoard, diagonal:BitBoard, checks:BitBoard, doubleChecked:bool) =
         let mutable promotion = false

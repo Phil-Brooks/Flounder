@@ -100,14 +100,14 @@ module BlackMagicBitBoardFactory =
     let GenerateRookMagicTable() =
         for h = 0 to 7 do
             for v = 0 to 7 do
-                let sq:Square = LanguagePrimitives.EnumOfValue(sbyte((v * 8 + h)))
+                let sq:Square = LanguagePrimitives.EnumOfValue(v * 8 + h)
                 let magic, offset = RookMagicData.[int(sq)]
                 // Flip mask for BM bitboards.
                 RookMagic.[int(sq)] <- (magic, ~~~(GenerateRookOccupiedMask(sq)), offset)
     let GenerateBishopMagicTable() =
         for h = 0 to 7 do
             for v = 0 to 7 do
-                let sq:Square = LanguagePrimitives.EnumOfValue(sbyte((v * 8 + h)))
+                let sq:Square = LanguagePrimitives.EnumOfValue(v * 8 + h)
                 let magic, offset = BishopMagicData.[int(sq)]
                 // Flip mask for BM bitboards.
                 BishopMagic.[int(sq)] <- (magic, ~~~(GenerateBishopOccupiedMask(sq)), offset)
