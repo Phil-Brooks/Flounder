@@ -1,6 +1,7 @@
 ﻿namespace Flounder
 open System
 open FlounderLib
+open System.Diagnostics
 
 module Tester =
     let DEPTH = 13
@@ -66,7 +67,8 @@ module Tester =
     let Test() =
         let mutable table = MoveTranspositionTable.GenerateTable(16)
         let timeControl = FlounderLib.TimeControl(9999999)
-        let start = DateTime.Now
+        let stopwatch = new Stopwatch()
+        stopwatch.Start()
         for i = 0 to (TesterFen.Length-1) do
             let fen = TesterFen.[i]
             Console.WriteLine("Position (" + (i + 1).ToString() + "/" + TesterFen.Length.ToString() + "): " + fen)
@@ -81,10 +83,11 @@ module Tester =
             Console.WriteLine("bestmove " + bm)
             if bm <> bms.[i] then failwith("Test " + (i + 1).ToString() + " failed with wrong best move: " + bm)
         Console.WriteLine(TesterFen.Length.ToString() + " run successfully.")
-        let elap = (DateTime.Now - start).Milliseconds
+        stopwatch.Stop()
+        let elap = stopwatch.ElapsedMilliseconds
         Console.WriteLine(elap.ToString() + "ms taken.")
-        let expElap = 670
-        let pc = (100 * elap)/expElap - 100
+        let expElap = 10000L
+        let pc = (100L * elap)/expElap - 100L
         if pc>0 then
             Console.WriteLine("BAD: " + pc.ToString() + "% extra time taken.")
         else
