@@ -1,0 +1,40 @@
+﻿namespace FlounderLib
+
+type RevertMove =
+    struct
+        val WhiteKCastle:byte
+        val WhiteQCastle:byte
+        val BlackKCastle:byte
+        val BlackQCastle:byte
+        val EnPassantTarget:Square
+        val ColorToMove:PieceColor
+        val mutable Promotion:bool
+        val mutable EnPassant:bool
+        val mutable From:Square
+        val mutable To:Square
+        val mutable CapturedPiece:Piece
+        val mutable CapturedColor:PieceColor
+        val mutable SecondaryFrom:Square
+        val mutable SecondaryTo:Square
+        new(map:BitBoardMap) =
+            {
+                WhiteKCastle = map.WhiteKCastle
+                WhiteQCastle = map.WhiteQCastle
+                BlackKCastle = map.BlackKCastle
+                BlackQCastle = map.BlackQCastle
+                EnPassantTarget = map.EnPassantTarget
+                ColorToMove = map.ColorToMove
+                Promotion = false
+                EnPassant = false
+                From = Square.Na
+                To = Square.Na
+                CapturedPiece = Piece.Empty
+                CapturedColor = PieceColor.None
+                SecondaryFrom = Square.Na
+                SecondaryTo = Square.Na
+            }
+        end
+    
+module RevertMove =
+    let FromBitBoardMap(map:byref<BitBoardMap>) =
+        RevertMove(map)
