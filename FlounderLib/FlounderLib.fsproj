@@ -13,12 +13,7 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </EmbeddedResource>
     <Compile Include="Array.fs" />
-    <Compile Include="MoveUpdateType.fs" />
-    <Compile Include="AccumulatorOperation.fs" />
-    <Compile Include="Piece.fs" />
-    <Compile Include="PieceColor.fs" />
-    <Compile Include="Square.fs" />
-    <Compile Include="Promotion.fs" />
+    <Compile Include="Types.fs" />
     <Compile Include="BitBoardIterator.fs" />
     <Compile Include="BitBoard.fs" />
     <Compile Include="ZobristPieceKeyTable.fs" />
