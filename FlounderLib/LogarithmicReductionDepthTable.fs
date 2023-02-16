@@ -9,4 +9,4 @@ type LogarithmicReductionDepthTable() =
             for played = 1 to SIZE-1 do
             Internal.[depth * SIZE + played] <- int(Math.Log(depth) * Math.Log(played) / 2.0 - 0.2)
     member _.Item 
-        with get(depth:int, played:int) = Internal.AA(depth * SIZE + played)
+        with get(depth:int, played:int) = Internal.[depth * SIZE + played]

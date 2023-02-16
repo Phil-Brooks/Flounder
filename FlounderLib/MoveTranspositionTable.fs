@@ -24,11 +24,11 @@ type MoveTranspositionTable(byteSize:int) =
         MoveTranspositionTable(megabyteSize * MB_TO_B)
     member _.Item 
         with get(zobristHash:uint64) = 
-            let ans = &(Internal.AA(int(zobristHash) &&& HashFilter))
+            let ans = &(Internal.[int(zobristHash) &&& HashFilter])
             ans
     member _.InsertEntry(zobristHash:uint64, entry:byref<MoveTranspositionTableEntry>) =
         let index = int(zobristHash) &&& HashFilter
-        let oldEntry = &(Internal.AA(index))
+        let oldEntry = &(Internal.[index])
         // Replace Scheme:
         // - ENTRY_TYPE == EXACT
         // - OLD_ENTRY_HASH != NEW_ENTRY_HASH
@@ -38,7 +38,7 @@ type MoveTranspositionTable(byteSize:int) =
             (oldEntry.Type = MoveTranspositionTableEntryType.AlphaUnchanged && 
             entry.Type = MoveTranspositionTableEntryType.BetaCutoff) ||
             int(entry.Depth) > int(oldEntry.Depth) - REPLACEMENT_DEPTH_THRESHOLD) then
-                Internal.AA(index) <- entry
+                Internal.[index] <- entry
 
     member _.FreeMemory() = 
         Internal <- null

@@ -12,7 +12,6 @@
     <EmbeddedResource Include="BasicNNUEf-0334adf934.nnue.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </EmbeddedResource>
-    <Compile Include="Array.fs" />
     <Compile Include="Types.fs" />
     <Compile Include="BitBoardIterator.fs" />
     <Compile Include="BitBoard.fs" />

@@ -53,7 +53,7 @@ type OrderedMoveList(memory:Span<OrderedMoveEntry>, ply:int, killerMoveTable:Kil
             elif move.From = this.KillerMoveTwo.From && move.To = this.KillerMoveTwo.To && move.Promotion = this.KillerMoveTwo.Promotion then 800000
             // Return the updated history score for the move.
             else this.HistoryTable.[pieceToMove, board.ColorToMove, move.To]
-    static member MvvLva(attacker:Piece, victim:Piece) = DJAA(int(victim), int(attacker)) OrderedMoveList.MvvLvaTable
+    static member MvvLva(attacker:Piece, victim:Piece) = OrderedMoveList.MvvLvaTable.[int(victim)].[int(attacker)]
     member this.NormalMoveGeneration(board:Board1, transpositionMove:SearchedMove) =
         let oppositeColor = PieceColor.OppositeColor(board.ColorToMove)
         // Generate pins and check bitboards.

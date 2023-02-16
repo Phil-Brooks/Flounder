@@ -27,13 +27,13 @@ type BasicNNUE =
         let HIDDEN = 256
         let size = uint(HIDDEN * Unsafe.SizeOf<int16>())
         Unsafe.CopyBlockUnaligned(
-            &Unsafe.As<int16, byte>(&targetA.AA(0)), 
-            &Unsafe.As<int16, byte>(&A.AA(0)), 
+            &Unsafe.As<int16, byte>(&targetA.[0]), 
+            &Unsafe.As<int16, byte>(&A.[0]), 
             size
         )
         Unsafe.CopyBlockUnaligned(
-            &Unsafe.As<int16, byte>(&targetB.AA(0)), 
-            &Unsafe.As<int16, byte>(&B.AA(0)), 
+            &Unsafe.As<int16, byte>(&targetB.[0]), 
+            &Unsafe.As<int16, byte>(&B.[0]), 
             size
         )
         this.CurrentAccumulator <- this.CurrentAccumulator + 1
@@ -55,16 +55,16 @@ type BasicNNUE =
                 let mutable sq = whiteIterator.Current
                 while (whiteIterator.MoveNext()) do
                     let index = int(color) * colorStride + int(piece) * pieceStride + int(sq)
-                    this.WhitePOV.AA(index) <- 1s
+                    this.WhitePOV.[index] <- 1s
                     sq <- whiteIterator.Current
                 sq <- blackIterator.Current
                 while (blackIterator.MoveNext()) do
                     let index = int(PieceColor.OppositeColor(color)) * colorStride + int(piece) * pieceStride + (int(sq) ^^^ 56)
-                    this.BlackPOV.AA(index) <- 1s
+                    this.BlackPOV.[index] <- 1s
                     sq <- blackIterator.Current
                 piece <- originalPiece
-        let accumulatorA = this.AccumulatorA.AA(this.CurrentAccumulator)
-        let accumulatorB = this.AccumulatorB.AA(this.CurrentAccumulator)
+        let accumulatorA = this.AccumulatorA.[this.CurrentAccumulator]
+        let accumulatorB = this.AccumulatorB.[this.CurrentAccumulator]
         NN.Forward(this.WhitePOV, this.FeatureWeight, accumulatorA)
         NN.Forward(this.BlackPOV, this.FeatureWeight, accumulatorB)
     member this.EfficientlyUpdateAccumulator(piece:Piece, color:PieceColor, from:Square, mto:Square) =
@@ -77,12 +77,12 @@ type BasicNNUE =
         let blackIndexFrom = int(PieceColor.OppositeColor(color)) * colorStride + opPieceStride + (int(from) ^^^ 56)
         let whiteIndexTo = int(color) * colorStride + opPieceStride + int(mto)
         let blackIndexTo = int(PieceColor.OppositeColor(color)) * colorStride + opPieceStride + (int(mto) ^^^ 56)
-        let accumulatorA = this.AccumulatorA.AA(this.CurrentAccumulator)
-        let accumulatorB = this.AccumulatorB.AA(this.CurrentAccumulator)
-        this.WhitePOV.AA(whiteIndexFrom) <- 0s
-        this.BlackPOV.AA(blackIndexFrom) <- 0s
-        this.WhitePOV.AA(whiteIndexTo) <- 1s
-        this.BlackPOV.AA(blackIndexTo) <- 1s
+        let accumulatorA = this.AccumulatorA.[this.CurrentAccumulator]
+        let accumulatorB = this.AccumulatorB.[this.CurrentAccumulator]
+        this.WhitePOV.[whiteIndexFrom] <- 0s
+        this.BlackPOV.[blackIndexFrom] <- 0s
+        this.WhitePOV.[whiteIndexTo] <- 1s
+        this.BlackPOV.[blackIndexTo] <- 1s
         NN.SubtractAndAddToAll(accumulatorA, this.FlippedFeatureWeight, whiteIndexFrom * HIDDEN, whiteIndexTo * HIDDEN)
         NN.SubtractAndAddToAll(accumulatorB, this.FlippedFeatureWeight, blackIndexFrom * HIDDEN, blackIndexTo * HIDDEN)
     member this.EfficientlyUpdateAccumulator(operation:AccumulatorOperation, piece:Piece, color:PieceColor, sq:Square) =
@@ -93,15 +93,15 @@ type BasicNNUE =
         let opPieceStride = int(nnPiece) * pieceStride
         let whiteIndex = int(color) * colorStride + opPieceStride + int(sq)
         let blackIndex = int(PieceColor.OppositeColor(color)) * colorStride + opPieceStride + (int(sq) ^^^ 56)
-        let accumulatorA = this.AccumulatorA.AA(this.CurrentAccumulator)
-        let accumulatorB = this.AccumulatorB.AA(this.CurrentAccumulator)
+        let accumulatorA = this.AccumulatorA.[this.CurrentAccumulator]
+        let accumulatorB = this.AccumulatorB.[this.CurrentAccumulator]
         if operation = AccumulatorOperation.Activate then
-            this.WhitePOV.AA(whiteIndex) <- 1s
-            this.BlackPOV.AA(blackIndex) <- 1s
+            this.WhitePOV.[whiteIndex] <- 1s
+            this.BlackPOV.[blackIndex] <- 1s
             NN.AddToAll(accumulatorA, accumulatorB, this.FlippedFeatureWeight, whiteIndex * HIDDEN, blackIndex * HIDDEN)
         else 
-            this.WhitePOV.AA(whiteIndex) <- 0s
-            this.BlackPOV.AA(blackIndex) <- 0s
+            this.WhitePOV.[whiteIndex] <- 0s
+            this.BlackPOV.[blackIndex] <- 0s
             NN.SubtractFromAll(accumulatorA, accumulatorB, this.FlippedFeatureWeight, whiteIndex * HIDDEN, blackIndex * HIDDEN)
     member this.Evaluate(colorToMove:PieceColor) =
         let HIDDEN = 256
@@ -119,8 +119,8 @@ type BasicNNUE =
             firstOffset <- 256
             secondOffset <- 0
 #endif
-        let accumulatorA = this.AccumulatorA.AA(this.CurrentAccumulator)
-        let accumulatorB = this.AccumulatorB.AA(this.CurrentAccumulator)
+        let accumulatorA = this.AccumulatorA.[this.CurrentAccumulator]
+        let accumulatorB = this.AccumulatorB.[this.CurrentAccumulator]
 
 #if RELEASE
         if (colorToMove = PieceColor.White) then
@@ -134,4 +134,4 @@ type BasicNNUE =
         NN.ClippedReLU(accumulatorB, this.FeatureBias, this.Flatten, CR_MIN, CR_MAX, secondOffset)
         NN.Forward1(this.Flatten, this.OutWeight, this.Output)
 #endif
-        (this.Output.AA(0) + int(this.OutBias.AA(0))) * SCALE / QAB
+        (this.Output.[0] + int(this.OutBias.[0])) * SCALE / QAB

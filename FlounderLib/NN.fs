@@ -41,9 +41,9 @@ module NN =
     let Clamp(value:Vector<int16>, min:byref<Vector<int16>>, max:byref<Vector<int16>>) =
         Vector.Max(min, Vector.Min(max, value))
     let ToArray(vector:Vector<int16>, array:int16 array, offset:int) =
-        Unsafe.WriteUnaligned(&Unsafe.As<int16, byte>(&array.AA(offset)), vector)
+        Unsafe.WriteUnaligned(&Unsafe.As<int16, byte>(&array.[offset]), vector)
     let LoadVector(values:int16 array, index:int) =
-        Unsafe.ReadUnaligned<Vector<int16>>(&Unsafe.As<int16, byte>(&values.AA(index)))
+        Unsafe.ReadUnaligned<Vector<int16>>(&Unsafe.As<int16, byte>(&values.[index]))
     
     
     let UNROLL = 4
@@ -78,7 +78,7 @@ module NN =
                 let wVec4 = LoadVector(weight, weightStride + unrolledIndex3)
                 sum <- sum + iVec4 * wVec4
                 vectorIndex <- unrolledIndex3 + VSize.Short
-            output.AA(offset + i) <- Vector.Sum(sum)
+            output.[offset + i] <- Vector.Sum(sum)
             weightStride <- weightStride + inputSize
 
 #if DEBUG
@@ -108,7 +108,7 @@ module NN =
                 let wVec4 = LoadVector(weight, weightStride + unrolledIndex3)
                 sum <- sum + MultiplyAddAdjacent(iVec4, wVec4)
                 vectorIndex <- unrolledIndex3 + VSize.Short
-            output.AA(offset + i) <- Vector.Sum(sum)
+            output.[offset + i] <- Vector.Sum(sum)
             weightStride <- weightStride + inputSize
 #endif
     let ClippedReLUFlattenAndForward(inputA:int16 array, inputB:int16 array, bias:int16 array, weight:int16 array,output:int array, min:int16, max:int16, separationIndex:int) =
@@ -154,7 +154,7 @@ module NN =
                 let clamped4 = Clamp(iVec4 + bVec4, &minVec, &maxVec)
                 sum <- sum + MultiplyAddAdjacent(clamped4, wVec4)
                 vectorIndex <- unrolledIndex3 + VSize.Short
-            output.AA(offset + i) <- Vector.Sum(sum)
+            output.[offset + i] <- Vector.Sum(sum)
             weightStride <- weightStride + inputSize
 #if DEBUG
     let ClippedReLU(input:int16 array, bias:int16 array, output:int16 array, min:int16, max:int16, offset:int) =

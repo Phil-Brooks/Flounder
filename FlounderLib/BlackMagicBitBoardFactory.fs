@@ -120,7 +120,7 @@ module BlackMagicBitBoardFactory =
             elif piece = Piece.Bishop then (BishopMagic, BISHOP)
             else raise (System.IO.InvalidDataException("No magic table found."))
         // Get magic.
-        let magic, mask, offset = args1.AA(int(sq))
+        let magic, mask, offset = args1.[int(sq)]
         // Get the relevant occupied squares.
         let relevantOccupied = occupied ||| mask
         // Get hash based on relevant occupied and magic.

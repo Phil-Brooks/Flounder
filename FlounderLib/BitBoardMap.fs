@@ -108,7 +108,7 @@ type BitBoardMap =
             let gethash() =
                 let mutable zobristHash = 0UL
                 for piece in [Piece.Pawn;Piece.Rook;Piece.Knight;Piece.Bishop;Piece.Queen;Piece.King] do
-                    let psbb:BitBoard = (DJAA(int(colorToMove), int(piece)) bb)
+                    let psbb:BitBoard = bb.[int(colorToMove)].[int(piece)]
                     let mutable pieceSquareIterator:BitBoardIterator = psbb.GetEnumerator()  
                     let mutable sq:Square = pieceSquareIterator.Current
                     while (pieceSquareIterator.MoveNext()) do
@@ -116,8 +116,8 @@ type BitBoardMap =
                         sq <- pieceSquareIterator.Current
 
                 if (colorToMove = PieceColor.White) then zobristHash <- zobristHash ^^^ Zobrist.TurnKey
-                if (enPassantTarget <> Square.Na) then zobristHash <- zobristHash ^^^ Zobrist.EnPassantKeys.AA(int(enPassantTarget))
-                zobristHash <- zobristHash ^^^ Zobrist.CastlingKeys.AA(int(whiteKCastle) ||| int(whiteQCastle) ||| int(blackKCastle) ||| int(blackQCastle))
+                if (enPassantTarget <> Square.Na) then zobristHash <- zobristHash ^^^ Zobrist.EnPassantKeys.[int(enPassantTarget)]
+                zobristHash <- zobristHash ^^^ Zobrist.CastlingKeys.[int(whiteKCastle) ||| int(whiteQCastle) ||| int(blackKCastle) ||| int(blackQCastle)]
                 zobristHash
             let zobristHash = gethash()
             BitBoardMap(bb,piecesAndColors,white,black,colorToMove,whiteKCastle,whiteQCastle,blackKCastle,blackQCastle,enPassantTarget,zobristHash)
@@ -143,7 +143,7 @@ type BitBoardMap =
             BitBoardMap(Bb,PiecesAndColors,White,Black,ColorToMove,WhiteKCastle,WhiteQCastle,BlackKCastle,BlackQCastle,EnPassantTarget,ZobristHash)
         member this.Item 
             with get(sq:Square):(Piece*PieceColor) = 
-                let r = this.PiecesAndColors.AA(int(sq))
+                let r = this.PiecesAndColors.[int(sq)]
                 LanguagePrimitives.EnumOfValue(r &&& 0xF), LanguagePrimitives.EnumOfValue(r >>> 4)
         member this.Item 
             with get(color:PieceColor) = 
@@ -152,13 +152,13 @@ type BitBoardMap =
                 elif color = PieceColor.None then ~~~(this.White ||| this.Black)
                 else raise (InvalidOperationException("Must provide a valid PieceColor."))
         member this.Item 
-            with get(piece:Piece, color:PieceColor) = DJAA(int(color), int(piece)) this.Bb
-        member this.PieceOnly(sq:Square):Piece = LanguagePrimitives.EnumOfValue(this.PiecesAndColors.AA(int(sq)) &&& 0xF)
-        member this.ColorOnly(sq:Square):PieceColor = LanguagePrimitives.EnumOfValue(this.PiecesAndColors.AA(int(sq)) >>> 4)
+            with get(piece:Piece, color:PieceColor) = this.Bb.[int(color)].[int(piece)]
+        member this.PieceOnly(sq:Square):Piece = LanguagePrimitives.EnumOfValue(this.PiecesAndColors.[int(sq)] &&& 0xF)
+        member this.ColorOnly(sq:Square):PieceColor = LanguagePrimitives.EnumOfValue(this.PiecesAndColors.[int(sq)] >>> 4)
         member this.Move(moveType:MoveUpdateType, pF:Piece, cF:PieceColor, pT:Piece, cT:PieceColor, from:Square, mto:Square) =
             if (pT <> Piece.Empty) then
                 // If moving to piece isn't empty, then we capture.
-                (DJAA(int(cT), int(pT)) this.Bb).[mto] <- false
+                this.Bb.[int(cT)].[int(pT)].[mto] <- false
                 // Remove from color bitboards.
                 if (cT = PieceColor.White) then
                     this.White.[mto] <- false
@@ -167,12 +167,12 @@ type BitBoardMap =
                 // Update Zobrist.
                 Zobrist.HashPiece(&this.ZobristHash, pT, cT, mto)
             // We remove from original square.
-            (DJAA(int(cF), int(pF)) this.Bb).[from] <- false
+            this.Bb.[int(cF)].[int(pF)].[from] <- false
             // Set at next square.
-            (DJAA(int(cF), int(pF)) this.Bb).[mto] <- true
+            this.Bb.[int(cF)].[int(pF)].[mto] <- true
             // Make sure to update the pieces and colors.
-            this.PiecesAndColors.AA(int(mto)) <- this.PiecesAndColors.AA(int(from))
-            this.PiecesAndColors.AA(int(from)) <- 0x26
+            this.PiecesAndColors.[int(mto)] <- this.PiecesAndColors.[int(from)]
+            this.PiecesAndColors.[int(from)] <- 0x26
             // Update color bitboards.
             if (cF = PieceColor.White) then
                 this.White.[from] <- false
@@ -189,9 +189,9 @@ type BitBoardMap =
             this.Move(moveType, pF, cF, pT, cT, from, mto)
         member this.Empty(updateType:MoveUpdateType, piece:Piece, color:PieceColor, sq:Square) =
             // Remove from square.
-            (DJAA(int(color), int(piece)) this.Bb).[sq] <- false
+            this.Bb.[int(color)].[int(piece)].[sq] <- false
             // Set empty in pieces and colors.
-            this.PiecesAndColors.AA(int(sq)) <- 0x26
+            this.PiecesAndColors.[int(sq)] <- 0x26
             // Remove from color bitboards.
             if (color = PieceColor.White) then
                 this.White.[sq] <- false
@@ -204,7 +204,7 @@ type BitBoardMap =
             this.Empty(updateType, piece, color, sq)
         member this.InsertPiece(updateType:MoveUpdateType, piece:Piece, color:PieceColor, sq:Square) =
             // Insert the piece at square.
-            (DJAA(int(color), int(piece)) this.Bb).[sq] <- true
+            this.Bb.[int(color)].[int(piece)].[sq] <- true
             // Insert into color bitboards.
             if (color = PieceColor.White) then
                 this.White.[sq] <- true
@@ -212,7 +212,7 @@ type BitBoardMap =
                 this.Black.[sq] <- true
             // Set piece in pieces and colors.
             let offset = if color = PieceColor.White then 0x0 else 0x10
-            this.PiecesAndColors.AA(int(sq)) <- (int(piece) ||| offset)
+            this.PiecesAndColors.[int(sq)] <- (int(piece) ||| offset)
             // Update Zobrist.
             Zobrist.HashPiece(&this.ZobristHash, piece, color, sq)
         member this.Copy() = BitBoardMap(this, this.Bb, this.PiecesAndColors)
@@ -258,6 +258,6 @@ module BitBoardMap =
                 sq <- pieceSquareIterator.Current
 
         if (map.ColorToMove = PieceColor.White) then zobristHash <- zobristHash ^^^ Zobrist.TurnKey
-        if (map.EnPassantTarget <> Square.Na) then zobristHash <- zobristHash ^^^ Zobrist.EnPassantKeys.AA(int(map.EnPassantTarget))
-        zobristHash <- zobristHash ^^^ Zobrist.CastlingKeys.AA(int(map.WhiteKCastle) ||| int(map.WhiteQCastle) ||| int(map.BlackKCastle) ||| int(map.BlackQCastle))
+        if (map.EnPassantTarget <> Square.Na) then zobristHash <- zobristHash ^^^ Zobrist.EnPassantKeys.[int(map.EnPassantTarget)]
+        zobristHash <- zobristHash ^^^ Zobrist.CastlingKeys.[int(map.WhiteKCastle) ||| int(map.WhiteQCastle) ||| int(map.BlackKCastle) ||| int(map.BlackQCastle)]
         zobristHash

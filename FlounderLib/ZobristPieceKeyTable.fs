@@ -14,5 +14,5 @@ type ZobristPieceKeyTable(random:Random) =
 
     member _.Item 
         with get(piece:Piece, color:PieceColor, sq:Square) = 
-            Internal.AA(int(color) * 384 + int(piece) * 64 + int(sq))
+            Internal.[int(color) * 384 + int(piece) * 64 + int(sq)]
  
