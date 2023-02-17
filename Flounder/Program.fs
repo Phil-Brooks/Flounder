@@ -10,9 +10,6 @@ let main argv =
     AttackTable1.SetUp()
     Zobrist.Setup()
         
-    // Run JIT.
-    Perft.MoveGeneration(Board1.Default(), 5) |>ignore
-
     let command = Environment.CommandLine
 
     if (command.ToLower().Contains("bench")) then

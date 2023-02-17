@@ -15,9 +15,9 @@ type BitBoardIterator =
         member this.MoveNext() =
             this.Iteration <- this.Iteration + 1
             this.Iteration <= this.Count
-        member this.Current:Square =
+        member this.Current =
             let i:int = BitOperations.TrailingZeroCount(this.Value)
             // Subtract 1 and only hold set bits in that mask.
             this.Value <- this.Value &&& (this.Value - 1UL)
-            LanguagePrimitives.EnumOfValue(i)
+            Square.FromInt(i)
     end

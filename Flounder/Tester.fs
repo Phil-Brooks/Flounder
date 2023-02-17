@@ -78,7 +78,7 @@ module Tester =
             
             let from = bestMove.From.ToString().ToLower()
             let mto = bestMove.To.ToString().ToLower()
-            let promotion = if bestMove.Promotion <> Promotion.None then bestMove.Promotion|>Promotion.ToUciNotation else ""
+            let promotion = if bestMove.Promotion <> Promotion.None then Promotion.ToStr(bestMove.Promotion) else ""
             let bm = from + mto + promotion
             Console.WriteLine("bestmove " + bm)
             if bm <> bms.[i] then failwith("Test " + (i + 1).ToString() + " failed with wrong best move: " + bm)

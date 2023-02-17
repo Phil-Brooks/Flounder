@@ -113,7 +113,7 @@ module AttackTable1 =
                 // Flip the mask.
                 let _,bb2,_ = args1.[v * 8 + h]
                 let mask = ~~~(bb2)
-                let sq:Square = LanguagePrimitives.EnumOfValue(v * 8 + h)
+                let sq = Square.FromInt(v * 8 + h)
                 let mutable occupied = BitBoard.Default
                 let mutable keepgoing = true
                 while (keepgoing) do
@@ -129,7 +129,7 @@ module AttackTable1 =
                             else
                                 hI <- hI + dH
                                 vI <- vI + dV
-                                let sqI:Square = LanguagePrimitives.EnumOfValue(vI * 8 + hI)
+                                let sqI = Square.FromInt(vI * 8 + hI)
                                 moves <- moves ||| BitBoard.FromSq(sqI)
                     // Add to list with magic index.
                     AttackTable.SlidingMoves.[BlackMagicBitBoardFactory.GetMagicIndex(piece, occupied, sq)] <- moves

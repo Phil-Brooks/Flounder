@@ -76,7 +76,7 @@ module OpenBenchBenchmark =
             
             let from = bestMove.From.ToString().ToLower()
             let mto = bestMove.To.ToString().ToLower()
-            let promotion = if bestMove.Promotion <> Promotion.None then bestMove.Promotion|>Promotion.ToUciNotation else ""
+            let promotion = if bestMove.Promotion <> Promotion.None then Promotion.ToStr(bestMove.Promotion) else ""
             Console.WriteLine("bestmove " + from + mto + promotion)
             total <- total + uint64(search.TotalNodeSearchCount)
 

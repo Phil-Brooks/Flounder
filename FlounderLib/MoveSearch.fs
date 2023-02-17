@@ -64,7 +64,7 @@ type MoveSearch(board:EngineBoard, table:MoveTranspositionTable, timeControl:Tim
             let move:OrderedMoveEntry = PvTable.Get(i)
             
             pv.Append(move.From).Append(move.To)|>ignore
-            if (move.Promotion <> Promotion.None) then pv.Append(move.Promotion|>Promotion.ToUciNotation)|>ignore
+            if (move.Promotion <> Promotion.None) then pv.Append(Promotion.ToStr(move.Promotion))|>ignore
             pv.Append(' ')|>ignore
         pv.ToString().ToLower()
     member this.NodeCounting(depth:int, bestMove:OrderedMoveEntry, itimePreviouslyUpdated:bool) = 
@@ -184,7 +184,7 @@ type MoveSearch(board:EngineBoard, table:MoveTranspositionTable, timeControl:Tim
                         keepgoing <- false
                     else
                         // Make the move.
-                        let mutable rv = board.Move(MoveUpdateType.NNUpdate,&move)
+                        let mutable rv = board.Move(&move)
                         totalNodeSearchCount <- totalNodeSearchCount+1
         
                         // Evaluate position by searching deeper and negating the result. An evaluation that's good for
@@ -192,7 +192,7 @@ type MoveSearch(board:EngineBoard, table:MoveTranspositionTable, timeControl:Tim
                         let evaluation = -this.QSearch(node, board, nextPlyFromRoot, nextDepth, -beta, -alpha)
                 
                         // Undo the move.
-                        board.UndoMove(MoveUpdateType.NNUpdate,&rv)
+                        board.UndoMove(&rv)
 
                         if not (handleEvaluation(evaluation)) then keepgoing <- false
             
@@ -456,7 +456,7 @@ type MoveSearch(board:EngineBoard, table:MoveTranspositionTable, timeControl:Tim
                             else
 
                                 // Make the move.
-                                let mutable rv = board.Move(MoveUpdateType.NNUpdate,&move)
+                                let mutable rv = board.Move(&move)
                                 totalNodeSearchCount <- totalNodeSearchCount+1
             
                                 let mutable evaluation = 0
@@ -514,7 +514,7 @@ type MoveSearch(board:EngineBoard, table:MoveTranspositionTable, timeControl:Tim
                                             evaluation <- -this.AbSearch(PvNode, board, nextPlyFromRoot, nextDepth, -beta, -alpha)
             
                                 // Undo the move.
-                                board.UndoMove(MoveUpdateType.NNUpdate,&rv)
+                                board.UndoMove(&rv)
                                 if not (handleEvaluation(evaluation, move, quietMove)) then
                                     if (quietMove) then
                                         if (KillerMoveTable.[0, plyFromRoot] <> move) then

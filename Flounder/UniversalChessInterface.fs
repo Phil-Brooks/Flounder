@@ -80,12 +80,7 @@ module UniversalChessInterface =
                         let mto = Enum.Parse<Square>(args.[i].[2..3], true)
                         let mutable promotion = Promotion.None
                         if (args.[i].Length > 4) then
-                            promotion <- 
-                                if args.[i].ToLower().[4] = 'r' then Promotion.Rook
-                                elif args.[i].ToLower().[4] = 'n' then Promotion.Knight
-                                elif args.[i].ToLower().[4] = 'b' then Promotion.Bishop
-                                elif args.[i].ToLower().[4] = 'q' then Promotion.Queen
-                                else Promotion.None
+                            promotion <- Promotion.FromChar(args.[i].ToLower().[4])
                         Board.GuiMove(from, mto, promotion)
                 Busy <- false
     let HandleDraw(input:string) =
@@ -157,7 +152,7 @@ module UniversalChessInterface =
                     Busy <- false
                     let from = bestMove.From.ToString().ToLower()
                     let mto = bestMove.To.ToString().ToLower()
-                    let promotion = if bestMove.Promotion <> Promotion.None then Promotion.ToUciNotation(bestMove.Promotion) else ""
+                    let promotion = if bestMove.Promotion <> Promotion.None then Promotion.ToStr(bestMove.Promotion) else ""
                     Console.WriteLine("bestmove " + from + mto + promotion)
         #if DEBUG
                     Console.WriteLine("TT Count: " + search.TableCutoffCount.ToString())

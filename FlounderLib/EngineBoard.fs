@@ -29,7 +29,7 @@ type EngineBoard =
         if not(moveList.Moves.[mto]) then raise (InvalidOperationException("Invalid move provided by GUI."))
         if (promotion <> Promotion.None && not moveList.Promotion) then
             raise (InvalidOperationException("Invalid move provided by GUI."))
-        let rv = this.Move(MoveUpdateType.NNUpdate, from, mto, promotion)
+        let rv = this.Move(from, mto, promotion)
         this.History.Append(this.ZobristHash)
     member this.NullMove() =
         let rv = RevertNullMove.FromBitBoardMap(&this.Map)
@@ -44,20 +44,14 @@ type EngineBoard =
             Zobrist.HashEp(&this.Map.ZobristHash, rv.EnPassantTarget)
         this.Map.ColorToMove <- PieceColor.OppositeColor(this.Map.ColorToMove)
         Zobrist.FlipTurnInHash(&this.Map.ZobristHash)
-    member this.Move(moveType:MoveUpdateType, move:byref<OrderedMoveEntry>) =
+    member this.Move(move:byref<OrderedMoveEntry>) =
         let rv:RevertMove =
-            if (moveType = MoveUpdateType.NNUpdate) then
-                Evaluation.NNUE.PushAccumulator()
-                this.Move(MoveUpdateType.NNUpdate, move.From, move.To, move.Promotion)
-            else
-                this.Move(MoveUpdateType.ClassicalUpdate, move.From, move.To, move.Promotion)
+            Evaluation.NNUE.PushAccumulator()
+            this.Move(move.From, move.To, move.Promotion)
         this.History.Append(this.ZobristHash)
         rv
-    member this.UndoMove(moveType:MoveUpdateType, rv:byref<RevertMove>) =
-        if (moveType = MoveUpdateType.NNUpdate) then
-            base.UndoMove(MoveUpdateType.NNUpdate, &rv)
-            Evaluation.NNUE.PullAccumulator()
-        else
-            base.UndoMove(MoveUpdateType.ClassicalUpdate, &rv)
+    member this.UndoMove(rv:byref<RevertMove>) =
+        base.UndoMove(&rv)
+        Evaluation.NNUE.PullAccumulator()
         this.History.RemoveLast()
 

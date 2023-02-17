@@ -30,9 +30,9 @@ module NNUE =
 
     [<Test>]
     let Eua() =
-        let ans1 = basicNNUE.EfficientlyUpdateAccumulator(AccumulatorOperation.Deactivate, Piece.Pawn, PieceColor.White, Square.E2)
+        let ans1 = basicNNUE.EfficientlyUpdateAccumulator(false, Piece.Pawn, PieceColor.White, Square.E2)
         ans1 |> should equal ()
-        let ans2 = basicNNUE.EfficientlyUpdateAccumulator(AccumulatorOperation.Activate, Piece.Pawn, PieceColor.White, Square.E2)
+        let ans2 = basicNNUE.EfficientlyUpdateAccumulator(true, Piece.Pawn, PieceColor.White, Square.E2)
         ans2 |> should equal ()
 
     [<Test>]
@@ -50,7 +50,7 @@ module NNUE =
     let EvaluateUpdate() =
         basicNNUE.ResetAccumulator()
         basicNNUE.RefreshAccumulator(Board)
-        basicNNUE.EfficientlyUpdateAccumulator(AccumulatorOperation.Deactivate, Piece.Pawn, PieceColor.White, Square.E2)
-        basicNNUE.EfficientlyUpdateAccumulator(AccumulatorOperation.Activate, Piece.Pawn, PieceColor.White, Square.E4)
+        basicNNUE.EfficientlyUpdateAccumulator(false, Piece.Pawn, PieceColor.White, Square.E2)
+        basicNNUE.EfficientlyUpdateAccumulator(true, Piece.Pawn, PieceColor.White, Square.E4)
         let ans = basicNNUE.Evaluate(PieceColor.OppositeColor(Board.ColorToMove))
         ans |> should equal -44

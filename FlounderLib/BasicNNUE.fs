@@ -85,7 +85,7 @@ type BasicNNUE =
         this.BlackPOV.[blackIndexTo] <- 1s
         NN.SubtractAndAddToAll(accumulatorA, this.FlippedFeatureWeight, whiteIndexFrom * HIDDEN, whiteIndexTo * HIDDEN)
         NN.SubtractAndAddToAll(accumulatorB, this.FlippedFeatureWeight, blackIndexFrom * HIDDEN, blackIndexTo * HIDDEN)
-    member this.EfficientlyUpdateAccumulator(operation:AccumulatorOperation, piece:Piece, color:PieceColor, sq:Square) =
+    member this.EfficientlyUpdateAccumulator(isActivate:bool, piece:Piece, color:PieceColor, sq:Square) =
         let HIDDEN = 256
         let colorStride = 64 * 6
         let pieceStride = 64
@@ -95,7 +95,7 @@ type BasicNNUE =
         let blackIndex = int(PieceColor.OppositeColor(color)) * colorStride + opPieceStride + (int(sq) ^^^ 56)
         let accumulatorA = this.AccumulatorA.[this.CurrentAccumulator]
         let accumulatorB = this.AccumulatorB.[this.CurrentAccumulator]
-        if operation = AccumulatorOperation.Activate then
+        if isActivate then
             this.WhitePOV.[whiteIndex] <- 1s
             this.BlackPOV.[blackIndex] <- 1s
             NN.AddToAll(accumulatorA, accumulatorB, this.FlippedFeatureWeight, whiteIndex * HIDDEN, blackIndex * HIDDEN)

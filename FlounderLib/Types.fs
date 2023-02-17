@@ -2,15 +2,6 @@
 
 [<AutoOpen>]
 module Types =
-    type MoveUpdateType =
-        |Normal
-        |ClassicalUpdate
-        |NNUpdate
-
-    type AccumulatorOperation =
-        |Activate
-        |Deactivate
-
     type Piece =
         // The type of piece.
         |Pawn = 0
@@ -48,11 +39,34 @@ module Types =
         |Rook = 1
         |Queen = 4
 
-module Promotion =
-    let ToUciNotation(promotion:Promotion) =
-        let notation = promotion.ToString().[0].ToString().ToLower()
-        if promotion = Promotion.Knight then "n" else notation
+module Piece =
+    let FromInt(i:int) =
+        let pc:Piece = LanguagePrimitives.EnumOfValue(i)
+        pc
 
 module PieceColor =
     let OppositeColor(color:PieceColor):PieceColor =
-        LanguagePrimitives.EnumOfValue(int(color) ^^^ 0x1)
+        if color = PieceColor.White then PieceColor.Black else PieceColor.White
+    let FromInt(i:int) =
+        let cl:PieceColor = LanguagePrimitives.EnumOfValue(i)
+        cl
+
+module Square =
+    let FromInt(i:int) =
+        let sq:Square = LanguagePrimitives.EnumOfValue(i)
+        sq
+
+module Promotion =
+    let ToStr(promotion:Promotion) =
+        let notation = promotion.ToString().[0].ToString().ToLower()
+        if promotion = Promotion.Knight then "n" else notation
+    let FromInt(i:int) =
+        let prm:Promotion = LanguagePrimitives.EnumOfValue(i)
+        prm
+    let FromChar(ch:char) =
+        if ch = 'r' then Promotion.Rook
+        elif ch = 'n' then Promotion.Knight
+        elif ch = 'b' then Promotion.Bishop
+        elif ch = 'q' then Promotion.Queen
+        else Promotion.None
+

@@ -41,28 +41,26 @@ module Perft =
                 let domv mv =
                    // Make our move iteration for our square iteration. Save the revert move for reverting
                     // in future.
-                    let mutable rv = board.Move(MoveUpdateType.Normal, sq, mv)
+                    let mutable rv = board.Move(sq, mv)
                     // If our king is safe, that move is legal and we can calculate moves at lesser
                     // depth recursively, but we shouldn't divide at lesser depth.
                     let mutable nextCount = 0uL
                     if (rv.Promotion) then
                         // Undo original pawn move without promotion.
-                        board.UndoMove(MoveUpdateType.Normal, &rv)
+                        board.UndoMove(&rv)
                         let mutable i = 1
                         //TODO:must be better to iterate through promotion types
                         while (i < 5) do 
-                            let pr:Promotion = LanguagePrimitives.EnumOfValue(i)
+                            let pr = Promotion.FromInt(i)
                             let nbd = board.Clone()
-                            let tnp = nbd.Move(MoveUpdateType.Normal, sq, mv, pr)
-                            nextCount <- nextCount + ( MoveGeneration(nbd, nextDepth))
+                            let tnp = nbd.Move(sq, mv, pr)
+                            nextCount <- nextCount + (MoveGeneration(nbd, nextDepth))
                             i<-i+1
                         // Don't undo the final move as it's done outside.
                     else 
                         //let nbd = board.Clone()
                         nextCount <- MoveGeneration(board, nextDepth)
-                        board.UndoMove(MoveUpdateType.Normal, &rv)
-                    // Revert the move to get back to original state.
-                    //board.UndoMove<Normal>(&rv)
+                        board.UndoMove(&rv)
                     nextCount
                 mvs|>Array.map domv|>Array.sum
             if depth>4 then

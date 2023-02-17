@@ -158,7 +158,7 @@ type MoveList(board:Board1, from:Square, horizontalVertical:BitBoard, diagonal:B
             if (board.EnPassantTarget <> Square.Na) then
                 // If EP exists, then we need to check if a piece exists on square that's under attack from Ep, not
                 // where we move to.
-                epPieceSq <- if color = PieceColor.White then LanguagePrimitives.EnumOfValue(int(board.EnPassantTarget) - 8) else LanguagePrimitives.EnumOfValue(int(board.EnPassantTarget) + 8)
+                epPieceSq <- if color = PieceColor.White then Square.FromInt(int(board.EnPassantTarget) - 8) else Square.FromInt(int(board.EnPassantTarget) + 8)
                 let epTargetPieceExists = board.All(Piece.Pawn, oppositeColor).[epPieceSq]
                 // We need to check if a piece of ours exists to actually execute the EP.
                 // We do this by running a reverse pawn mask, to determine whether a piece of ours is on the corner.
@@ -183,16 +183,16 @@ type MoveList(board:Board1, from:Square, horizontalVertical:BitBoard, diagonal:B
                     // If we do EP here, our king can be attacked by rook.
                     // This is known as being pinned through a piece and only happens for EP, thus we must actually EP and see
                     // if our king is under attacked.
-                    board.RemovePiece(MoveUpdateType.Normal, Piece.Pawn, color, from)
-                    board.RemovePiece(MoveUpdateType.Normal, Piece.Pawn, oppositeColor, epPieceSq)
-                    board.InsertPiece(MoveUpdateType.Normal, Piece.Pawn, color, board.EnPassantTarget)
+                    board.RemovePiece(Piece.Pawn, color, from)
+                    board.RemovePiece(Piece.Pawn, oppositeColor, epPieceSq)
+                    board.InsertPiece(Piece.Pawn, color, board.EnPassantTarget)
                     let kingSq = board.KingLoc(color).ToSq()
                     // If our king is under attack, it means the pawn was pinned through a piece and the removal of that piece
                     // caused a discovered pin. Thus, we must remove it from our legal moves.
                     if (MoveList.UnderAttack(board, kingSq, oppositeColor)) then moves <- moves &&& ~~~(BitBoard(1UL) <<< int(board.EnPassantTarget))
-                    board.InsertPiece(MoveUpdateType.Normal, Piece.Pawn, color, from)
-                    board.InsertPiece(MoveUpdateType.Normal, Piece.Pawn, oppositeColor, epPieceSq)
-                    board.RemovePiece(MoveUpdateType.Normal, Piece.Pawn, color, board.EnPassantTarget)
+                    board.InsertPiece( Piece.Pawn, color, from)
+                    board.InsertPiece(Piece.Pawn, oppositeColor, epPieceSq)
+                    board.RemovePiece(Piece.Pawn, color, board.EnPassantTarget)
                     // In the case that the EP piece isn't in our checks during a check, we shouldn't EP.
                     if (moves.[board.EnPassantTarget] && not c.[epPieceSq]) then moves <- moves &&& ~~~(BitBoard(1UL) <<< int(board.EnPassantTarget))
                     moves,promotion
@@ -215,7 +215,7 @@ type MoveList(board:Board1, from:Square, horizontalVertical:BitBoard, diagonal:B
         if (board.EnPassantTarget <> Square.Na) then
             // If EP exists, then we need to check if a piece exists on square that's under attack from Ep, not
             // where we move to.
-            epPieceSq <- if color = PieceColor.White then LanguagePrimitives.EnumOfValue(int(board.EnPassantTarget) - 8) else LanguagePrimitives.EnumOfValue(int(board.EnPassantTarget) + 8)
+            epPieceSq <- if color = PieceColor.White then Square.FromInt(int(board.EnPassantTarget) - 8) else Square.FromInt(int(board.EnPassantTarget) + 8)
             let epTargetPieceExists = board.All(Piece.Pawn, oppositeColor).[epPieceSq]
             // We need to check if a piece of ours exists to actually execute the EP.
             // We do this by running a reverse pawn mask, to determine whether a piece of ours is on the corner.
@@ -258,16 +258,16 @@ type MoveList(board:Board1, from:Square, horizontalVertical:BitBoard, diagonal:B
                     // If we do EP here, our king can be attacked by rook.
                     // This is known as being pinned through a piece and only happens for EP, thus we must actually EP and see
                     // if our king is under attacked.
-                    board.RemovePiece(MoveUpdateType.Normal, Piece.Pawn, color, from)
-                    board.RemovePiece(MoveUpdateType.Normal, Piece.Pawn, oppositeColor, epPieceSq)
-                    board.InsertPiece(MoveUpdateType.Normal, Piece.Pawn, color, board.EnPassantTarget)
+                    board.RemovePiece(Piece.Pawn, color, from)
+                    board.RemovePiece(Piece.Pawn, oppositeColor, epPieceSq)
+                    board.InsertPiece(Piece.Pawn, color, board.EnPassantTarget)
                     let kingSq = board.KingLoc(color).ToSq()
                     // If our king is under attack, it means the pawn was pinned through a piece and the removal of that piece
                     // caused a discovered pin. Thus, we must remove it from our legal moves.
                     if (MoveList.UnderAttack(board, kingSq, oppositeColor)) then moves <- moves &&& ~~~(BitBoard(1UL) <<< int(board.EnPassantTarget))
-                    board.InsertPiece(MoveUpdateType.Normal, Piece.Pawn, color, from)
-                    board.InsertPiece(MoveUpdateType.Normal, Piece.Pawn, oppositeColor, epPieceSq)
-                    board.RemovePiece(MoveUpdateType.Normal, Piece.Pawn, color, board.EnPassantTarget)
+                    board.InsertPiece(Piece.Pawn, color, from)
+                    board.InsertPiece(Piece.Pawn, oppositeColor, epPieceSq)
+                    board.RemovePiece(Piece.Pawn, color, board.EnPassantTarget)
                     // In the case that the EP piece isn't in our checks during a check, we shouldn't EP.
                     if (moves.[board.EnPassantTarget] && not c.[epPieceSq]) then moves <- moves &&& ~~~(BitBoard(1UL) <<< int(board.EnPassantTarget))
                     moves,promotion
@@ -317,12 +317,12 @@ type MoveList(board:Board1, from:Square, horizontalVertical:BitBoard, diagonal:B
             let oppositeColor = PieceColor.OppositeColor(color)
             let mutable kingMovesIterator = kingMoves.GetEnumerator()
             let mutable move = kingMovesIterator.Current
-            board.RemovePiece(MoveUpdateType.Normal, Piece.King, color, from)
+            board.RemovePiece(Piece.King, color, from)
             while (kingMovesIterator.MoveNext()) do
                 if (MoveList.UnderAttack(board, move, oppositeColor)) then kingMoves.[move] <- false
                 // Next square iteration.
                 move <- kingMovesIterator.Current
-            board.InsertPiece(MoveUpdateType.Normal, Piece.King, color, from)
+            board.InsertPiece(Piece.King, color, from)
             moves <- moves ||| kingMoves
             // Castling
             // If enemy is attacking our king, we cannot castle.
@@ -331,21 +331,21 @@ type MoveList(board:Board1, from:Square, horizontalVertical:BitBoard, diagonal:B
                 // Get castling rights.
                 let q, k = board.CastlingRight(color)
                 // Make sure castling close-path isn't under attack.
-                if (q <> 0x0uy && kingMoves.[int(from) - 1] && not (MoveList.UnderAttack(board, LanguagePrimitives.EnumOfValue(int(from) - 2), oppositeColor))) then
+                if (q <> 0x0uy && kingMoves.[int(from) - 1] && not (MoveList.UnderAttack(board, Square.FromInt(int(from) - 2), oppositeColor))) then
                     // Generate path of castle queen-side.
                     let path:BitBoard = if color = PieceColor.White then BitBoard(MoveList.WHITE_QUEEN_CASTLE) else BitBoard(MoveList.BLACK_QUEEN_CASTLE)
                     // If path is empty, we can castle.
                     let all = ~~~(board.All(PieceColor.None))
                     if ((path &&& all) = BitBoard.Default) then
-                        moves <- moves ||| BitBoard.FromSq(LanguagePrimitives.EnumOfValue(int(from) - 2))
+                        moves <- moves ||| BitBoard.FromSq(Square.FromInt(int(from) - 2))
                 // Make sure castling close-path isn't under attack.
-                if (k <> 0x0uy && kingMoves.[int(from) + 1] && not (MoveList.UnderAttack(board, LanguagePrimitives.EnumOfValue(int(from) + 2), oppositeColor))) then
+                if (k <> 0x0uy && kingMoves.[int(from) + 1] && not (MoveList.UnderAttack(board, Square.FromInt(int(from) + 2), oppositeColor))) then
                     // Generate path of castle king-side.
                     let path:BitBoard = if color = PieceColor.White then BitBoard(MoveList.WHITE_KING_CASTLE) else BitBoard(MoveList.BLACK_KING_CASTLE)
                     // If path is empty, we can castle.
                     let all = ~~~(board.All(PieceColor.None))
                     if ((path &&& all) = BitBoard.Default) then
-                        moves <- moves ||| BitBoard.FromSq(LanguagePrimitives.EnumOfValue(int(from) + 2))
+                        moves <- moves ||| BitBoard.FromSq(Square.FromInt(int(from) + 2))
                 moves
     new(board:Board1, from:Square, piece:Piece, color:PieceColor, horizontalVertical:BitBoard, diagonal:BitBoard, checks:BitBoard, doubleChecked:bool) =
         let mutable promotion = false

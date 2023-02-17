@@ -50,20 +50,20 @@ module BitBoardMap =
     [<Test>]
     let MoveWhitePawn() =
         let useMap = Map.Copy()
-        useMap.Move(MoveUpdateType.Normal, Square.A2, Square.A4)
+        useMap.Move(Square.A2, Square.A4)
         (Piece.Pawn, PieceColor.White) |> should equal useMap.[Square.A4]
 
     [<Test>]
     let MoveWhitePawnInEnemy() =
         let useMap = Map.Copy()
-        useMap.Move(MoveUpdateType.Normal,Square.A2, Square.A7)
+        useMap.Move(Square.A2, Square.A7)
         (Piece.Pawn, PieceColor.White) |> should equal useMap.[Square.A7]
         useMap.[Piece.Pawn, PieceColor.Black].Count |> should equal 7
 
     [<Test>]
     let RemoveWhitePawn() =
         let useMap = Map.Copy()
-        useMap.Empty(MoveUpdateType.Normal,Square.A2)
+        useMap.Empty(Square.A2)
         (Piece.Empty, PieceColor.None) |> should equal useMap.[Square.A2]
         let fen = useMap.GenerateBoardFen()
         fen |> should equal "rnbqkbnr/pppppppp/8/8/8/8/1PPPPPPP/RNBQKBNR"
@@ -71,13 +71,13 @@ module BitBoardMap =
     [<Test>]
     let MoveKnightToA3() =
         let useMap = Map.Copy()
-        useMap.Move(MoveUpdateType.Normal,Square.B1, Square.A3)
+        useMap.Move(Square.B1, Square.A3)
         (Piece.Knight, PieceColor.White) |> should equal useMap.[Square.A3]
 
     [<Test>]
     let AddWhitePawn() =
         let useMap = Map.Copy()
-        useMap.InsertPiece(MoveUpdateType.Normal,Piece.Pawn,PieceColor.White,Square.A4)
+        useMap.InsertPiece(Piece.Pawn,PieceColor.White,Square.A4)
         (Piece.Pawn, PieceColor.White) |> should equal useMap.[Square.A4]
 
     [<Test>]

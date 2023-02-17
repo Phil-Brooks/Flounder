@@ -66,8 +66,8 @@ type BitBoard =
             this.Internal <> 0UL
         member this.ToUint64() =
             this.Internal
-        member this.ToSq():Square =
-            LanguagePrimitives.EnumOfValue(BitOperations.TrailingZeroCount(this.Internal))
+        member this.ToSq() =
+            Square.FromInt(BitOperations.TrailingZeroCount(this.Internal))
         member this.ToSqs():Square array =
             let c = this.Count
             let mutable iterator = BitBoardIterator(this.Internal, c)

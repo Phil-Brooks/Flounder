@@ -144,7 +144,7 @@ type BitBoardMap =
         member this.Item 
             with get(sq:Square):(Piece*PieceColor) = 
                 let r = this.PiecesAndColors.[int(sq)]
-                LanguagePrimitives.EnumOfValue(r &&& 0xF), LanguagePrimitives.EnumOfValue(r >>> 4)
+                Piece.FromInt(r &&& 0xF), PieceColor.FromInt(r >>> 4)
         member this.Item 
             with get(color:PieceColor) = 
                 if color = PieceColor.White then this.White
@@ -153,9 +153,9 @@ type BitBoardMap =
                 else raise (InvalidOperationException("Must provide a valid PieceColor."))
         member this.Item 
             with get(piece:Piece, color:PieceColor) = this.Bb.[int(color)].[int(piece)]
-        member this.PieceOnly(sq:Square):Piece = LanguagePrimitives.EnumOfValue(this.PiecesAndColors.[int(sq)] &&& 0xF)
-        member this.ColorOnly(sq:Square):PieceColor = LanguagePrimitives.EnumOfValue(this.PiecesAndColors.[int(sq)] >>> 4)
-        member this.Move(moveType:MoveUpdateType, pF:Piece, cF:PieceColor, pT:Piece, cT:PieceColor, from:Square, mto:Square) =
+        member this.PieceOnly(sq:Square):Piece = Piece.FromInt(this.PiecesAndColors.[int(sq)] &&& 0xF)
+        member this.ColorOnly(sq:Square):PieceColor = PieceColor.FromInt(this.PiecesAndColors.[int(sq)] >>> 4)
+        member this.Move(pF:Piece, cF:PieceColor, pT:Piece, cT:PieceColor, from:Square, mto:Square) =
             if (pT <> Piece.Empty) then
                 // If moving to piece isn't empty, then we capture.
                 this.Bb.[int(cT)].[int(pT)].[mto] <- false
@@ -183,11 +183,11 @@ type BitBoardMap =
             // Update Zobrist.
             Zobrist.HashPiece(&this.ZobristHash, pF, cF, from)
             Zobrist.HashPiece(&this.ZobristHash, pF, cF, mto)
-        member this.Move(moveType:MoveUpdateType, from:Square, mto:Square) =
+        member this.Move(from:Square, mto:Square) =
             let pF,cF = this.[from]
             let pT, cT = this.[mto]
-            this.Move(moveType, pF, cF, pT, cT, from, mto)
-        member this.Empty(updateType:MoveUpdateType, piece:Piece, color:PieceColor, sq:Square) =
+            this.Move(pF, cF, pT, cT, from, mto)
+        member this.Empty(piece:Piece, color:PieceColor, sq:Square) =
             // Remove from square.
             this.Bb.[int(color)].[int(piece)].[sq] <- false
             // Set empty in pieces and colors.
@@ -199,10 +199,10 @@ type BitBoardMap =
                 this.Black.[sq] <- false
             // Update Zobrist.
             Zobrist.HashPiece(&this.ZobristHash, piece, color, sq)
-        member this.Empty(updateType:MoveUpdateType, sq:Square) =
+        member this.Empty(sq:Square) =
             let (piece, color) = this.[sq]
-            this.Empty(updateType, piece, color, sq)
-        member this.InsertPiece(updateType:MoveUpdateType, piece:Piece, color:PieceColor, sq:Square) =
+            this.Empty(piece, color, sq)
+        member this.InsertPiece(piece:Piece, color:PieceColor, sq:Square) =
             // Insert the piece at square.
             this.Bb.[int(color)].[int(piece)].[sq] <- true
             // Insert into color bitboards.
@@ -222,14 +222,14 @@ type BitBoardMap =
                 let mutable rankData = ""
                 let mutable h = 0
                 while h < 8 do
-                    let sq:Square = LanguagePrimitives.EnumOfValue(v * 8 + h)
+                    let sq = Square.FromInt(v * 8 + h)
                     let piece, color = this.[sq]
                     if (piece = Piece.Empty) then
                         let mutable c = 1
                         let mutable fnd = false
                         for i = h + 1 to 7 do
                             if not fnd then
-                                let sq:Square = LanguagePrimitives.EnumOfValue(v * 8 + i)
+                                let sq = Square.FromInt(v * 8 + i)
                                 let pc,_ = this.[sq]
                                 if (pc= Piece.Empty) then c <- c + 1
                                 else fnd <- true
