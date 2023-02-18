@@ -9,20 +9,15 @@ let main argv =
     let path = @"D:\Github\Flounder\FlounderLib"
     let NNUE_FILE = "BasicNNUE"
     let HASH = "0334adf934"
-    let inf = Path.Combine(path, NNUE_FILE + "f-" + HASH + ".nnue")
-    //let streamf = File.OpenRead(inf)
-    //let reader = BinaryFormatter()
-    //let basicNNUE:BasicNNUEf = reader.Deserialize(streamf):?>BasicNNUEf
-    //let ans = basicNNUE.Evaluate(Board.ColorToMove)
-    //Can't Serialize to JSON as nothing works!!! Need to create a more standard class with 
-    // tried member val Property1 = property1  but does not work!!!!!!!!!!!!!!!
-    //let newbasicNNUE:BasicNNUE = basicNNUE.Convert()
-    
-    
-    //let jsonString = JsonConvert.SerializeObject(newbasicNNUE)
-    let outf = inf + ".json"
-    //File.WriteAllText(outf,jsonString)
+    let inf = Path.Combine(path, NNUE_FILE + "f-" + HASH + ".nnue.json")
+    let jsonString = File.ReadAllText(inf)
 
-    //let testbasicNNUE:BasicNNUE = JsonConvert.DeserializeObject<BasicNNUE>(jsonString)
-    //let ans1 = testbasicNNUE.Evaluate(Board.ColorToMove)
+    let testbasicNNUE:BasicNNUE = JsonConvert.DeserializeObject<BasicNNUE>(jsonString)
+    let ans1 = testbasicNNUE.Evaluate(Board.ColorToMove)
+    //need to adjust object then write out.
+
+    let jsonOut = JsonConvert.SerializeObject(testbasicNNUE)
+    //File.WriteAllText(outf,jsonOut)
+
+
     0

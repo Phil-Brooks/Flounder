@@ -224,7 +224,7 @@ type BitBoardMap =
                             if not fnd then
                                 let sq = Square.FromInt(v * 8 + i)
                                 let pc,_ = this.[sq]
-                                if (pc= Piece.Empty) then c <- c + 1
+                                if (pc = Piece.Empty) then c <- c + 1
                                 else fnd <- true
                         rankData <- rankData + c.ToString()
                         h <- h + c

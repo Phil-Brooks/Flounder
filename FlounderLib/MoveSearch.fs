@@ -121,7 +121,7 @@ type MoveSearch(board:EngineBoard, table:MoveTranspositionTable, timeControl:Tim
         if ans.IsSome then 
             ans.Value
         else
-            let mutable earlyEval = Evaluation1.RelativeEvaluation(board)
+            let mutable earlyEval = Evaluation.Relative(board)
             // In the rare case our evaluation is already too good, we don't need to further evaluate captures any further,
             // as this position is overwhelmingly winning.
             if (earlyEval >= beta) then ans <- beta|>Some
@@ -300,7 +300,7 @@ type MoveSearch(board:EngineBoard, table:MoveTranspositionTable, timeControl:Tim
                 let mutable improving = false
                 // We should use the evaluation from our transposition table if we had a hit.
                 // As that evaluation isn't truly static and may have been from a previous deep search.
-                let positionalEvaluation = if transpositionHit then transpositionMove.Evaluation else Evaluation1.RelativeEvaluation(board)
+                let positionalEvaluation = if transpositionHit then transpositionMove.Evaluation else Evaluation.Relative(board)
             
                 // Also store the evaluation to later check if it improved.
                 MoveSearchStack.[plyFromRoot].PositionalEvaluation <- positionalEvaluation
@@ -623,6 +623,6 @@ type MoveSearch(board:EngineBoard, table:MoveTranspositionTable, timeControl:Tim
         with
             | :? OperationCanceledException -> ()
         
-        Evaluation.NNUE.ResetAccumulator()
+        NNUE.ResetAccumulator()
         bestMove
         

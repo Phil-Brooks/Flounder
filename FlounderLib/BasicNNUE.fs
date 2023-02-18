@@ -111,27 +111,10 @@ type BasicNNUE =
         let CR_MIN = 0s
         let CR_MAX = int16(1 * QA)
         let SCALE = 400
-
-#if DEBUG
-        let mutable firstOffset = 0
-        let mutable secondOffset = 256
-        if (colorToMove = PieceColor.Black) then
-            firstOffset <- 256
-            secondOffset <- 0
-#endif
         let accumulatorA = this.AccumulatorA.[this.CurrentAccumulator]
         let accumulatorB = this.AccumulatorB.[this.CurrentAccumulator]
-
-#if RELEASE
         if (colorToMove = PieceColor.White) then
             NN.ClippedReLUFlattenAndForward(accumulatorA, accumulatorB, this.FeatureBias, this.OutWeight, this.Output, CR_MIN, CR_MAX, HIDDEN)
         else
             NN.ClippedReLUFlattenAndForward(accumulatorB, accumulatorA, this.FeatureBias, this.OutWeight, this.Output, CR_MIN, CR_MAX, HIDDEN)
-#endif
-        
-#if DEBUG
-        NN.ClippedReLU(accumulatorA, this.FeatureBias, this.Flatten, CR_MIN, CR_MAX, firstOffset)
-        NN.ClippedReLU(accumulatorB, this.FeatureBias, this.Flatten, CR_MIN, CR_MAX, secondOffset)
-        NN.Forward1(this.Flatten, this.OutWeight, this.Output)
-#endif
         (this.Output.[0] + int(this.OutBias.[0])) * SCALE / QAB

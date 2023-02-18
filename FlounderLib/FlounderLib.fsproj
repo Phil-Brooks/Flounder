@@ -20,10 +20,10 @@
     <Compile Include="BitBoardMap.fs" />
     <Compile Include="NN.fs" />
     <Compile Include="BasicNNUE.fs" />
-    <Compile Include="Evaluation.fs" />
+    <Compile Include="NNUE_Load.fs" />
     <Compile Include="RevertMove.fs" />
     <Compile Include="Board.fs" />
-    <Compile Include="Evaluation1.fs" />
+    <Compile Include="Evaluation.fs" />
     <Compile Include="InvalidMoveLookupException.fs" />
     <Compile Include="RevertNullMove.fs" />
     <Compile Include="OrderedMoveEntry.fs" />

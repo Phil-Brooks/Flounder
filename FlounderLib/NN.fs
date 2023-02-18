@@ -9,21 +9,17 @@ module VSize =
     let Int = Vector<int>.Count
     let Short = Vector<int16>.Count
 
-
 module NN =
     let MultiplyAddAdjacent(a:Vector<int16>, b:Vector<int16>) =
         let SoftwareFallback() =
             let c = a * b
             let bufferSpanarr = Array.zeroCreate<int>(VSize.Int)
             let mutable buffer = new Span<int>(bufferSpanarr)
-            
             let mutable vectorIndex = 0
             for i = 0 to VSize.Int-1 do
                 buffer.[i] <- int(c.[vectorIndex]) + int(c.[vectorIndex + 1])
                 vectorIndex <- vectorIndex + 2
-
             new Vector<int>(buffer)
-        
         if (Avx.IsSupported) then
             if (Avx2.IsSupported) then
                 let one = a.AsVector256()
@@ -37,15 +33,12 @@ module NN =
             Sse2.MultiplyAddAdjacent(one, two).AsVector()
         else
             SoftwareFallback()
-
     let Clamp(value:Vector<int16>, min:byref<Vector<int16>>, max:byref<Vector<int16>>) =
         Vector.Max(min, Vector.Min(max, value))
     let ToArray(vector:Vector<int16>, array:int16 array, offset:int) =
         Unsafe.WriteUnaligned(&Unsafe.As<int16, byte>(&array.[offset]), vector)
     let LoadVector(values:int16 array, index:int) =
         Unsafe.ReadUnaligned<Vector<int16>>(&Unsafe.As<int16, byte>(&values.[index]))
-    
-    
     let UNROLL = 4
     let PieceToNN(piece:Piece) =
        if piece = Piece.Rook then Piece.Bishop
@@ -80,37 +73,6 @@ module NN =
                 vectorIndex <- unrolledIndex3 + VSize.Short
             output.[offset + i] <- Vector.Sum(sum)
             weightStride <- weightStride + inputSize
-
-#if DEBUG
-    let Forward1(input:int16 array, weight:int16 array, output:int array) =
-        let offset = 0
-        let inputSize = input.Length
-        let loopSize = inputSize / VSize.Short / UNROLL
-        let outputSize = output.Length
-        let mutable weightStride = 0
-        for i = 0 to outputSize-1 do
-            let mutable sum = Vector<int>.Zero
-            let mutable vectorIndex = 0
-            for j = 0 to loopSize-1 do
-                let unrolledIndex = vectorIndex + VSize.Short
-                let unrolledIndex2 = unrolledIndex + VSize.Short
-                let unrolledIndex3 = unrolledIndex2 + VSize.Short
-                let iVec = LoadVector(input, vectorIndex)
-                let wVec = LoadVector(weight, weightStride + vectorIndex)
-                sum <- sum + MultiplyAddAdjacent(iVec, wVec)
-                let iVec2 = LoadVector(input, unrolledIndex)
-                let wVec2 = LoadVector(weight, weightStride + unrolledIndex)
-                sum <- sum + MultiplyAddAdjacent(iVec2, wVec2)
-                let iVec3 = LoadVector(input, unrolledIndex2)
-                let wVec3 = LoadVector(weight, weightStride + unrolledIndex2)
-                sum <- sum + MultiplyAddAdjacent(iVec3, wVec3)
-                let iVec4 = LoadVector(input, unrolledIndex3)
-                let wVec4 = LoadVector(weight, weightStride + unrolledIndex3)
-                sum <- sum + MultiplyAddAdjacent(iVec4, wVec4)
-                vectorIndex <- unrolledIndex3 + VSize.Short
-            output.[offset + i] <- Vector.Sum(sum)
-            weightStride <- weightStride + inputSize
-#endif
     let ClippedReLUFlattenAndForward(inputA:int16 array, inputB:int16 array, bias:int16 array, weight:int16 array,output:int array, min:int16, max:int16, separationIndex:int) =
         let offset = 0
         let inputSize = inputA.Length + inputB.Length
@@ -156,35 +118,6 @@ module NN =
                 vectorIndex <- unrolledIndex3 + VSize.Short
             output.[offset + i] <- Vector.Sum(sum)
             weightStride <- weightStride + inputSize
-#if DEBUG
-    let ClippedReLU(input:int16 array, bias:int16 array, output:int16 array, min:int16, max:int16, offset:int) =
-        let size = input.Length
-        let loopSize = size / VSize.Short / UNROLL
-        let mutable minVec = Vector<int16>(min)
-        let mutable maxVec = Vector<int16>(max)
-        let mutable vectorIndex = 0
-        for i = 0 to loopSize-1 do
-            let unrolledIndex = vectorIndex + VSize.Short
-            let unrolledIndex2 = unrolledIndex + VSize.Short
-            let unrolledIndex3 = unrolledIndex2 + VSize.Short
-            let iVec = LoadVector(input, vectorIndex)
-            let bVec = LoadVector(bias,vectorIndex)
-            let clamped = Clamp(iVec + bVec, &minVec, &maxVec)
-            ToArray(clamped,output, offset + vectorIndex)
-            let iVec2 = LoadVector(input, unrolledIndex)
-            let bVec2 = LoadVector(bias,unrolledIndex)
-            let clamped2 = Clamp(iVec2 + bVec2, &minVec, &maxVec)
-            ToArray(clamped2,output, offset + unrolledIndex)
-            let iVec3 = LoadVector(input, unrolledIndex2)
-            let bVec3 = LoadVector(bias,unrolledIndex2)
-            let clamped3 = Clamp(iVec3 + bVec3, &minVec, &maxVec)
-            ToArray(clamped3,output, offset + unrolledIndex2)
-            let iVec4 = LoadVector(input, unrolledIndex3)
-            let bVec4 = LoadVector(bias,unrolledIndex3)
-            let clamped4 = Clamp(iVec4 + bVec4, &minVec, &maxVec)
-            ToArray(clamped4,output, offset + unrolledIndex3)
-            vectorIndex <- unrolledIndex3 + VSize.Short
-#endif
     let AddToAll(inputA:int16 array, inputB:int16 array, delta:int16 array, offsetA:int, offsetB:int) =
         let size = inputA.Length
         let loopSize = size / VSize.Short / UNROLL
