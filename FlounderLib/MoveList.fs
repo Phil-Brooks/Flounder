@@ -1,34 +1,22 @@
 ﻿namespace FlounderLib
-open System
 open System.Runtime.CompilerServices
 
-[<IsByRefLike; Struct>]
-type MoveList(board:Board, from:Square, horizontalVertical:BitBoard, diagonal:BitBoard, checks:BitBoard, moves:BitBoard, promotion:bool) =
-    static member WHITE_KING_CASTLE = 0x60uL
-    static member BLACK_KING_CASTLE = MoveList.WHITE_KING_CASTLE <<< 56
-    static member WHITE_QUEEN_CASTLE = 0xEuL
-    static member BLACK_QUEEN_CASTLE = MoveList.WHITE_QUEEN_CASTLE <<< 56
-
-    member _.Board = board
-    member _.From = from
-    member _.Hv = horizontalVertical
-    member _.D = diagonal
-    member _.C = checks
-    member this.Count:int = this.Moves.Count
-    member _.Moves:BitBoard = moves
-    member _.Promotion = promotion
-
-    static member UnderAttack(board:Board, sq:Square, by:PieceColor) =
+module MoveList =
+    let WHITE_KING_CASTLE = 0x60uL
+    let BLACK_KING_CASTLE = WHITE_KING_CASTLE <<< 56
+    let WHITE_QUEEN_CASTLE = 0xEuL
+    let BLACK_QUEEN_CASTLE = WHITE_QUEEN_CASTLE <<< 56
+    let UnderAttack(board:Board, sq:Square, by:PieceColor) =
         let s = int(sq)
         // First, we check if the square is being attacked by pawns.
         // To do this, we generate a reverse attack mask, letting our square act as a pawn and seeing if opposing
         // pawns exist on the squares in the mask. If so, our square can be attacked by pawns.
-        let pawnAttack = if by = PieceColor.White then AttackTable1.BlackPawnAttacks.[s] else AttackTable1.WhitePawnAttacks.[s]
+        let pawnAttack = if by = PieceColor.White then AttackTable.BlackPawnAttacks.[s] else AttackTable.WhitePawnAttacks.[s]
         if (pawnAttack &&& board.All(Piece.Pawn, by)).ToBool() then true
         // Then, we check if the square is being attacked by knights.
         // To do this, we generate a reverse attack mask, letting our square act as a knight and seeing if opposing
         // knights exist on the squares in the mask. If so, our square can be attacked by knights.
-        elif (AttackTable1.KnightMoves.[s] &&& board.All(Piece.Knight, by)).ToBool() then true
+        elif (AttackTable.KnightMoves.[s] &&& board.All(Piece.Knight, by)).ToBool() then true
         else
             // Next, we check if the square is being attacked by sliding pieces.
             // To do this, first we need to find all occupied squares (by our and opposing pieces).
@@ -50,16 +38,16 @@ type MoveList(board:Board, from:Square, horizontalVertical:BitBoard, diagonal:Bi
                     // We generate a reverse attack mask, letting our square act as king and then check if there if opposing
                     // king exists on the squares in the mask. If so, our square can be attacked by king.
                     // Otherwise, this square is completely safe from all pieces.
-                     (AttackTable1.KingMoves.[s] &&& board.All(Piece.King, by)).ToBool()
-    static member CheckBitBoard(board:Board, sq:Square, by:PieceColor) =
+                     (AttackTable.KingMoves.[s] &&& board.All(Piece.King, by)).ToBool()
+    let CheckBitBoard(board:Board, sq:Square, by:PieceColor) =
         let mutable count = 0
         let mutable checks = BitBoard.Default
         let s = int(sq)
         // First we generate a pawn check.
-        let pawnAttack = if by = PieceColor.White then AttackTable1.BlackPawnAttacks.[s] else AttackTable1.WhitePawnAttacks.[s]
+        let pawnAttack = if by = PieceColor.White then AttackTable.BlackPawnAttacks.[s] else AttackTable.WhitePawnAttacks.[s]
         let pawnCheck = pawnAttack &&& board.All(Piece.Pawn, by)
         // Next, we generate a knight check.
-        let knightCheck = AttackTable1.KnightMoves.[s] &&& board.All(Piece.Knight, by)
+        let knightCheck = AttackTable.KnightMoves.[s] &&& board.All(Piece.Knight, by)
         // For sliding pieces, we use a BitBoard of all pieces.
         let occupied = ~~~(board.All(PieceColor.None))
         // We will reference the queen along with rooks and bishops for the checks.
@@ -82,7 +70,7 @@ type MoveList(board:Board, from:Square, horizontalVertical:BitBoard, diagonal:Bi
             // If there is a rook-queen check hit, we must add in the checks as well as the path from square to
             // rook or queen.
             let rqSq:Square = rookQueenCheck.ToSq()
-            checks <- checks ||| UtilityTable1.Between.[s].[int(rqSq)] ||| BitBoard.FromSq(rqSq)
+            checks <- checks ||| UtilityTable.Between.[s].[int(rqSq)] ||| BitBoard.FromSq(rqSq)
             count<-count+1
             // In the case where pawn promotes to queen or rook, we have a secondary check as well.
             if (rookQueenCheck.Count > 1) then count<-count+1
@@ -90,13 +78,13 @@ type MoveList(board:Board, from:Square, horizontalVertical:BitBoard, diagonal:Bi
             // If there is a bishop-queen check hit, we must add in the checks as well as the path from square to
             // bishop or queen.
             let bqSq:Square = bishopQueenCheck.ToSq()
-            checks <- checks ||| UtilityTable1.Between.[s].[int(bqSq)] ||| BitBoard.FromSq(bqSq)
+            checks <- checks ||| UtilityTable.Between.[s].[int(bqSq)] ||| BitBoard.FromSq(bqSq)
             count<-count+1
         
         if (checks = BitBoard.Default) then checks <- BitBoard.Filled
 
         (checks, count > 1)
-    static member PinBitBoards(board:Board, sq:Square, us:PieceColor, by:PieceColor) =
+    let PinBitBoards(board:Board, sq:Square, us:PieceColor, by:PieceColor) =
         let s = int(sq)
         // Unlike for all other boards and checks, we don't use a fully occupied board. We want our paths to go through
         // our pieces so we only consider board occupied by opposing.
@@ -116,7 +104,7 @@ type MoveList(board:Board, from:Square, horizontalVertical:BitBoard, diagonal:Bi
         let mutable rqSq = rookQueenIterator.Current
         while (rookQueenIterator.MoveNext()) do
             let rqS = int(rqSq)
-            let possiblePin = UtilityTable1.Between.[s].[rqS] ||| BitBoard.FromSq(rqSq)
+            let possiblePin = UtilityTable.Between.[s].[rqS] ||| BitBoard.FromSq(rqSq)
             if ((possiblePin &&& board.All(us)).Count = 1) then horizontalVerticalPin <- horizontalVerticalPin ||| possiblePin
             // Next square iteration.
             rqSq <- rookQueenIterator.Current
@@ -125,19 +113,12 @@ type MoveList(board:Board, from:Square, horizontalVertical:BitBoard, diagonal:Bi
         let mutable bqSq = bishopQueenIterator.Current
         while (bishopQueenIterator.MoveNext()) do
             let bqS = int(bqSq)
-            let possiblePin = UtilityTable1.Between.[s].[bqS] ||| BitBoard.FromSq(bqSq)
+            let possiblePin = UtilityTable.Between.[s].[bqS] ||| BitBoard.FromSq(bqSq)
             if ((possiblePin &&& board.All(us)).Count = 1) then diagonalPin <- diagonalPin ||| possiblePin
             // Next square iteration.
             bqSq <- bishopQueenIterator.Current
         (horizontalVerticalPin, diagonalPin)
-    static member WithoutProvidedPins(board:Board, from:Square) =
-        let piece, color = board.At(from)
-        let oppositeColor = PieceColor.OppositeColor(color)
-        let kingSq = board.KingLoc(color).ToSq()
-        let (horizontalVertical, diagonal) = MoveList.PinBitBoards(board, kingSq, color, oppositeColor)
-        let (checks, doubleChecked) = MoveList.CheckBitBoard(board, kingSq, oppositeColor)
-        new MoveList(board, from, piece, color, horizontalVertical, diagonal, checks, doubleChecked)
-    static member LegalPawnMoveCaptures(color:PieceColor, board:Board, from:Square, hv:BitBoard, d:BitBoard, c:BitBoard) =
+    let LegalPawnMoveCaptures(color:PieceColor, board:Board, from:Square, hv:BitBoard, d:BitBoard, c:BitBoard) =
         let mutable moves = BitBoard.Default
         if (hv.[from]) then
             // If pawn is horizontally pinned, then we have no moves.
@@ -162,12 +143,12 @@ type MoveList(board:Board, from:Square, horizontalVertical:BitBoard, diagonal:Bi
                 let epTargetPieceExists = board.All(Piece.Pawn, oppositeColor).[epPieceSq]
                 // We need to check if a piece of ours exists to actually execute the EP.
                 // We do this by running a reverse pawn mask, to determine whether a piece of ours is on the corner.
-                let reverseCorner = if color = PieceColor.White then AttackTable1.BlackPawnAttacks.[int(board.EnPassantTarget)] else AttackTable1.WhitePawnAttacks[int(board.EnPassantTarget)]
+                let reverseCorner = if color = PieceColor.White then AttackTable.BlackPawnAttacks.[int(board.EnPassantTarget)] else AttackTable.WhitePawnAttacks[int(board.EnPassantTarget)]
                 if (epTargetPieceExists && reverseCorner.[from]) then
                     // If both the enemy EP piece and our piece that can theoretically EP exist...
                     moves <- moves ||| BitBoard.FromSq(board.EnPassantTarget)
             // Attack Moves.
-            let attack = if color = PieceColor.White then AttackTable1.WhitePawnAttacks.[int(from)] else AttackTable1.BlackPawnAttacks.[int(from)]
+            let attack = if color = PieceColor.White then AttackTable.WhitePawnAttacks.[int(from)] else AttackTable.BlackPawnAttacks.[int(from)]
             // Make sure attacks are only on opposite pieces (and not on empty squares or squares occupied by
             // our pieces).
             moves <- moves ||| (attack &&& opposite &&& c)
@@ -189,7 +170,7 @@ type MoveList(board:Board, from:Square, horizontalVertical:BitBoard, diagonal:Bi
                     let kingSq = board.KingLoc(color).ToSq()
                     // If our king is under attack, it means the pawn was pinned through a piece and the removal of that piece
                     // caused a discovered pin. Thus, we must remove it from our legal moves.
-                    if (MoveList.UnderAttack(board, kingSq, oppositeColor)) then moves <- moves &&& ~~~(BitBoard(1UL) <<< int(board.EnPassantTarget))
+                    if (UnderAttack(board, kingSq, oppositeColor)) then moves <- moves &&& ~~~(BitBoard(1UL) <<< int(board.EnPassantTarget))
                     board.InsertPiece( Piece.Pawn, color, from)
                     board.InsertPiece(Piece.Pawn, oppositeColor, epPieceSq)
                     board.RemovePiece(Piece.Pawn, color, board.EnPassantTarget)
@@ -198,7 +179,7 @@ type MoveList(board:Board, from:Square, horizontalVertical:BitBoard, diagonal:Bi
                     moves,promotion
                 else
                     moves,promotion                
-    static member LegalPawnMoves(color:PieceColor, board:Board, from:Square, hv:BitBoard, d:BitBoard, c:BitBoard) =
+    let LegalPawnMoves(color:PieceColor, board:Board, from:Square, hv:BitBoard, d:BitBoard, c:BitBoard) =
         let mutable moves = BitBoard.Default
         let oppositeColor = PieceColor.OppositeColor(color)
         let opposite = board.All(oppositeColor)
@@ -219,12 +200,12 @@ type MoveList(board:Board, from:Square, horizontalVertical:BitBoard, diagonal:Bi
             let epTargetPieceExists = board.All(Piece.Pawn, oppositeColor).[epPieceSq]
             // We need to check if a piece of ours exists to actually execute the EP.
             // We do this by running a reverse pawn mask, to determine whether a piece of ours is on the corner.
-            let reverseCorner = if color = PieceColor.White then AttackTable1.BlackPawnAttacks.[int(board.EnPassantTarget)] else AttackTable1.WhitePawnAttacks[int(board.EnPassantTarget)]
+            let reverseCorner = if color = PieceColor.White then AttackTable.BlackPawnAttacks.[int(board.EnPassantTarget)] else AttackTable.WhitePawnAttacks[int(board.EnPassantTarget)]
             if (epTargetPieceExists && reverseCorner.[from]) then
                 // If both the enemy EP piece and our piece that can theoretically EP exist...
                 moves <- moves ||| BitBoard.FromSq(board.EnPassantTarget)
         // Attack Moves.
-        let attack = if color = PieceColor.White then AttackTable1.WhitePawnAttacks.[int(from)] else AttackTable1.BlackPawnAttacks.[int(from)]
+        let attack = if color = PieceColor.White then AttackTable.WhitePawnAttacks.[int(from)] else AttackTable.BlackPawnAttacks.[int(from)]
        // Make sure attacks are only on opposite pieces (and not on empty squares or squares occupied by
         // our pieces).
         moves <- moves ||| (attack &&& opposite &&& c)
@@ -264,7 +245,7 @@ type MoveList(board:Board, from:Square, horizontalVertical:BitBoard, diagonal:Bi
                     let kingSq = board.KingLoc(color).ToSq()
                     // If our king is under attack, it means the pawn was pinned through a piece and the removal of that piece
                     // caused a discovered pin. Thus, we must remove it from our legal moves.
-                    if (MoveList.UnderAttack(board, kingSq, oppositeColor)) then moves <- moves &&& ~~~(BitBoard(1UL) <<< int(board.EnPassantTarget))
+                    if (UnderAttack(board, kingSq, oppositeColor)) then moves <- moves &&& ~~~(BitBoard(1UL) <<< int(board.EnPassantTarget))
                     board.InsertPiece(Piece.Pawn, color, from)
                     board.InsertPiece(Piece.Pawn, oppositeColor, epPieceSq)
                     board.RemovePiece(Piece.Pawn, color, board.EnPassantTarget)
@@ -273,7 +254,7 @@ type MoveList(board:Board, from:Square, horizontalVertical:BitBoard, diagonal:Bi
                     moves,promotion
                 else
                     moves,promotion
-    static member LegalRookMoves(color:PieceColor, board:Board, from:Square, hv:BitBoard, d:BitBoard, c:BitBoard) =
+    let LegalRookMoves(color:PieceColor, board:Board, from:Square, hv:BitBoard, d:BitBoard, c:BitBoard) =
         let mutable moves = BitBoard.Default
         // If rook is diagonally pinned, it has no moves.
         if (d.[from]) then moves
@@ -284,13 +265,13 @@ type MoveList(board:Board, from:Square, horizontalVertical:BitBoard, diagonal:Bi
             // If rook is horizontally or vertically pinned, it can only move within the pin.
             if (hv.[from]) then moves <- moves &&& hv
             moves
-    static member LegalKnightMoves(color:PieceColor, board:Board, from:Square, hv:BitBoard, d:BitBoard, c:BitBoard) =
+    let LegalKnightMoves(color:PieceColor, board:Board, from:Square, hv:BitBoard, d:BitBoard, c:BitBoard) =
         let mutable moves = BitBoard.Default
         if (hv.[from] || d.[from]) then moves
         else
-            moves <- moves ||| AttackTable1.KnightMoves.[int(from)] &&& ~~~(board.All(color)) &&& c
+            moves <- moves ||| AttackTable.KnightMoves.[int(from)] &&& ~~~(board.All(color)) &&& c
             moves
-    static member LegalBishopMoves(color:PieceColor, board:Board, from:Square, hv:BitBoard, d:BitBoard, c:BitBoard) =
+    let LegalBishopMoves(color:PieceColor, board:Board, from:Square, hv:BitBoard, d:BitBoard, c:BitBoard) =
         let mutable moves = BitBoard.Default
         // If bishop is horizontally or vertically pinned, it has no moves.
         if (hv.[from]) then moves
@@ -301,13 +282,13 @@ type MoveList(board:Board, from:Square, horizontalVertical:BitBoard, diagonal:Bi
             // If bishop is diagonally pinned, it can only move within the pin.
             if (d.[from]) then moves <- moves &&& d
             moves
-    static member LegalQueenMoves(color:PieceColor, board:Board, from:Square, hv:BitBoard, d:BitBoard, c:BitBoard) =
-        MoveList.LegalRookMoves(color,board,from,hv,d,c) 
-        ||| MoveList.LegalBishopMoves(color,board,from,hv,d,c)
-    static member LegalKingMoves(color:PieceColor, board:Board, from:Square, hv:BitBoard, d:BitBoard, c:BitBoard) =
+    let LegalQueenMoves(color:PieceColor, board:Board, from:Square, hv:BitBoard, d:BitBoard, c:BitBoard) =
+        LegalRookMoves(color,board,from,hv,d,c) 
+        ||| LegalBishopMoves(color,board,from,hv,d,c)
+    let LegalKingMoves(color:PieceColor, board:Board, from:Square, hv:BitBoard, d:BitBoard, c:BitBoard) =
         let mutable moves = BitBoard.Default
         // Normal
-        let mutable kingMoves = AttackTable1.KingMoves.[int(from)]
+        let mutable kingMoves = AttackTable.KingMoves.[int(from)]
         kingMoves <- kingMoves &&& ~~~(board.All(color))
         // If we have no king moves, we can return earlier and avoiding having to check if the moves are legal
         // or not by removing the king.
@@ -319,41 +300,91 @@ type MoveList(board:Board, from:Square, horizontalVertical:BitBoard, diagonal:Bi
             let mutable move = kingMovesIterator.Current
             board.RemovePiece(Piece.King, color, from)
             while (kingMovesIterator.MoveNext()) do
-                if (MoveList.UnderAttack(board, move, oppositeColor)) then kingMoves.[move] <- false
+                if (UnderAttack(board, move, oppositeColor)) then kingMoves.[move] <- false
                 // Next square iteration.
                 move <- kingMovesIterator.Current
             board.InsertPiece(Piece.King, color, from)
             moves <- moves ||| kingMoves
             // Castling
             // If enemy is attacking our king, we cannot castle.
-            if (MoveList.UnderAttack(board, from, oppositeColor)) then moves
+            if (UnderAttack(board, from, oppositeColor)) then moves
             else
                 // Get castling rights.
                 let q, k = board.CastlingRight(color)
                 // Make sure castling close-path isn't under attack.
-                if (q <> 0x0 && kingMoves.[int(from) - 1] && not (MoveList.UnderAttack(board, Square.FromInt(int(from) - 2), oppositeColor))) then
+                if (q <> 0x0 && kingMoves.[int(from) - 1] && not (UnderAttack(board, Square.FromInt(int(from) - 2), oppositeColor))) then
                     // Generate path of castle queen-side.
-                    let path:BitBoard = if color = PieceColor.White then BitBoard(MoveList.WHITE_QUEEN_CASTLE) else BitBoard(MoveList.BLACK_QUEEN_CASTLE)
+                    let path:BitBoard = if color = PieceColor.White then BitBoard(WHITE_QUEEN_CASTLE) else BitBoard(BLACK_QUEEN_CASTLE)
                     // If path is empty, we can castle.
                     let all = ~~~(board.All(PieceColor.None))
                     if ((path &&& all) = BitBoard.Default) then
                         moves <- moves ||| BitBoard.FromSq(Square.FromInt(int(from) - 2))
                 // Make sure castling close-path isn't under attack.
-                if (k <> 0x0 && kingMoves.[int(from) + 1] && not (MoveList.UnderAttack(board, Square.FromInt(int(from) + 2), oppositeColor))) then
+                if (k <> 0x0 && kingMoves.[int(from) + 1] && not (UnderAttack(board, Square.FromInt(int(from) + 2), oppositeColor))) then
                     // Generate path of castle king-side.
-                    let path:BitBoard = if color = PieceColor.White then BitBoard(MoveList.WHITE_KING_CASTLE) else BitBoard(MoveList.BLACK_KING_CASTLE)
+                    let path:BitBoard = if color = PieceColor.White then BitBoard(WHITE_KING_CASTLE) else BitBoard(BLACK_KING_CASTLE)
                     // If path is empty, we can castle.
                     let all = ~~~(board.All(PieceColor.None))
                     if ((path &&& all) = BitBoard.Default) then
                         moves <- moves ||| BitBoard.FromSq(Square.FromInt(int(from) + 2))
                 moves
-    new(board:Board, from:Square, piece:Piece, color:PieceColor, horizontalVertical:BitBoard, diagonal:BitBoard, checks:BitBoard, doubleChecked:bool) =
-        let mutable promotion = false
-        // If we're double-checked (discovered check + normal check), only the king can move. Thus, we can return
-        // early here.
-        if (doubleChecked && piece <> Piece.King) then
-            new MoveList(board, from, horizontalVertical, diagonal, checks, BitBoard.Default, promotion)
-        else
+
+[<IsByRefLike>]
+type MoveList =
+    struct
+        val Board:Board
+        val From:Square
+        val Hv:BitBoard
+        val D:BitBoard
+        val C:BitBoard
+        val Moves:BitBoard
+        val Count:int
+        val Promotion:bool
+        new(board:Board, from:Square, horizontalVertical:BitBoard, diagonal:BitBoard, checks:BitBoard, moves:BitBoard, promotion:bool) =
+            {
+                Board = board
+                From = from
+                Hv = horizontalVertical
+                D = diagonal
+                C = checks
+                Moves = moves
+                Count = moves.Count
+                Promotion = promotion
+            }
+        new(board:Board, from:Square) =
+            let piece, color = board.At(from)
+            let oppositeColor = PieceColor.OppositeColor(color)
+            let kingSq = board.KingLoc(color).ToSq()
+            let (horizontalVertical, diagonal) = MoveList.PinBitBoards(board, kingSq, color, oppositeColor)
+            let (checks, doubleChecked) = MoveList.CheckBitBoard(board, kingSq, oppositeColor)
+            new MoveList(board, from, piece, color, horizontalVertical, diagonal, checks, doubleChecked)
+        new(board:Board, from:Square, piece:Piece, color:PieceColor, horizontalVertical:BitBoard, diagonal:BitBoard, checks:BitBoard, doubleChecked:bool) =
+            let mutable promotion = false
+            // If we're double-checked (discovered check + normal check), only the king can move. Thus, we can return
+            // early here.
+            if (doubleChecked && piece <> Piece.King) then
+                new MoveList(board, from, horizontalVertical, diagonal, checks, BitBoard.Default, promotion)
+            else
+                let moves =
+                    if piece=Piece.Pawn then 
+                        let m,p = MoveList.LegalPawnMoves(color,board,from,horizontalVertical,diagonal,checks)
+                        promotion <- p
+                        m
+                    elif piece=Piece.Rook then 
+                        MoveList.LegalRookMoves(color,board,from,horizontalVertical,diagonal,checks)
+                    elif piece=Piece.Knight then 
+                        MoveList.LegalKnightMoves(color,board,from,horizontalVertical,diagonal,checks)
+                    elif piece=Piece.Bishop then 
+                        MoveList.LegalBishopMoves(color,board,from,horizontalVertical,diagonal,checks)
+                    elif piece=Piece.Queen then 
+                        MoveList.LegalQueenMoves(color,board,from,horizontalVertical,diagonal,checks)
+                    elif piece=Piece.King then 
+                        MoveList.LegalKingMoves(color,board,from,horizontalVertical,diagonal,checks)
+                    else 
+                        raise (InvalidMoveLookupException.FromBoard(board,"Cannot generate move for empty piece: " + from.ToString()))
+                new MoveList(board, from, horizontalVertical, diagonal, checks, moves, promotion)
+        new(board:Board, from:Square, piece:Piece, color:PieceColor, horizontalVertical:BitBoard, diagonal:BitBoard, checks:BitBoard) =
+            let mutable promotion = false
             let moves =
                 if piece=Piece.Pawn then 
                     let m,p = MoveList.LegalPawnMoves(color,board,from,horizontalVertical,diagonal,checks)
@@ -372,28 +403,10 @@ type MoveList(board:Board, from:Square, horizontalVertical:BitBoard, diagonal:Bi
                 else 
                     raise (InvalidMoveLookupException.FromBoard(board,"Cannot generate move for empty piece: " + from.ToString()))
             new MoveList(board, from, horizontalVertical, diagonal, checks, moves, promotion)
-    new(board:Board, from:Square, piece:Piece, color:PieceColor, horizontalVertical:BitBoard, diagonal:BitBoard, checks:BitBoard) =
-        let mutable promotion = false
-        let moves =
-            if piece=Piece.Pawn then 
-                let m,p = MoveList.LegalPawnMoves(color,board,from,horizontalVertical,diagonal,checks)
-                promotion <- p
-                m
-            elif piece=Piece.Rook then 
-                MoveList.LegalRookMoves(color,board,from,horizontalVertical,diagonal,checks)
-            elif piece=Piece.Knight then 
-                MoveList.LegalKnightMoves(color,board,from,horizontalVertical,diagonal,checks)
-            elif piece=Piece.Bishop then 
-                MoveList.LegalBishopMoves(color,board,from,horizontalVertical,diagonal,checks)
-            elif piece=Piece.Queen then 
-                MoveList.LegalQueenMoves(color,board,from,horizontalVertical,diagonal,checks)
-            elif piece=Piece.King then 
-                MoveList.LegalKingMoves(color,board,from,horizontalVertical,diagonal,checks)
-            else 
-                raise (InvalidMoveLookupException.FromBoard(board,"Cannot generate move for empty piece: " + from.ToString()))
-        new MoveList(board, from, horizontalVertical, diagonal, checks, moves, promotion)
-    new(board:Board, from:Square, horizontalVertical:BitBoard, diagonal:BitBoard, checks:BitBoard) =
-        //this can only be used when processing pawn captiures
-        let moves,promotion = MoveList.LegalPawnMoveCaptures(board.ColorToMove,board,from,horizontalVertical,diagonal,checks)
-        new MoveList(board, from, horizontalVertical, diagonal, checks, moves, promotion)
+        new(board:Board, from:Square, horizontalVertical:BitBoard, diagonal:BitBoard, checks:BitBoard) =
+            //this can only be used when processing pawn captiures
+            let moves,promotion = MoveList.LegalPawnMoveCaptures(board.ColorToMove,board,from,horizontalVertical,diagonal,checks)
+            new MoveList(board, from, horizontalVertical, diagonal, checks, moves, promotion)
   
+    end
+    
