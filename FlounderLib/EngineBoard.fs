@@ -14,12 +14,6 @@ type EngineBoard =
             inherit Board(board.Map)
             History = board.History.Clone()
         }
-    static member FromFen(fen:string) = 
-        let parts = fen.Split(" ")
-        EngineBoard(parts.[0], parts.[1], parts.[2], parts.[3])
-    static member Default() = 
-        let DEFAULT_FEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
-        EngineBoard.FromFen(DEFAULT_FEN)
     member this.Clone() = EngineBoard(this)
     member this.PieceOnly(sq:Square) = this.Map.PieceOnly(sq)
     member this.IsRepetition() = 
@@ -54,4 +48,10 @@ type EngineBoard =
         base.UndoMove(&rv)
         NNUE.PullAccumulator()
         this.History.RemoveLast()
-
+module EngineBoard =
+    let FromFen(fen:string) = 
+        let parts = fen.Split(" ")
+        EngineBoard(parts.[0], parts.[1], parts.[2], parts.[3])
+    let Default() = 
+        let DEFAULT_FEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
+        FromFen(DEFAULT_FEN)

@@ -13,12 +13,6 @@ type Board =
     member this.ColorToMove = this.Map.ColorToMove
     member this.EnPassantTarget = this.Map.EnPassantTarget
     member this.ZobristHash = this.Map.ZobristHash
-    static member FromFen(fen:string) = 
-        let parts = fen.Split(" ")
-        Board(parts.[0], parts.[1], parts.[2], parts.[3])
-    static member Default() = 
-        let DEFAULT_FEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
-        Board.FromFen(DEFAULT_FEN)
     member this.Clone() = Board(this.Map.Copy())
     // Readonly Properties
     member this.CastlingRight(color) = 
@@ -206,3 +200,10 @@ type Board =
             enPassantTarget <- this.EnPassantTarget.ToString().ToLower()
         let fen = [| boardData; turnData; castlingRight; enPassantTarget |]
         fen|>Array.reduce (fun a b -> a + " " + b)
+module Board =
+    let FromFen(fen:string) = 
+        let parts = fen.Split(" ")
+        Board(parts.[0], parts.[1], parts.[2], parts.[3])
+    let Default() = 
+        let DEFAULT_FEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
+        FromFen(DEFAULT_FEN)
