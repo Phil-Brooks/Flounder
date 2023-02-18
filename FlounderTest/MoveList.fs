@@ -4,7 +4,7 @@ open FsUnit
 open FlounderLib
 
 module MoveList =
-    let board = Board.Default
+    let board = Board.Default()
     let epfen = "rnbqkbnr/pp2pppp/8/2ppP3/8/8/PPPP1PPP/RNBQKBNR w KQkq d6 0 3"
     let epboard = Board.FromFen(epfen)
     let prmfen = "rnb1kb1r/ppP1pppp/5n2/2p5/8/8/PPPP1PPP/RNBQKBNR w KQkq - 0 5"

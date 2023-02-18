@@ -104,8 +104,8 @@ type MoveSearch(board:EngineBoard, table:MoveTranspositionTable, timeControl:Tim
 
         let mutable ans = None 
         if (node = NonPvNode) then
-            let storedEntry = Table.Value.[board.Board.ZobristHash]
-            if (storedEntry.ZobristHash = board.Board.ZobristHash &&
+            let storedEntry = Table.Value.[board.ZobristHash]
+            if (storedEntry.ZobristHash = board.ZobristHash &&
                 (storedEntry.Type = MoveTranspositionTableEntryType.Exact ||
                 storedEntry.Type = MoveTranspositionTableEntryType.BetaCutoff &&
                 storedEntry.BestMove.Evaluation >= beta ||
@@ -121,7 +121,7 @@ type MoveSearch(board:EngineBoard, table:MoveTranspositionTable, timeControl:Tim
         if ans.IsSome then 
             ans.Value
         else
-            let mutable earlyEval = Evaluation.Relative(board.Board)
+            let mutable earlyEval = Evaluation.Relative(board)
             // In the rare case our evaluation is already too good, we don't need to further evaluate captures any further,
             // as this position is overwhelmingly winning.
             if (earlyEval >= beta) then ans <- beta|>Some
@@ -136,7 +136,7 @@ type MoveSearch(board:EngineBoard, table:MoveTranspositionTable, timeControl:Tim
                 let moveSpanarr = Array.zeroCreate<OrderedMoveEntry>(OrderedMoveList.SIZE)//stackalloc OrderedMoveEntry[OrderedMoveList.SIZE];
                 let mutable moveSpan = new Span<OrderedMoveEntry>(moveSpanarr)
                 let moveList = OrderedMoveList(moveSpan, plyFromRoot, KillerMoveTable, HistoryTable)
-                let moveCount = moveList.QSearchMoveGeneration(board.Board, SearchedMove.Default)
+                let moveCount = moveList.QSearchMoveGeneration(board, SearchedMove.Default)
         
                 let mutable bestEvaluation = earlyEval
         
@@ -225,15 +225,15 @@ type MoveSearch(board:EngineBoard, table:MoveTranspositionTable, timeControl:Tim
                 // We had a three-fold repetition, so return earlier.
                 if (board.IsRepetition()) then ans <- 0|>Some
                 else
-                    let allPiecesCount = board.Board.All().Count
+                    let allPiecesCount = board.All().Count
                     // If only the kings are left, it's a draw.
                     if (allPiecesCount = 2) then ans <- 0|>Some
                     else
-                        let knightLeft = board.Board.All(Piece.Knight, PieceColor.White).ToBool() || board.Board.All(Piece.Knight, PieceColor.Black).ToBool()
+                        let knightLeft = board.All(Piece.Knight, PieceColor.White).ToBool() || board.All(Piece.Knight, PieceColor.Black).ToBool()
                         // If only the kings and one knight is left, it's a draw.
                         if (allPiecesCount = 3 && knightLeft) then ans <- 0|>Some
                         else
-                            let bishopLeft = board.Board.All(Piece.Bishop, PieceColor.White).ToBool() || board.Board.All(Piece.Bishop, PieceColor.Black).ToBool()
+                            let bishopLeft = board.All(Piece.Bishop, PieceColor.White).ToBool() || board.All(Piece.Bishop, PieceColor.Black).ToBool()
                             // If only the kings and one bishop is left, it's a draw.
                             if (allPiecesCount = 3 && bishopLeft) then ans <- 0|>Some
                             else
@@ -246,12 +246,12 @@ type MoveSearch(board:EngineBoard, table:MoveTranspositionTable, timeControl:Tim
         if ans.IsSome then 
             ans.Value
         else
-            let storedEntry = Table.Value.[board.Board.ZobristHash]
+            let storedEntry = Table.Value.[board.ZobristHash]
             let valid = storedEntry.Type <> MoveTranspositionTableEntryType.Invalid
             let mutable transpositionMove = SearchedMove.Default
             let mutable transpositionHit = false
 
-            if (valid && storedEntry.ZobristHash = board.Board.ZobristHash) then
+            if (valid && storedEntry.ZobristHash = board.ZobristHash) then
                 // We had a transposition table hit. However, at this point, we don't know if this is a trustworthy
                 // transposition hit or not.
                 transpositionMove <- storedEntry.BestMove
@@ -294,13 +294,13 @@ type MoveSearch(board:EngineBoard, table:MoveTranspositionTable, timeControl:Tim
                 // Calculate deeper ply.
                 let nextPlyFromRoot = plyFromRoot + 1
                 // Determine whether we should prune moves.
-                let oppositeColor = PieceColor.OppositeColor(board.Board.ColorToMove)
-                let kingSq = board.Board.KingLoc(board.Board.ColorToMove).ToSq()
-                let mutable inCheck = MoveList.UnderAttack(board.Board, kingSq, oppositeColor)
+                let oppositeColor = PieceColor.OppositeColor(board.ColorToMove)
+                let kingSq = board.KingLoc(board.ColorToMove).ToSq()
+                let mutable inCheck = MoveList.UnderAttack(board, kingSq, oppositeColor)
                 let mutable improving = false
                 // We should use the evaluation from our transposition table if we had a hit.
                 // As that evaluation isn't truly static and may have been from a previous deep search.
-                let positionalEvaluation = if transpositionHit then transpositionMove.Evaluation else Evaluation.Relative(board.Board)
+                let positionalEvaluation = if transpositionHit then transpositionMove.Evaluation else Evaluation.Relative(board)
             
                 // Also store the evaluation to later check if it improved.
                 MoveSearchStack.[plyFromRoot].PositionalEvaluation <- positionalEvaluation
@@ -366,7 +366,7 @@ type MoveSearch(board:EngineBoard, table:MoveTranspositionTable, timeControl:Tim
                     let moveSpanarr = Array.zeroCreate<OrderedMoveEntry>(OrderedMoveList.SIZE)//stackalloc OrderedMoveEntry[OrderedMoveList.SIZE];
                     let mutable moveSpan = new Span<OrderedMoveEntry>(moveSpanarr)
                     let moveList = OrderedMoveList(moveSpan, plyFromRoot, KillerMoveTable, HistoryTable)
-                    let moveCount = moveList.NormalMoveGeneration(board.Board, transpositionMove)
+                    let moveCount = moveList.NormalMoveGeneration(board, transpositionMove)
                     if (moveCount = 0) then
                         // If we had no moves at this depth, we should check if our king is in check. If our king is in check, it
                         // means we lost as nothing can save the king anymore. Otherwise, it's a stalemate where we can't really do
@@ -437,7 +437,7 @@ type MoveSearch(board:EngineBoard, table:MoveTranspositionTable, timeControl:Tim
                             let previousNodeCount = this.TotalNodeSearchCount
                             let mutable move = moveList.[i]
 
-                            let quietMove = not (board.Board.All(oppositeColor).[move.To])
+                            let quietMove = not (board.All(oppositeColor).[move.To])
                             let quietInt = if quietMove then 1 else 0
                             quietMoveCounter <- quietMoveCounter + quietInt
 
@@ -525,13 +525,13 @@ type MoveSearch(board:EngineBoard, table:MoveTranspositionTable, timeControl:Tim
                                             KillerMoveTable.[0, plyFromRoot] <- move
                     
                                         // Increment the move that caused a beta cutoff to get a historical heuristic of best quiet moves.
-                                        HistoryTable.[board.PieceOnly(move.From), board.Board.ColorToMove, move.To] <- HistoryTable.[board.PieceOnly(move.From), board.Board.ColorToMove, move.To] + historyBonus
+                                        HistoryTable.[board.PieceOnly(move.From), board.ColorToMove, move.To] <- HistoryTable.[board.PieceOnly(move.From), board.ColorToMove, move.To] + historyBonus
                     
                                         // Decrement all other quiet moves to ensure a branch local history heuristic.
                                         let mutable j = 1
                                         while (j < quietMoveCounter) do
                                             let otherMove = moveList.[i - j]
-                                            HistoryTable.[board.PieceOnly(otherMove.From), board.Board.ColorToMove, otherMove.To] <- HistoryTable.[board.PieceOnly(otherMove.From), board.Board.ColorToMove, otherMove.To] - historyBonus
+                                            HistoryTable.[board.PieceOnly(otherMove.From), board.ColorToMove, otherMove.To] <- HistoryTable.[board.PieceOnly(otherMove.From), board.ColorToMove, otherMove.To] - historyBonus
                                             j <- j+1
 
                                     // We had a beta cutoff, hence it's a beta cutoff entry.
@@ -543,8 +543,8 @@ type MoveSearch(board:EngineBoard, table:MoveTranspositionTable, timeControl:Tim
                                 i <- i+1
                         
                         let bestMove = SearchedMove(&bestMoveSoFar, bestEvaluation)
-                        let mutable entry = MoveTranspositionTableEntry(board.Board.ZobristHash, transpositionTableEntryType, bestMove, depth)
-                        Table.Value.InsertEntry(board.Board.ZobristHash, &entry)
+                        let mutable entry = MoveTranspositionTableEntry(board.ZobristHash, transpositionTableEntryType, bestMove, depth)
+                        Table.Value.InsertEntry(board.ZobristHash, &entry)
 
                         bestEvaluation
     member this.AspirationSearch(board:EngineBoard, depth:int, previousEvaluation:int, bestMove:byref<OrderedMoveEntry>) =
