@@ -46,11 +46,11 @@ type MoveSearch(board:EngineBoard, table:MoveTranspositionTable, timeControl:Tim
 
     let mutable Board:EngineBoard option =  None
     let mutable TimeControl:TimeControl = TimeControl(9999999)
-    let mutable Table:MoveTranspositionTable = null
+    let mutable Table:MoveTranspositionTable option = None
     do
         Board <- board|>Some
         TimeControl <- timeControl
-        Table <- table
+        Table <- Some(table)
     static member ReductionDepthTable
         with get() = reductionDepthTable
         and set(v) = reductionDepthTable <- v
@@ -104,7 +104,7 @@ type MoveSearch(board:EngineBoard, table:MoveTranspositionTable, timeControl:Tim
 
         let mutable ans = None 
         if (node = NonPvNode) then
-            let storedEntry = Table.[board.ZobristHash]
+            let storedEntry = Table.Value.[board.ZobristHash]
             if (storedEntry.ZobristHash = board.ZobristHash &&
                 (storedEntry.Type = MoveTranspositionTableEntryType.Exact ||
                 storedEntry.Type = MoveTranspositionTableEntryType.BetaCutoff &&
@@ -246,7 +246,7 @@ type MoveSearch(board:EngineBoard, table:MoveTranspositionTable, timeControl:Tim
         if ans.IsSome then 
             ans.Value
         else
-            let storedEntry = Table.[board.ZobristHash]
+            let storedEntry = Table.Value.[board.ZobristHash]
             let valid = storedEntry.Type <> MoveTranspositionTableEntryType.Invalid
             let mutable transpositionMove = SearchedMove.Default
             let mutable transpositionHit = false
@@ -544,7 +544,7 @@ type MoveSearch(board:EngineBoard, table:MoveTranspositionTable, timeControl:Tim
                         
                         let bestMove = SearchedMove(&bestMoveSoFar, bestEvaluation)
                         let mutable entry = MoveTranspositionTableEntry(board.ZobristHash, transpositionTableEntryType, bestMove, depth)
-                        Table.InsertEntry(board.ZobristHash, &entry)
+                        Table.Value.InsertEntry(board.ZobristHash, &entry)
 
                         bestEvaluation
     member this.AspirationSearch(board:EngineBoard, depth:int, previousEvaluation:int, bestMove:byref<OrderedMoveEntry>) =

@@ -23,7 +23,7 @@ module UniversalChessInterface =
     let NAME = "Flounder"
     let AUTHOR = "Phil Brooks"
 
-    let mutable TranspositionTable:MoveTranspositionTable = null
+    let mutable TranspositionTable:MoveTranspositionTable option = None
     let mutable TranspositionTableSizeMb = 16
 
     let mutable Board:EngineBoard = EngineBoard.Default()
@@ -37,17 +37,17 @@ module UniversalChessInterface =
             if (args.[2] = "Hash") then
                 TranspositionTableSizeMb <- int(args.[4])
                 Busy <- true
-                TranspositionTable.FreeMemory()
-                TranspositionTable <- null
-                TranspositionTable <- MoveTranspositionTable.GenerateTable(TranspositionTableSizeMb);
+                TranspositionTable.Value.FreeMemory()
+                TranspositionTable <- None
+                TranspositionTable <- Some(MoveTranspositionTable.GenerateTable(TranspositionTableSizeMb))
                 Busy <- false
     let HandleIsReady(input:string) =
         if (input.ToLower().Equals("isready")) then
             Console.WriteLine("readyok")
     let HandleQuit(thread:Thread, input:string) =
         if (input.ToLower().Equals("quit")) then
-            TranspositionTable.FreeMemory()
-            TranspositionTable <- null
+            TranspositionTable.Value.FreeMemory()
+            TranspositionTable <- None
             UciStdInputThread.Running <- false
             thread.IsBackground <- true
             Environment.Exit(0)
@@ -146,7 +146,7 @@ module UniversalChessInterface =
                 let factory = TaskFactory()
                 let bestMove = OrderedMoveEntry()
                 let doSearch() =
-                    let search = FlounderLib.MoveSearch(Board.Clone(), TranspositionTable, ActiveTimeControl)
+                    let search = FlounderLib.MoveSearch(Board.Clone(), TranspositionTable.Value, ActiveTimeControl)
                     Busy <- true
                     let bestMove = search.IterativeDeepening(depth)
                     Busy <- false
@@ -176,7 +176,7 @@ module UniversalChessInterface =
         
     let LaunchUci() =
         // Initialize default UCI parameters.
-        TranspositionTable <- MoveTranspositionTable.GenerateTable(TranspositionTableSizeMb)
+        TranspositionTable <- Some(MoveTranspositionTable.GenerateTable(TranspositionTableSizeMb))
         
         // Provide identification information.
         Console.WriteLine("id name " + NAME)

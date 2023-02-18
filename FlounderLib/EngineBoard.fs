@@ -32,16 +32,16 @@ type EngineBoard =
         let rv = this.Move(from, mto, promotion)
         this.History.Append(this.ZobristHash)
     member this.NullMove() =
-        let rv = RevertNullMove.FromBitBoardMap(&this.Map)
+        let rv = this.Map.EnPassantTarget
         if (this.Map.EnPassantTarget <> Square.Na) then Zobrist.HashEp(&this.Map.ZobristHash, this.Map.EnPassantTarget)
         this.Map.EnPassantTarget <- Square.Na
         this.Map.ColorToMove <- PieceColor.OppositeColor(this.Map.ColorToMove)
         Zobrist.FlipTurnInHash(&this.Map.ZobristHash)
         rv
-    member this.UndoNullMove(rv:RevertNullMove) =
-        if (rv.EnPassantTarget <> Square.Na) then
-            this.Map.EnPassantTarget <- rv.EnPassantTarget
-            Zobrist.HashEp(&this.Map.ZobristHash, rv.EnPassantTarget)
+    member this.UndoNullMove(rv:Square) =
+        if (rv <> Square.Na) then
+            this.Map.EnPassantTarget <- rv
+            Zobrist.HashEp(&this.Map.ZobristHash, rv)
         this.Map.ColorToMove <- PieceColor.OppositeColor(this.Map.ColorToMove)
         Zobrist.FlipTurnInHash(&this.Map.ZobristHash)
     member this.Move(move:byref<OrderedMoveEntry>) =

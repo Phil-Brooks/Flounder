@@ -6,7 +6,7 @@ type SearchedMove =
         val To: Square
         val Promotion: Promotion
         val Evaluation: int
-        new(move:byref<OrderedMoveEntry>, evaluation:int ) = 
+        new(move:byref<OrderedMoveEntry>, evaluation:int) = 
             { 
                 From = move.From
                 To = move.To

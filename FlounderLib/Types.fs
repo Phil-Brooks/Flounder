@@ -39,6 +39,12 @@ module Types =
         |Rook = 1
         |Queen = 4
 
+    type MoveTranspositionTableEntryType =
+        | Exact = 0
+        | BetaCutoff = 1
+        | AlphaUnchanged = 2
+        | Invalid = 3
+
 module Piece =
     let FromInt(i:int) =
         let pc:Piece = LanguagePrimitives.EnumOfValue(i)
