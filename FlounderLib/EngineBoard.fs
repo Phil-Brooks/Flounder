@@ -3,11 +3,11 @@ open System
 
 type EngineBoard =
     inherit Board
-    val History:RepetitionHistory
+    val mutable History:RepetitionHistory
     new(boardData, turnData, castlingData, enPassantTargetData) as this = 
         {
             inherit Board(boardData, turnData, castlingData, enPassantTargetData)
-            History = new RepetitionHistory()
+            History = new RepetitionHistory(1024)
         } then NNUE.ResetAccumulator();NNUE.RefreshAccumulator(this.Map)
     new(board:EngineBoard) = 
         {
@@ -25,7 +25,7 @@ type EngineBoard =
     member this.IsRepetition() = 
         this.History.Count(this.ZobristHash) > 1
     member this.GuiMove(from:Square, mto:Square, promotion:Promotion) =
-        let moveList = MoveList.WithoutProvidedPins(this, from)
+        let moveList = MoveList(this, from)
         if not(moveList.Moves.[mto]) then raise (InvalidOperationException("Invalid move provided by GUI."))
         if (promotion <> Promotion.None && not moveList.Promotion) then
             raise (InvalidOperationException("Invalid move provided by GUI."))

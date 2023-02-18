@@ -1,27 +1,27 @@
 ﻿namespace FlounderLib
 
-type RepetitionHistory() =
-    let SIZE = 1024
-    let mutable InternalValue:uint64 array = Array.zeroCreate (SIZE)
-    let mutable IndexValue = 0
-    member _.Internal
-        with get () = InternalValue
-        and set (value) = InternalValue <- value
-    member _.Index
-        with get () = IndexValue
-        and set (value) = IndexValue <- value
-    member _.Append(zobristHash) = 
-        InternalValue.[IndexValue] <- zobristHash
-        IndexValue <- IndexValue+1
-    member _.RemoveLast() = IndexValue <- IndexValue-1
-    member _.Count(zobristHash) =
-        let mutable count = 0
-        for i = IndexValue - 1 downto 0 do
-            if (InternalValue.[i] = zobristHash) then count <- count+1
-        count
-    member _.Clone() =
-        let history = new RepetitionHistory()
-        for i = IndexValue downto 0 do
-            history.Internal.[i] <- InternalValue.[i]
-        history.Index <- IndexValue
-        history
+type RepetitionHistory =
+    struct
+        val mutable Internal:uint64 array
+        val mutable Index:int
+        new(size) =
+            {
+                Internal = Array.zeroCreate size
+                Index = 0
+            }
+        member this.Append(zobristHash) = 
+            this.Internal.[this.Index] <- zobristHash
+            this.Index <- this.Index + 1
+        member this.RemoveLast() = this.Index <- this.Index - 1
+        member this.Count(zobristHash) =
+            let mutable count = 0
+            for i = this.Index - 1 downto 0 do
+                if (this.Internal.[i] = zobristHash) then count <- count + 1
+            count
+        member this.Clone() =
+            let mutable history = new RepetitionHistory(1024)
+            for i = this.Index downto 0 do
+                history.Internal.[i] <- this.Internal.[i]
+            history.Index <- this.Index
+            history
+    end

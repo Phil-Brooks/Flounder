@@ -16,12 +16,12 @@ module MoveList =
 
     [<Test>]
     let CountKnightMovesAtB1() =
-        let moveList = MoveList.WithoutProvidedPins(board, Square.B1)
+        let moveList = MoveList(board, Square.B1)
         moveList.Count |> should equal 2
 
     [<Test>]
     let CountPawnMovesAtA2() =
-        let moveList = MoveList.WithoutProvidedPins(board, Square.A2)
+        let moveList = MoveList(board, Square.A2)
         moveList.Count |> should equal 2
         let mutable moves = moveList.Moves.GetEnumerator()
         let mutable move = moves.Current
@@ -34,7 +34,7 @@ module MoveList =
     let CountKnightMovesAtA3() =
         let usebd = board.Clone()
         let res = usebd.Move(Square.B1, Square.A3)
-        let moveList = MoveList.WithoutProvidedPins(usebd, Square.A3)
+        let moveList = MoveList(usebd, Square.A3)
         moveList.Count |> should equal 3
         let mutable moves = moveList.Moves.GetEnumerator()
         let mutable move = moves.Current
@@ -47,7 +47,7 @@ module MoveList =
     let CountRookMovesAtA3() =
         let usebd = board.Clone()
         let res = usebd.Move(Square.A1, Square.A3)
-        let moveList = MoveList.WithoutProvidedPins(usebd, Square.A3)
+        let moveList = MoveList(usebd, Square.A3)
         moveList.Count |> should equal 11
         let mutable moves = moveList.Moves.GetEnumerator()
         let mutable move = moves.Current
@@ -58,14 +58,14 @@ module MoveList =
 
     [<Test>]
     let CountRookMovesAtA1() =
-        let moveList = MoveList.WithoutProvidedPins(board, Square.A1)
+        let moveList = MoveList(board, Square.A1)
         moveList.Count |> should equal 0
 
     [<Test>]
     let CountBishopMovesAtC3() =
         let usebd = board.Clone()
         let res = usebd.Move(Square.C1, Square.C3)
-        let moveList = MoveList.WithoutProvidedPins(usebd, Square.C3)
+        let moveList = MoveList(usebd, Square.C3)
         moveList.Count |> should equal 6
         let mutable moves = moveList.Moves.GetEnumerator()
         let mutable move = moves.Current
@@ -78,7 +78,7 @@ module MoveList =
     let CountQueenMovesAtC3() =
         let usebd = board.Clone()
         let res = usebd.Move(Square.D1, Square.C3)
-        let moveList = MoveList.WithoutProvidedPins(usebd, Square.C3)
+        let moveList = MoveList(usebd, Square.C3)
         moveList.Count |> should equal 17
         let mutable moves = moveList.Moves.GetEnumerator()
         let mutable move = moves.Current
@@ -91,7 +91,7 @@ module MoveList =
     let CountKingMovesAtC3() =
         let usebd = board.Clone()
         let res = usebd.Move(Square.E1, Square.C3)
-        let moveList = MoveList.WithoutProvidedPins(usebd, Square.C3)
+        let moveList = MoveList(usebd, Square.C3)
         moveList.Count |> should equal 5
         let mutable moves = moveList.Moves.GetEnumerator()
         let mutable move = moves.Current
@@ -105,7 +105,7 @@ module MoveList =
         let usebd = board.Clone()
         let res = usebd.Move(Square.F1, Square.F3)
         let res = usebd.Move(Square.G1, Square.G3)
-        let moveList = MoveList.WithoutProvidedPins(usebd, Square.E1)
+        let moveList = MoveList(usebd, Square.E1)
         moveList.Count |> should equal 2
         let mutable moves = moveList.Moves.GetEnumerator()
         let mutable move = moves.Current
@@ -116,7 +116,7 @@ module MoveList =
 
     [<Test>]
     let CountPawnMovesEP() =
-        let moveList = MoveList.WithoutProvidedPins(epboard, Square.E5)
+        let moveList = MoveList(epboard, Square.E5)
         moveList.Count |> should equal 2
         let mutable moves = moveList.Moves.GetEnumerator()
         let mutable move = moves.Current
@@ -127,7 +127,7 @@ module MoveList =
 
     [<Test>]
     let CountPawnMovesPRM() =
-        let moveList = MoveList.WithoutProvidedPins(prmboard, Square.C7)
+        let moveList = MoveList(prmboard, Square.C7)
         moveList.Count |> should equal 1
         let mutable moves = moveList.Moves.GetEnumerator()
         let mutable move = moves.Current

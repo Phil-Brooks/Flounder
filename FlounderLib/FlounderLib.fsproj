@@ -33,7 +33,6 @@
     <Compile Include="AttackTable.fs" />
     <Compile Include="UtilityTable.fs" />
     <Compile Include="BlackMagicBitBoardFactory.fs" />
-    <Compile Include="UtilityTable1.fs" />
     <Compile Include="AttackTable1.fs" />
     <Compile Include="MoveList.fs" />
     <Compile Include="EngineBoard.fs" />

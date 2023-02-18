@@ -26,3 +26,4 @@ module UtilityTable =
         |]
         |>Array.map(fun u -> BitBoard(u))
     let Edged = Hs.[0] ||| Hs.[7] ||| Vs.[0] ||| Vs.[7]
+    let Between:BitBoard array array = Array.zeroCreate 64
