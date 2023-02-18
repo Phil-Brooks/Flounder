@@ -8,7 +8,7 @@ module Perft =
     let D5 = 4865609uL
     let D6 = 119060324uL
     let D7 = 3195901860uL
-    let Board = Board.Default()
+    let Board = Board.Default
     let rec MoveGeneration(iboard:Board, depth) =
         // Figure out color and opposite color from the one set in the board.
         let oppositeColor = PieceColor.OppositeColor(iboard.ColorToMove)

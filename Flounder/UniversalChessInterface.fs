@@ -26,7 +26,7 @@ module UniversalChessInterface =
     let mutable TranspositionTable:MoveTranspositionTable option = None
     let mutable TranspositionTableSizeMb = 16
 
-    let mutable Board:EngineBoard = EngineBoard.Default()
+    let mutable Board:EngineBoard = EngineBoard.Default
     let mutable Busy = false
     let mutable ActiveTimeControl = FlounderLib.TimeControl(9999999)
     let mutable MoveCount = 0
@@ -57,7 +57,7 @@ module UniversalChessInterface =
             Busy <- true
             let mutable argsParsed = 1
             if (args.[1].ToLower()="startpos") then
-                Board <- EngineBoard.Default()
+                Board <- EngineBoard.Default
                 argsParsed<-argsParsed+1
             elif (args.[1].ToLower()="fen") then
                 let p = args.[2]
@@ -91,7 +91,7 @@ module UniversalChessInterface =
         if (args.[0].ToLower().Equals("go")) then
             if (input.ToLower().Contains("perft")) then
                 // Just run PERFT.
-                Program.RunPerft(Board, int(args.[2]))
+                Program.RunPerft(Board.Board, int(args.[2]))
             else
                 let maxTime = 999_999_999
                 let maxDepth = 63
@@ -141,7 +141,7 @@ module UniversalChessInterface =
                     
                     getargs 1
                     if (time = maxTime || timeSpecified) then ActiveTimeControl <- new FlounderLib.TimeControl(time)
-                    else ActiveTimeControl <- FlounderLib.TimeControl(movesToGo, timeForColor, timeIncForColor, Board.ColorToMove, MoveCount)
+                    else ActiveTimeControl <- FlounderLib.TimeControl(movesToGo, timeForColor, timeIncForColor, Board.Board.ColorToMove, MoveCount)
 
                 let factory = TaskFactory()
                 let bestMove = OrderedMoveEntry()

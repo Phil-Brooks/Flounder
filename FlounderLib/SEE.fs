@@ -8,7 +8,7 @@ module SEE =
         let mutable mto = board.PieceOnly(move.To)
         
         // In case of En Passant, we set the target piece to a pawn.
-        if (from = Piece.Pawn && move.To = board.EnPassantTarget) then mto <- Piece.Pawn
+        if (from = Piece.Pawn && move.To = board.Board.EnPassantTarget) then mto <- Piece.Pawn
 
         let mutable value = Internal.[int(mto)]
         

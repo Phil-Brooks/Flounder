@@ -6,7 +6,7 @@ open Newtonsoft.Json
 
 type Overall() =
 
-    let Default = Board.Default()
+    let Default = Board.Default
     let path = @"D:\Github\Flounder\FlounderLib"
     let NNUE_FILE = "BasicNNUE"
     let HASH = "0334adf934"
