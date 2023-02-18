@@ -6,7 +6,7 @@ open Newtonsoft.Json
 
 type Overall() =
 
-    let Default = Board1.Default()
+    let Default = Board.Default()
     let path = @"D:\Github\Flounder\FlounderLib"
     let NNUE_FILE = "BasicNNUE"
     let HASH = "0334adf934"
@@ -24,6 +24,6 @@ type Overall() =
     [<Benchmark>]
     member _.Overall() = 
         FlounderLib.Perft.MoveGeneration(Default, 4)|>ignore
-        basicNNUE.RefreshAccumulator(Default)
+        basicNNUE.RefreshAccumulator(Default.Map)
         basicNNUE.Evaluate(Default.ColorToMove)|>ignore
 

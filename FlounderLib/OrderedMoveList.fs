@@ -21,7 +21,7 @@ type OrderedMoveList(memory:Span<OrderedMoveEntry>, ply:int, killerMoveTable:Kil
     member _.KillerMoveOne:OrderedMoveEntry =  killerMoveTable.[0, ply] 
     member _.KillerMoveTwo:OrderedMoveEntry =  killerMoveTable.[1, ply]
     member _.HistoryTable:HistoryTable =  historyTable
-    member this.ScoreMove(pieceToMove:Piece, board:Board1, move:OrderedMoveEntry, tableMove:SearchedMove) =
+    member this.ScoreMove(pieceToMove:Piece, board:Board, move:OrderedMoveEntry, tableMove:SearchedMove) =
         // Compare our move with the one found from transposition table. There's no guarantee the transposition move
         // is even legal, so this acts as a sort of legal verification for it too.
         // Regardless, if our move is equal to that (also proving that it is legal for this position), then give it
@@ -54,7 +54,7 @@ type OrderedMoveList(memory:Span<OrderedMoveEntry>, ply:int, killerMoveTable:Kil
             // Return the updated history score for the move.
             else this.HistoryTable.[pieceToMove, board.ColorToMove, move.To]
     static member MvvLva(attacker:Piece, victim:Piece) = OrderedMoveList.MvvLvaTable.[int(victim)].[int(attacker)]
-    member this.NormalMoveGeneration(board:Board1, transpositionMove:SearchedMove) =
+    member this.NormalMoveGeneration(board:Board, transpositionMove:SearchedMove) =
         let oppositeColor = PieceColor.OppositeColor(board.ColorToMove)
         // Generate pins and check bitboards.
         let kingSq = board.KingLoc(board.ColorToMove).ToSq()
@@ -114,7 +114,7 @@ type OrderedMoveList(memory:Span<OrderedMoveEntry>, ply:int, killerMoveTable:Kil
                 move <- moves.Current
             from <- fromIterator.Current
         i
-    member this.QSearchMoveGeneration(board:Board1, transpositionMove:SearchedMove) =
+    member this.QSearchMoveGeneration(board:Board, transpositionMove:SearchedMove) =
         let oppositeColor = PieceColor.OppositeColor(board.ColorToMove)
         // If we only want capture moves, we should also define our opposite board.
         let opposite = board.All(oppositeColor)

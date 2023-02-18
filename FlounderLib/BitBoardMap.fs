@@ -9,10 +9,10 @@ type BitBoardMap =
         val mutable White:BitBoard
         val mutable Black:BitBoard
         val mutable ColorToMove:PieceColor
-        val mutable WhiteKCastle:byte
-        val mutable WhiteQCastle:byte
-        val mutable BlackKCastle:byte
-        val mutable BlackQCastle:byte
+        val mutable WhiteKCastle:int
+        val mutable WhiteQCastle:int
+        val mutable BlackKCastle:int
+        val mutable BlackQCastle:int
         val mutable EnPassantTarget:Square
         val mutable ZobristHash:uint64
         new(bb,piecesAndColors,white,black,colorToMove,whiteKCastle,whiteQCastle,blackKCastle,blackQCastle,enPassantTarget,zobristHash) =
@@ -39,8 +39,7 @@ type BitBoardMap =
             let piecesAndColors:int array = Array.zeroCreate 64
             for i = 0 to 63 do
                 piecesAndColors[i] <- 0x26
-            
-            let expandedBoardData:string array = boardFen.Split(FEN_SPR)|>Array.rev
+            let expandedBoardData = boardFen.Split(FEN_SPR)|>Array.rev
             if expandedBoardData.Length <> 8 then 
                 raise (InvalidDataException("Wrong board data provided: " + boardFen))
             for v = 0 to 7 do
@@ -88,9 +87,7 @@ type BitBoardMap =
                             elif p = 'k' then
                                 bb.[int(PieceColor.Black)].[int(Piece.King)].[v * 8 + h] <- true
                                 piecesAndColors.[v * 8 + h] <- 0x15
-
                         h <- h + 1
-           
             let white = bb.[int(PieceColor.White)].[int(Piece.Pawn)] ||| bb.[int(PieceColor.White)].[int(Piece.Rook)] ||| 
                         bb.[int(PieceColor.White)].[int(Piece.Knight)] ||| bb.[int(PieceColor.White)].[int(Piece.Bishop)] |||
                         bb.[int(PieceColor.White)].[int(Piece.Queen)] ||| bb.[int(PieceColor.White)].[int(Piece.King)]
@@ -98,23 +95,22 @@ type BitBoardMap =
                         bb.[int(PieceColor.Black)].[int(Piece.Knight)] ||| bb.[int(PieceColor.Black)].[int(Piece.Bishop)] |||
                         bb.[int(PieceColor.Black)].[int(Piece.Queen)] ||| bb.[int(PieceColor.Black)].[int(Piece.King)]
             let colorToMove = if turnData.[0] = 'w' then PieceColor.White else PieceColor.Black
-            let whiteKCastle = if castlingData.Contains('K') then 0x1uy else 0x0uy
-            let whiteQCastle = if castlingData.Contains('Q') then 0x2uy else 0x0uy
-            let blackKCastle = if castlingData.Contains('k') then 0x4uy else 0x0uy
-            let blackQCastle = if castlingData.Contains('K') then 0x8uy else 0x0uy
+            let whiteKCastle = if castlingData.Contains('K') then 0x1 else 0x0
+            let whiteQCastle = if castlingData.Contains('Q') then 0x2 else 0x0
+            let blackKCastle = if castlingData.Contains('k') then 0x4 else 0x0
+            let blackQCastle = if castlingData.Contains('K') then 0x8 else 0x0
             let mutable enPassantTarget = Square.Na
             if (enPassantTargetData.Length = 2) then
                 enPassantTarget <- System.Enum.Parse<Square>(enPassantTargetData, true)
             let gethash() =
                 let mutable zobristHash = 0UL
                 for piece in [Piece.Pawn;Piece.Rook;Piece.Knight;Piece.Bishop;Piece.Queen;Piece.King] do
-                    let psbb:BitBoard = bb.[int(colorToMove)].[int(piece)]
-                    let mutable pieceSquareIterator:BitBoardIterator = psbb.GetEnumerator()  
+                    let psbb = bb.[int(colorToMove)].[int(piece)]
+                    let mutable pieceSquareIterator = psbb.GetEnumerator()  
                     let mutable sq:Square = pieceSquareIterator.Current
                     while (pieceSquareIterator.MoveNext()) do
                         zobristHash <- zobristHash ^^^ Zobrist.PieceKeys.[piece, colorToMove, sq]
                         sq <- pieceSquareIterator.Current
-
                 if (colorToMove = PieceColor.White) then zobristHash <- zobristHash ^^^ Zobrist.TurnKey
                 if (enPassantTarget <> Square.Na) then zobristHash <- zobristHash ^^^ Zobrist.EnPassantKeys.[int(enPassantTarget)]
                 zobristHash <- zobristHash ^^^ Zobrist.CastlingKeys.[int(whiteKCastle) ||| int(whiteQCastle) ||| int(blackKCastle) ||| int(blackQCastle)]
@@ -130,15 +126,12 @@ type BitBoardMap =
             let BlackQCastle = map.BlackQCastle
             let ColorToMove = map.ColorToMove
             let EnPassantTarget = map.EnPassantTarget
-
             let PiecesAndColors = Array.zeroCreate 64
             let Bb = Array.zeroCreate 2
-
             for i = 0 to 1 do
                 Bb.[i] <- Array.zeroCreate 6
                 Array.Copy(bb.[i], Bb.[i], 6)
             Array.Copy(piecesAndColors, PiecesAndColors, 64)
-
             let ZobristHash = map.ZobristHash
             BitBoardMap(Bb,PiecesAndColors,White,Black,ColorToMove,WhiteKCastle,WhiteQCastle,BlackKCastle,BlackQCastle,EnPassantTarget,ZobristHash)
         member this.Item 
@@ -256,8 +249,7 @@ module BitBoardMap =
             while (pieceSquareIterator.MoveNext()) do
                 zobristHash <- zobristHash ^^^ Zobrist.PieceKeys.[piece, map.ColorToMove, sq]
                 sq <- pieceSquareIterator.Current
-
         if (map.ColorToMove = PieceColor.White) then zobristHash <- zobristHash ^^^ Zobrist.TurnKey
         if (map.EnPassantTarget <> Square.Na) then zobristHash <- zobristHash ^^^ Zobrist.EnPassantKeys.[int(map.EnPassantTarget)]
-        zobristHash <- zobristHash ^^^ Zobrist.CastlingKeys.[int(map.WhiteKCastle) ||| int(map.WhiteQCastle) ||| int(map.BlackKCastle) ||| int(map.BlackQCastle)]
+        zobristHash <- zobristHash ^^^ Zobrist.CastlingKeys.[map.WhiteKCastle ||| map.WhiteQCastle ||| map.BlackKCastle ||| map.BlackQCastle]
         zobristHash

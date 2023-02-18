@@ -2,16 +2,16 @@
 open System
 
 type EngineBoard =
-    inherit Board1
+    inherit Board
     val History:RepetitionHistory
     new(boardData, turnData, castlingData, enPassantTargetData) as this = 
         {
-            inherit Board1(boardData, turnData, castlingData, enPassantTargetData)
+            inherit Board(boardData, turnData, castlingData, enPassantTargetData)
             History = new RepetitionHistory()
-        } then Evaluation.NNUE.ResetAccumulator();Evaluation.NNUE.RefreshAccumulator(this)
+        } then Evaluation.NNUE.ResetAccumulator();Evaluation.NNUE.RefreshAccumulator(this.Map)
     new(board:EngineBoard) = 
         {
-            inherit Board1(board.Map)
+            inherit Board(board.Map)
             History = board.History.Clone()
         }
     static member FromFen(fen:string) = 

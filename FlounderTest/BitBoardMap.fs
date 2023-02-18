@@ -94,17 +94,17 @@ module BitBoardMap =
         Map.Bb.[1].[0].Count |> should equal 8
 
         Map.PiecesAndColors.Length |> should equal 64
-        Map.PiecesAndColors.[0] |> should equal 1uy
-        Map.PiecesAndColors.[63] |> should equal 17uy
-        Map.PiecesAndColors.[8] |> should equal 0uy
+        Map.PiecesAndColors.[0] |> should equal 1
+        Map.PiecesAndColors.[63] |> should equal 17
+        Map.PiecesAndColors.[8] |> should equal 0
 
         Map.White.Count |> should equal 16
         Map.Black.Count |> should equal 16
         Map.ColorToMove |> should equal PieceColor.White
-        Map.BlackKCastle |> should equal 0x4uy
-        Map.BlackQCastle |> should equal 0x8uy
-        Map.WhiteKCastle |> should equal 0x1uy
-        Map.WhiteQCastle |> should equal 0x2uy
+        Map.BlackKCastle |> should equal 0x4
+        Map.BlackQCastle |> should equal 0x8
+        Map.WhiteKCastle |> should equal 0x1
+        Map.WhiteQCastle |> should equal 0x2
         Map.EnPassantTarget |> should equal Square.Na
         Map.ZobristHash |> should equal 15338111103076795062UL
 

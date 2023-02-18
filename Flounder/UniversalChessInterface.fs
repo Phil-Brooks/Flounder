@@ -6,7 +6,7 @@ open System.Diagnostics
 open FlounderLib
 
 module Program =
-    let RunPerft(board:Board1, depth:int) =
+    let RunPerft(board:Board, depth:int) =
         Console.WriteLine("Running PERFT @ depth " + depth.ToString() + ": ")
         
         let watch = Stopwatch()

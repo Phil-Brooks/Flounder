@@ -2,10 +2,10 @@
 
 type RevertMove =
     struct
-        val WhiteKCastle:byte
-        val WhiteQCastle:byte
-        val BlackKCastle:byte
-        val BlackQCastle:byte
+        val WhiteKCastle:int
+        val WhiteQCastle:int
+        val BlackKCastle:int
+        val BlackQCastle:int
         val EnPassantTarget:Square
         val ColorToMove:PieceColor
         val mutable Promotion:bool

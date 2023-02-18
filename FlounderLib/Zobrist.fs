@@ -22,8 +22,8 @@ module Zobrist =
         TurnKey <- BitConverter.ToUInt64(buffer)
     let HashPiece(zobristHash:byref<uint64>, piece:Piece, color:PieceColor, sq:Square) = 
         zobristHash <- zobristHash ^^^ PieceKeys.[piece, color, sq]
-    let HashCastlingRights(zobristHash:byref<uint64>, wk:byte, wq:byte, bk:byte, bq:byte) = 
-        zobristHash <- zobristHash ^^^ CastlingKeys.[int(wk) ||| int(wq) ||| int(bk) ||| int(bq)]
+    let HashCastlingRights(zobristHash:byref<uint64>, wk:int, wq:int, bk:int, bq:int) = 
+        zobristHash <- zobristHash ^^^ CastlingKeys.[wk ||| wq ||| bk ||| bq]
     let FlipTurnInHash(zobristHash:byref<uint64>) =
         zobristHash <- zobristHash ^^^ TurnKey
     let HashEp(zobristHash:byref<uint64>, ep:Square) = 

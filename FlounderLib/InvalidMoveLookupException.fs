@@ -16,6 +16,6 @@ type InvalidMoveLookupException =
         {
             inherit InvalidOperationException(info, context)
         }
-    static member FromBoard(board:Board1, message:string) = 
+    static member FromBoard(board:Board, message:string) = 
         InvalidOperationException("\n" + board.ToString() + message)
         

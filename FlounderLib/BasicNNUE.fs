@@ -38,7 +38,7 @@ type BasicNNUE =
         )
         this.CurrentAccumulator <- this.CurrentAccumulator + 1
     member this.PullAccumulator() = this.CurrentAccumulator <- this.CurrentAccumulator - 1
-    member this.RefreshAccumulator(board:Board) =
+    member this.RefreshAccumulator(map:BitBoardMap) =
         let colorStride = 64 * 6
         let pieceStride = 64
         Array.Clear(this.WhitePOV)
@@ -46,8 +46,8 @@ type BasicNNUE =
         for color in [PieceColor.White;PieceColor.Black] do
             for ipiece in [Piece.Pawn;Piece.Rook;Piece.Knight;Piece.Bishop;Piece.Queen;Piece.King] do
                 let mutable piece = ipiece
-                let mutable whiteIterator = board.All(piece, color).GetEnumerator()
-                let mutable blackIterator = board.All(piece, color).GetEnumerator()
+                let mutable whiteIterator = map.[piece, color].GetEnumerator()
+                let mutable blackIterator = map.[piece, color].GetEnumerator()
                 let originalPiece = piece
                 if (piece = Piece.Rook) then piece <- Piece.Bishop
                 elif (piece = Piece.Knight) then piece <- Piece.Rook
