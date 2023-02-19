@@ -25,3 +25,5 @@ type RepetitionHistory =
             history.Index <- this.Index
             history
     end
+module RepetitionHistory =
+    let Default() = RepetitionHistory(1024)
