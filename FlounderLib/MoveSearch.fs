@@ -45,11 +45,11 @@ type MoveSearch(board:EngineBoard, table:MoveTranspositionTable, timeControl:Tim
     static let mutable reductionDepthTable = LogarithmicReductionDepthTable.Default()
 
     let mutable Board:EngineBoard option =  None
-    let mutable TimeControl:TimeControl = TimeControl(9999999)
+    let mutable TimeCntrl:TimeControl = TimeControl(9999999)
     let mutable Table:MoveTranspositionTable option = None
     do
         Board <- board|>Some
-        TimeControl <- timeControl
+        TimeCntrl <- timeControl
         Table <- Some(table)
     static member ReductionDepthTable
         with get() = reductionDepthTable
@@ -75,15 +75,15 @@ type MoveSearch(board:EngineBoard, table:MoveTranspositionTable, timeControl:Tim
 
         // Check whether we're past the depth to start reducing our search time with node counting and make sure that
         // we're past the required effort threshold to do this move quickly.
-        if (depth >= NODE_COUNTING_DEPTH && TimeControl.TimeLeft() <> 0 && not timePreviouslyUpdated
+        if (depth >= NODE_COUNTING_DEPTH && TimeCntrl.TimeLeft() <> 0 && not timePreviouslyUpdated
             && SearchEffort.[bestMove.From, bestMove.To] * 100 / this.TotalNodeSearchCount >= NODE_COUNTING_REQUIRED_EFFORT) then
             timePreviouslyUpdated <- true
-            TimeControl.ChangeTime(TimeControl.Time / 3)
+            TimeCntrl.ChangeTime(TimeCntrl.Time / 3)
             ReducedTimeMove <- bestMove
         if (timePreviouslyUpdated && bestMove <> ReducedTimeMove) then
             // In the rare case that our previous node count guess was incorrect, give us a little bit more time
             // to see if we can find a better move.
-            TimeControl.ChangeTime(TimeControl.Time * 3)
+            TimeCntrl.ChangeTime(TimeCntrl.Time * 3)
         timePreviouslyUpdated
     member this.DepthSearchLog(depth:int, evaluation:int, stopwatch:Stopwatch) =
         let elapSec = float(stopwatch.ElapsedMilliseconds) / 1000.0
@@ -98,7 +98,7 @@ type MoveSearch(board:EngineBoard, table:MoveTranspositionTable, timeControl:Tim
         //// If we're out of time, we should exit the search as fast as possible.
         //// NOTE: Due to the nature of this exit (using exceptions to do it as fast as possible), the board state
         //// is not reverted. Thus, a cloned board must be provided.
-        if (TimeControl.Finished()) then raise (OperationCanceledException())
+        if (TimeCntrl.Finished()) then raise (OperationCanceledException())
         
         if (node = PvNode) then selectiveDepth <- Math.Max(selectiveDepth, plyFromRoot)
 
@@ -175,10 +175,9 @@ type MoveSearch(board:EngineBoard, table:MoveTranspositionTable, timeControl:Tim
 
                     // Calculate approximation of SEE.
                     let see = SEE.Approximate(board, move)
-            
                     // If SEE + the positional evaluation is greater than beta, then this capture is far too good, and hence
                     // causes a beta cutoff.
-                    let seeEval = see + earlyEval;
+                    let seeEval = see + earlyEval
                     if (seeEval > beta) then 
                         bestEvaluation <- seeEval
                         keepgoing <- false
@@ -207,7 +206,7 @@ type MoveSearch(board:EngineBoard, table:MoveTranspositionTable, timeControl:Tim
         // If we're out of time, we should exit the search as fast as possible.
         // NOTE: Due to the nature of this exit (using exceptions to do it as fast as possible), the board state
         // is not reverted. Thus, a cloned board must be provided.
-        if (TimeControl.Finished()) then raise (OperationCanceledException())
+        if (TimeCntrl.Finished()) then raise (OperationCanceledException())
         
         if (node = PvNode) then PvTable.InitializeLength(plyFromRoot)
 
@@ -565,7 +564,7 @@ type MoveSearch(board:EngineBoard, table:MoveTranspositionTable, timeControl:Tim
             // If we're out of time, we should exit the search as fast as possible.
             // NOTE: Due to the nature of this exit (using exceptions to do it as fast as possible), the board state
             // is not reverted. Thus, a cloned board must be provided.
-            if (TimeControl.Finished()) then raise (OperationCanceledException())
+            if (TimeCntrl.Finished()) then raise (OperationCanceledException())
             // We should reset our window if it's too far gone because the gradual increase isn't working.
             // In the case our alpha is far below our aspiration bound, we should reset it to negative infinity for
             // our research.
@@ -606,7 +605,7 @@ type MoveSearch(board:EngineBoard, table:MoveTranspositionTable, timeControl:Tim
             let stopwatch = Stopwatch.StartNew()
             let mutable timePreviouslyUpdated = false
             let mutable keepgoing = true
-            while (keepgoing && not (TimeControl.Finished()) && depth <= selectedDepth) do
+            while (keepgoing && not (TimeCntrl.Finished()) && depth <= selectedDepth) do
                 evaluation <- this.AspirationSearch(Board.Value, depth, evaluation, &bestMove)
                 bestMove <- PvTable.Get(0)
 
@@ -617,7 +616,7 @@ type MoveSearch(board:EngineBoard, table:MoveTranspositionTable, timeControl:Tim
                 
                 // In the case we are past a certain depth, and are really low on time, it's highly unlikely we'll
                 // finish the next depth in time. To save time, we should just exit the search early.
-                if (depth > 5 && float(TimeControl.TimeLeft()) <= float(TimeControl.Time) * TIME_TO_DEPTH_THRESHOLD) then keepgoing <- false
+                if (depth > 5 && float(TimeCntrl.TimeLeft()) <= float(TimeCntrl.Time) * TIME_TO_DEPTH_THRESHOLD) then keepgoing <- false
                 
                 depth <- depth+1
         with

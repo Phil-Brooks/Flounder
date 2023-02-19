@@ -1,5 +1,4 @@
 ﻿namespace FlounderLib
-open System
 
 type PrincipleVariationTable =
     struct
