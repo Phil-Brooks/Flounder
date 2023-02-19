@@ -1,14 +1,19 @@
 ﻿namespace FlounderLib
 
-type KillerMoveTable() =
-    let SIZE = 128
-    let mutable Internal:OrderedMoveEntry[] = Array.zeroCreate (2*SIZE)
-    member _.Item 
-        with get(typ:int, ply:int) = Internal.[typ * SIZE + ply]
-        and set(typ:int, ply:int) value = Internal.[typ * SIZE + ply] <- value
-    member _.ReOrder(ply:int) = Internal.[SIZE + ply] <- Internal.[ply]
-
-
+type KillerMoveTable =
+    struct
+        val mutable Internal:OrderedMoveEntry array
+        new(size) =
+            {
+                Internal = Array.zeroCreate size
+            }
+        member this.Item 
+            with get(typ:int, ply:int) = this.Internal.[typ * 128 + ply]
+            and set(typ:int, ply:int) value = this.Internal.[typ * 128 + ply] <- value
+        member this.ReOrder(ply:int) = this.Internal.[128 + ply] <- this.Internal.[ply]
+    end
+module KillerMoveTable =
+    let Default() = KillerMoveTable(256)
 
 
 

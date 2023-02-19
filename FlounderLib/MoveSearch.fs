@@ -37,7 +37,7 @@ type MoveSearch(board:EngineBoard, table:MoveTranspositionTable, timeControl:Tim
     let mutable totalNodeSearchCount = 0
     let mutable selectiveDepth = 0
     let HistoryTable = HistoryTable()
-    let KillerMoveTable = KillerMoveTable()
+    let mutable KillerMvTbl = KillerMoveTable.Default()
     let SearchEffort = MoveSearchEffortTable()
     let PvTable = PrincipleVariationTable()
     let MoveSearchStack = MoveSearchStack()
@@ -135,7 +135,7 @@ type MoveSearch(board:EngineBoard, table:MoveTranspositionTable, timeControl:Tim
                 // Allocate memory on the stack to be used for our move-list.
                 let moveSpanarr = Array.zeroCreate<OrderedMoveEntry>(OrderedMoveList.SIZE)//stackalloc OrderedMoveEntry[OrderedMoveList.SIZE];
                 let mutable moveSpan = new Span<OrderedMoveEntry>(moveSpanarr)
-                let moveList = OrderedMoveList(moveSpan, plyFromRoot, KillerMoveTable, HistoryTable)
+                let moveList = OrderedMoveList(moveSpan, plyFromRoot, KillerMvTbl, HistoryTable)
                 let moveCount = moveList.QSearchMoveGeneration(board.Brd, SearchedMove.Default)
         
                 let mutable bestEvaluation = earlyEval
@@ -365,7 +365,7 @@ type MoveSearch(board:EngineBoard, table:MoveTranspositionTable, timeControl:Tim
                     // Allocate memory on the stack to be used for our move-list.
                     let moveSpanarr = Array.zeroCreate<OrderedMoveEntry>(OrderedMoveList.SIZE)//stackalloc OrderedMoveEntry[OrderedMoveList.SIZE];
                     let mutable moveSpan = new Span<OrderedMoveEntry>(moveSpanarr)
-                    let moveList = OrderedMoveList(moveSpan, plyFromRoot, KillerMoveTable, HistoryTable)
+                    let moveList = OrderedMoveList(moveSpan, plyFromRoot, KillerMvTbl, HistoryTable)
                     let moveCount = moveList.NormalMoveGeneration(board.Brd, transpositionMove)
                     if (moveCount = 0) then
                         // If we had no moves at this depth, we should check if our king is in check. If our king is in check, it
@@ -517,12 +517,12 @@ type MoveSearch(board:EngineBoard, table:MoveTranspositionTable, timeControl:Tim
                                 board.UndoMove(&rv)
                                 if not (handleEvaluation(evaluation, move, quietMove)) then
                                     if (quietMove) then
-                                        if (KillerMoveTable.[0, plyFromRoot] <> move) then
+                                        if (KillerMvTbl.[0, plyFromRoot] <> move) then
                                             // Given this move isn't a capture move (quiet move), we store it as a killer move (cutoff move)
                                             // to better sort quiet moves like these in the future, allowing us to achieve a cutoff faster.
                                             // Also make sure we are not saving same move in both of our caches.
-                                            KillerMoveTable.ReOrder(plyFromRoot)
-                                            KillerMoveTable.[0, plyFromRoot] <- move
+                                            KillerMvTbl.ReOrder(plyFromRoot)
+                                            KillerMvTbl.[0, plyFromRoot] <- move
                     
                                         // Increment the move that caused a beta cutoff to get a historical heuristic of best quiet moves.
                                         HistoryTable.[board.PieceOnly(move.From), board.Brd.ColorToMove, move.To] <- HistoryTable.[board.PieceOnly(move.From), board.Brd.ColorToMove, move.To] + historyBonus
