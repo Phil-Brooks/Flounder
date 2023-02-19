@@ -38,11 +38,11 @@ type MoveSearch(board:EngineBoard, table:MoveTranspositionTable, timeControl:Tim
     let mutable selectiveDepth = 0
     let mutable HistTbl = HistoryTable.Default()
     let mutable KillerMvTbl = KillerMoveTable.Default()
-    let SearchEffort = MoveSearchEffortTable()
+    let mutable SearchEffort = MoveSearchEffortTable.Default()
     let PvTable = PrincipleVariationTable()
     let MoveSearchStack = MoveSearchStack()
     let mutable ReducedTimeMove = OrderedMoveEntry.Default
-    static let mutable reductionDepthTable = LogarithmicReductionDepthTable()
+    static let mutable reductionDepthTable = LogarithmicReductionDepthTable.Default()
 
     let mutable Board:EngineBoard option =  None
     let mutable TimeControl:TimeControl = TimeControl(9999999)
