@@ -2,52 +2,52 @@
 open System
 
 type EngineBoard =
-    val mutable History:RepetitionHistory
-    val mutable IBoard:Board
+    val mutable RepHist:RepetitionHistory
+    val mutable Brd:Board
     new(boardData, turnData, castlingData, enPassantTargetData) as this = 
         {
-            IBoard = Board(boardData, turnData, castlingData, enPassantTargetData)
-            History = new RepetitionHistory(1024)
-        } then NNUE.ResetAccumulator();NNUE.RefreshAccumulator(this.IBoard.Map)
+            Brd = Board(boardData, turnData, castlingData, enPassantTargetData)
+            RepHist = RepetitionHistory.Default()
+        } then NNUE.ResetAccumulator();NNUE.RefreshAccumulator(this.Brd.Map)
     new(board:EngineBoard) = 
         {
-            IBoard = Board(board.IBoard.Map)
-            History = board.History.Clone()
+            Brd = Board(board.Brd.Map)
+            RepHist = board.RepHist.Clone()
         }
     member this.Clone() = EngineBoard(this)
-    member this.PieceOnly(sq:Square) = this.IBoard.Map.PieceOnly(sq)
+    member this.PieceOnly(sq:Square) = this.Brd.Map.PieceOnly(sq)
     member this.IsRepetition() = 
-        this.History.Count(this.IBoard.ZobristHash) > 1
+        this.RepHist.Count(this.Brd.ZobristHash) > 1
     member this.GuiMove(from:Square, mto:Square, promotion:Promotion) =
-        let moveList = MoveList(this.IBoard, from)
+        let moveList = MoveList(this.Brd, from)
         if not(moveList.Moves.[mto]) then raise (InvalidOperationException("Invalid move provided by GUI."))
         if (promotion <> Promotion.None && not moveList.Promotion) then
             raise (InvalidOperationException("Invalid move provided by GUI."))
-        let rv = this.IBoard.Move(from, mto, promotion)
-        this.History.Append(this.IBoard.ZobristHash)
+        let rv = this.Brd.Move(from, mto, promotion)
+        this.RepHist.Append(this.Brd.ZobristHash)
     member this.NullMove() =
-        let rv = this.IBoard.Map.EnPassantTarget
-        if (this.IBoard.Map.EnPassantTarget <> Square.Na) then Zobrist.HashEp(&this.IBoard.Map.ZobristHash, this.IBoard.Map.EnPassantTarget)
-        this.IBoard.Map.EnPassantTarget <- Square.Na
-        this.IBoard.Map.ColorToMove <- PieceColor.OppositeColor(this.IBoard.Map.ColorToMove)
-        Zobrist.FlipTurnInHash(&this.IBoard.Map.ZobristHash)
+        let rv = this.Brd.Map.EnPassantTarget
+        if (this.Brd.Map.EnPassantTarget <> Square.Na) then Zobrist.HashEp(&this.Brd.Map.ZobristHash, this.Brd.Map.EnPassantTarget)
+        this.Brd.Map.EnPassantTarget <- Square.Na
+        this.Brd.Map.ColorToMove <- PieceColor.OppositeColor(this.Brd.Map.ColorToMove)
+        Zobrist.FlipTurnInHash(&this.Brd.Map.ZobristHash)
         rv
     member this.UndoNullMove(rv:Square) =
         if (rv <> Square.Na) then
-            this.IBoard.Map.EnPassantTarget <- rv
-            Zobrist.HashEp(&this.IBoard.Map.ZobristHash, rv)
-        this.IBoard.Map.ColorToMove <- PieceColor.OppositeColor(this.IBoard.Map.ColorToMove)
-        Zobrist.FlipTurnInHash(&this.IBoard.Map.ZobristHash)
+            this.Brd.Map.EnPassantTarget <- rv
+            Zobrist.HashEp(&this.Brd.Map.ZobristHash, rv)
+        this.Brd.Map.ColorToMove <- PieceColor.OppositeColor(this.Brd.Map.ColorToMove)
+        Zobrist.FlipTurnInHash(&this.Brd.Map.ZobristHash)
     member this.Move(move:byref<OrderedMoveEntry>) =
         let rv:RevertMove =
             NNUE.PushAccumulator()
-            this.IBoard.Move(move.From, move.To, move.Promotion)
-        this.History.Append(this.IBoard.ZobristHash)
+            this.Brd.Move(move.From, move.To, move.Promotion)
+        this.RepHist.Append(this.Brd.ZobristHash)
         rv
     member this.UndoMove(rv:byref<RevertMove>) =
-        this.IBoard.UndoMove(&rv)
+        this.Brd.UndoMove(&rv)
         NNUE.PullAccumulator()
-        this.History.RemoveLast()
+        this.RepHist.RemoveLast()
 module EngineBoard =
     let FromFen(fen:string) = 
         let parts = fen.Split(" ")

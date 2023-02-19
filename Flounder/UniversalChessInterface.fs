@@ -91,7 +91,7 @@ module UniversalChessInterface =
         if (args.[0].ToLower().Equals("go")) then
             if (input.ToLower().Contains("perft")) then
                 // Just run PERFT.
-                Program.RunPerft(Board.IBoard, int(args.[2]))
+                Program.RunPerft(Board.Brd, int(args.[2]))
             else
                 let maxTime = 999_999_999
                 let maxDepth = 63
@@ -141,7 +141,7 @@ module UniversalChessInterface =
                     
                     getargs 1
                     if (time = maxTime || timeSpecified) then ActiveTimeControl <- new FlounderLib.TimeControl(time)
-                    else ActiveTimeControl <- FlounderLib.TimeControl(movesToGo, timeForColor, timeIncForColor, Board.IBoard.ColorToMove, MoveCount)
+                    else ActiveTimeControl <- FlounderLib.TimeControl(movesToGo, timeForColor, timeIncForColor, Board.Brd.ColorToMove, MoveCount)
 
                 let factory = TaskFactory()
                 let bestMove = OrderedMoveEntry()
