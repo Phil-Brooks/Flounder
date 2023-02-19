@@ -39,8 +39,8 @@ type MoveSearch(board:EngineBoard, table:MoveTranspositionTable, timeControl:Tim
     let mutable HistTbl = HistoryTable.Default()
     let mutable KillerMvTbl = KillerMoveTable.Default()
     let mutable SearchEffort = MoveSearchEffortTable.Default()
-    let PvTable = PrincipleVariationTable()
-    let MoveSearchStack = MoveSearchStack()
+    let mutable PvTable = PrincipleVariationTable.Default()
+    let mutable MvSrchStck = MoveSearchStack.Default()
     let mutable ReducedTimeMove = OrderedMoveEntry.Default
     static let mutable reductionDepthTable = LogarithmicReductionDepthTable.Default()
 
@@ -303,11 +303,11 @@ type MoveSearch(board:EngineBoard, table:MoveTranspositionTable, timeControl:Tim
                 let positionalEvaluation = if transpositionHit then transpositionMove.Evaluation else Evaluation.Relative(board.Brd)
             
                 // Also store the evaluation to later check if it improved.
-                MoveSearchStack.[plyFromRoot].PositionalEvaluation <- positionalEvaluation
+                MvSrchStck.[plyFromRoot].PositionalEvaluation <- positionalEvaluation
         
                 if (node = NonPvNode && not inCheck) then
                     // Roughly estimate whether the deeper search improves the position or not.
-                    improving <- plyFromRoot >= 2 && positionalEvaluation >= MoveSearchStack.[plyFromRoot - 2].PositionalEvaluation
+                    improving <- plyFromRoot >= 2 && positionalEvaluation >= MvSrchStck.[plyFromRoot - 2].PositionalEvaluation
 
                     if (depth < REVERSE_FUTILITY_DEPTH_THRESHOLD && Math.Abs(beta) < MATE &&
                         // If our depth is less than our threshold and our beta is less than mate on each end of the number

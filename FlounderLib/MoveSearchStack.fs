@@ -4,10 +4,15 @@ type MoveSearchStackItem =
     struct
         val mutable PositionalEvaluation:int
     end
-type MoveSearchStack() =
-    let SIZE = 128
-    let mutable Internal:MoveSearchStackItem array = Array.zeroCreate SIZE
-    member _.Item with get(ply:int):byref<MoveSearchStackItem> = 
-        &(Internal.[ply])
-    
-
+type MoveSearchStack =
+    struct
+        val mutable Internal:MoveSearchStackItem array
+        new(size) =
+            {
+                Internal = Array.zeroCreate size
+            }
+        member this.Item with get(ply:int):byref<MoveSearchStackItem> = 
+            &(this.Internal.[ply])
+    end
+module MoveSearchStack =
+    let Default() = MoveSearchStack(128)

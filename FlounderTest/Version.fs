@@ -12,4 +12,4 @@ module Vestion =
     [<Test>]
     let Current() =
         let ans = Version.Current
-        ans |> should equal "0.3.1.7"
+        ans |> should equal "0.3.1.8"
