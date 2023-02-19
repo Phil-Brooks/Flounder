@@ -20,7 +20,7 @@ type OrderedMoveList(memory:Span<OrderedMoveEntry>, ply:int, killerMoveTable:Kil
     member _.Internal:Span<OrderedMoveEntry> = memory
     member _.KillerMoveOne:OrderedMoveEntry =  killerMoveTable.[0, ply] 
     member _.KillerMoveTwo:OrderedMoveEntry =  killerMoveTable.[1, ply]
-    member _.HistoryTable:HistoryTable =  historyTable
+    member _.HistTbl:HistoryTable =  historyTable
     member this.ScoreMove(pieceToMove:Piece, board:Board, move:OrderedMoveEntry, tableMove:SearchedMove) =
         // Compare our move with the one found from transposition table. There's no guarantee the transposition move
         // is even legal, so this acts as a sort of legal verification for it too.
@@ -52,7 +52,7 @@ type OrderedMoveList(memory:Span<OrderedMoveEntry>, ply:int, killerMoveTable:Kil
             // Check if move is a rank 2 killer move (less local, might've been updated long time ago).
             elif move.From = this.KillerMoveTwo.From && move.To = this.KillerMoveTwo.To && move.Promotion = this.KillerMoveTwo.Promotion then 800000
             // Return the updated history score for the move.
-            else this.HistoryTable.[pieceToMove, board.ColorToMove, move.To]
+            else this.HistTbl.[pieceToMove, board.ColorToMove, move.To]
     static member MvvLva(attacker:Piece, victim:Piece) = OrderedMoveList.MvvLvaTable.[int(victim)].[int(attacker)]
     member this.NormalMoveGeneration(board:Board, transpositionMove:SearchedMove) =
         let oppositeColor = PieceColor.OppositeColor(board.ColorToMove)
