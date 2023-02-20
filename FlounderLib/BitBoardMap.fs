@@ -242,7 +242,7 @@ type BitBoardMap =
 module BitBoardMap =
     let Hash(map:BitBoardMap) =
         let mutable zobristHash = 0UL
-        for piece in [Piece.Pawn;Piece.Rook;Piece.Knight;Piece.Bishop;Piece.Queen;Piece.King] do
+        for piece in Pcs do
             let psbb:BitBoard = map.[piece,map.ColorToMove]
             let mutable pieceSquareIterator:BitBoardIterator = psbb.GetEnumerator()  
             let mutable sq:Square = pieceSquareIterator.Current

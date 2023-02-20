@@ -2,8 +2,10 @@
 open System
 open System.Diagnostics
 open System.Text
-    
-type NodeType = NonPvNode|PvNode
+
+module MoveSearch =
+    let mutable ReductionDepthTable = LogarithmicReductionDepthTable.Default()
+
 type MoveSearch(board:EngineBoard, table:MoveTranspositionTable, timeControl:TimeControl) =
 
     let POS_INFINITY = 100000000
@@ -42,7 +44,6 @@ type MoveSearch(board:EngineBoard, table:MoveTranspositionTable, timeControl:Tim
     let mutable PvTable = PrincipleVariationTable.Default()
     let mutable MvSrchStck = MoveSearchStack.Default()
     let mutable ReducedTimeMove = OrderedMoveEntry.Default
-    static let mutable reductionDepthTable = LogarithmicReductionDepthTable.Default()
 
     let mutable Board:EngineBoard option =  None
     let mutable TimeCntrl:TimeControl = TimeControl(9999999)
@@ -51,9 +52,6 @@ type MoveSearch(board:EngineBoard, table:MoveTranspositionTable, timeControl:Tim
         Board <- board|>Some
         TimeCntrl <- timeControl
         Table <- Some(table)
-    static member ReductionDepthTable
-        with get() = reductionDepthTable
-        and set(v) = reductionDepthTable <- v
     member _.TotalNodeSearchCount = totalNodeSearchCount
     member _.TableCutoffCount = tableCutoffCount
     member _.PvLine() = 
@@ -93,17 +91,17 @@ type MoveSearch(board:EngineBoard, table:MoveTranspositionTable, timeControl:Tim
             this.TotalNodeSearchCount.ToString() + " nps " + ratio.ToString() 
             + " pv " + this.PvLine() + "\n"
         )
-    member this.QSearch(node:NodeType, board:EngineBoard, plyFromRoot:int, depth:int, ialpha:int, beta:int) =
+    member this.QSearch(isPvNode:bool, board:EngineBoard, plyFromRoot:int, depth:int, ialpha:int, beta:int) =
         let mutable alpha = ialpha
         //// If we're out of time, we should exit the search as fast as possible.
         //// NOTE: Due to the nature of this exit (using exceptions to do it as fast as possible), the board state
         //// is not reverted. Thus, a cloned board must be provided.
         if (TimeCntrl.Finished()) then raise (OperationCanceledException())
         
-        if (node = PvNode) then selectiveDepth <- Math.Max(selectiveDepth, plyFromRoot)
+        if isPvNode then selectiveDepth <- Math.Max(selectiveDepth, plyFromRoot)
 
         let mutable ans = None 
-        if (node = NonPvNode) then
+        if not isPvNode then
             let storedEntry = Table.Value.[board.Brd.ZobristHash]
             if (storedEntry.ZobristHash = board.Brd.ZobristHash &&
                 (storedEntry.Type = MoveTranspositionTableEntryType.Exact ||
@@ -188,7 +186,7 @@ type MoveSearch(board:EngineBoard, table:MoveTranspositionTable, timeControl:Tim
         
                         // Evaluate position by searching deeper and negating the result. An evaluation that's good for
                         // our opponent will obviously be bad for us.
-                        let evaluation = -this.QSearch(node, board, nextPlyFromRoot, nextDepth, -beta, -alpha)
+                        let evaluation = -this.QSearch(isPvNode, board, nextPlyFromRoot, nextDepth, -beta, -alpha)
                 
                         // Undo the move.
                         board.UndoMove(&rv)
@@ -197,7 +195,7 @@ type MoveSearch(board:EngineBoard, table:MoveTranspositionTable, timeControl:Tim
             
                     i <- i+1
                 bestEvaluation
-    member this.AbSearch(node:NodeType, board:EngineBoard, plyFromRoot:int, idepth:int, ialpha:int, ibeta:int) =
+    member this.AbSearch(isPvNode:bool, board:EngineBoard, plyFromRoot:int, idepth:int, ialpha:int, ibeta:int) =
         let mutable depth = idepth
         let mutable alpha = ialpha
         let mutable beta = ibeta
@@ -208,9 +206,9 @@ type MoveSearch(board:EngineBoard, table:MoveTranspositionTable, timeControl:Tim
         // is not reverted. Thus, a cloned board must be provided.
         if (TimeCntrl.Finished()) then raise (OperationCanceledException())
         
-        if (node = PvNode) then PvTable.InitializeLength(plyFromRoot)
+        if isPvNode then PvTable.InitializeLength(plyFromRoot)
 
-        if (node = PvNode) then selectiveDepth <- Math.Max(selectiveDepth, plyFromRoot)
+        if isPvNode then selectiveDepth <- Math.Max(selectiveDepth, plyFromRoot)
         
         // At depth 0 (or less in the case of reductions etc.), since we may be having a capture train, we should
         // jump into QSearch and evaluate even deeper. In the case of no captures available, QSearch will throw us
@@ -218,7 +216,7 @@ type MoveSearch(board:EngineBoard, table:MoveTranspositionTable, timeControl:Tim
         let rootNode = plyFromRoot = 0
         let notRootNode = not rootNode
 
-        if (depth <= 0) then ans <- this.QSearch(node, board, plyFromRoot, 15, alpha, beta)|>Some
+        if (depth <= 0) then ans <- this.QSearch(isPvNode, board, plyFromRoot, 15, alpha, beta)|>Some
         else
             if (notRootNode) then
                 // We had a three-fold repetition, so return earlier.
@@ -256,7 +254,7 @@ type MoveSearch(board:EngineBoard, table:MoveTranspositionTable, timeControl:Tim
                 transpositionMove <- storedEntry.BestMove
                 transpositionHit <- true
 
-                if (node = NonPvNode && int(storedEntry.Depth) >= depth) then
+                if (not isPvNode && int(storedEntry.Depth) >= depth) then
                     // If it came from a higher depth search than our current depth, it means the results are definitely
                     // more trustworthy than the ones we could achieve at this depth.
                     if storedEntry.Type=MoveTranspositionTableEntryType.Exact then
@@ -304,7 +302,7 @@ type MoveSearch(board:EngineBoard, table:MoveTranspositionTable, timeControl:Tim
                 // Also store the evaluation to later check if it improved.
                 MvSrchStck.[plyFromRoot].PositionalEvaluation <- positionalEvaluation
         
-                if (node = NonPvNode && not inCheck) then
+                if (not isPvNode && not inCheck) then
                     // Roughly estimate whether the deeper search improves the position or not.
                     improving <- plyFromRoot >= 2 && positionalEvaluation >= MvSrchStck.[plyFromRoot - 2].PositionalEvaluation
 
@@ -325,7 +323,7 @@ type MoveSearch(board:EngineBoard, table:MoveTranspositionTable, timeControl:Tim
                         // less than alpha, then the opponent will be able to find at least one move that improves their
                         // position.
                         // Thus, we can avoid trying moves and jump into QSearch to get exact evaluation of the position.
-                        ans <- this.QSearch(NonPvNode, board, plyFromRoot, 15, alpha, beta)|>Some
+                        ans <- this.QSearch(false, board, plyFromRoot, 15, alpha, beta)|>Some
         
                     elif (notRootNode && depth > NULL_MOVE_DEPTH) then
                         // Reduced depth for null move pruning.
@@ -340,7 +338,7 @@ type MoveSearch(board:EngineBoard, table:MoveTranspositionTable, timeControl:Tim
                         // can cutoff this branch earlier.
                         // Being reduced, it's not as expensive as the regular search (especially if we can avoid a jump into
                         // QSearch).
-                        let evaluation = -this.AbSearch(NonPvNode, board, nextPlyFromRoot, reducedDepth, -beta, -beta + 1);
+                        let evaluation = -this.AbSearch(false, board, nextPlyFromRoot, reducedDepth, -beta, -beta + 1);
                 
                         // Undo the null move so we can get back to original state of the board.
                         board.UndoNullMove(rv);
@@ -391,7 +389,7 @@ type MoveSearch(board:EngineBoard, table:MoveTranspositionTable, timeControl:Tim
                                 bestEvaluation <- evaluation
                                 bestMoveSoFar <- move
 
-                                if node = PvNode then
+                                if isPvNode then
                                     // Insert move into PV Table.
                                     PvTable.Insert(plyFromRoot, &move)
             
@@ -447,7 +445,7 @@ type MoveSearch(board:EngineBoard, table:MoveTranspositionTable, timeControl:Tim
                                 // Hence, it's futile to evaluate this position any further.
                                 keepgoing <- false
                             //Late Move Pruning
-                            elif (node = NonPvNode && lmp && bestEvaluation > NEG_INFINITY && quietMoveCounter > lmpQuietThreshold) then 
+                            elif (not isPvNode && lmp && bestEvaluation > NEG_INFINITY && quietMoveCounter > lmpQuietThreshold) then 
                                 // If we are past a certain threshold and we have searched the required quiet moves for this depth for
                                 // pruning to be relatively safe, we can avoid searching any more moves since the likely best move
                                 // will have been determined by now.
@@ -464,7 +462,7 @@ type MoveSearch(board:EngineBoard, table:MoveTranspositionTable, timeControl:Tim
                                     // If we haven't searched any moves, we should do a full depth search without any reductions.
                                     // Without a full depth search beforehand, there's no way to guarantee principle variation search being
                                     // safe.
-                                    evaluation <- -this.AbSearch(node, board, nextPlyFromRoot, nextDepth, -beta, -alpha)
+                                    evaluation <- -this.AbSearch(isPvNode, board, nextPlyFromRoot, nextDepth, -beta, -alpha)
                                 else 
                                     // Otherwise, to speed up search, we should try applying certain reductions to see if we can speed up
                                     // the search. Moreover, even if those reductions are still unsafe, we can still save time by trying
@@ -480,7 +478,7 @@ type MoveSearch(board:EngineBoard, table:MoveTranspositionTable, timeControl:Tim
                                         // Logarithmic reduction: ln(depth) * ln(i) / 2 - 0.2
                                         let mutable r = MoveSearch.ReductionDepthTable.[depth, i]
                                         // Reduce more on non-PV nodes.
-                                        if (node <> PvNode) then r <- r+1
+                                        if not isPvNode then r <- r+1
                                         // Reduce if not improving.
                                         if (not improving) then r <- r+1
                                         // Determine the reduced depth. Ensure it's >= 1 as we want to avoid dropping into QSearch.
@@ -490,7 +488,7 @@ type MoveSearch(board:EngineBoard, table:MoveTranspositionTable, timeControl:Tim
                                         // reduced depth searches with reasonable safety. Result is negated as an evaluation that's good
                                         // for our opponent will be bad for us.
                                         evaluation <- 
-                                            -this.AbSearch(NonPvNode, board, nextPlyFromRoot, reducedDepth, -alpha - 1, -alpha)
+                                            -this.AbSearch(false, board, nextPlyFromRoot, reducedDepth, -alpha - 1, -alpha)
                 
                                         // In the case that LMR fails, our evaluation will be greater than alpha which will force a
                                         // principle variation research. However, in the case we couldn't apply LMR (due to safety reasons,
@@ -503,14 +501,14 @@ type MoveSearch(board:EngineBoard, table:MoveTranspositionTable, timeControl:Tim
                                         // If we couldn't attempt LMR because it was unsafe or if LMR failed, we should try a null-window
                                         // search at a normal progressive depth. If this is a research, it'll likely be fast enough to have
                                         // no impact due to transposition tables.
-                                        evaluation <- -this.AbSearch(NonPvNode, board, nextPlyFromRoot, nextDepth, -alpha - 1, -alpha)
+                                        evaluation <- -this.AbSearch(false, board, nextPlyFromRoot, nextDepth, -alpha - 1, -alpha)
 
                                         if (evaluation > alpha && evaluation < beta) then
                                             // If our evaluation was good enough to change our alpha but not our beta, it means we're on a
                                             // principle variation node. Essentially: beta - alpha > 1.
                                             // This means this is our best move from the search, and it isn't too good to be deemed
                                             // an unlikely path. Thus, we should evaluate it clearly using a full-window research.
-                                            evaluation <- -this.AbSearch(PvNode, board, nextPlyFromRoot, nextDepth, -beta, -alpha)
+                                            evaluation <- -this.AbSearch(true, board, nextPlyFromRoot, nextDepth, -beta, -alpha)
             
                                 // Undo the move.
                                 board.UndoMove(&rv)
@@ -574,7 +572,7 @@ type MoveSearch(board:EngineBoard, table:MoveTranspositionTable, timeControl:Tim
             if (beta > ASPIRATION_BOUND) then beta <- POS_INFINITY
             // Get our best evaluation so far so we can decide whether we need to do a research or not.
             // Researches are reasonably fast thanks to transposition tables.
-            let bestEvaluation = this.AbSearch(PvNode, board, 0, depth, alpha, beta)
+            let bestEvaluation = this.AbSearch(true, board, 0, depth, alpha, beta)
             //Modify Window
 
             if (bestEvaluation <= alpha) then

@@ -87,7 +87,7 @@ type OrderedMoveList =
                     let mutable move = moves.Current
                     while (moves.MoveNext()) do
                         if (moveList.Promotion) then
-                            for p in [Promotion.Rook;Promotion.Knight;Promotion.Bishop;Promotion.Queen] do
+                            for p in Proms do
                                 this.Internal.[i] <- new OrderedMoveEntry(from, move, p)
                                 this.Internal.[i].Score <- this.ScoreMove(Piece.Pawn, board, this.Internal.[i], transpositionMove)
                                 i<-i+1
@@ -147,7 +147,7 @@ type OrderedMoveList =
                     let mutable move = moves.Current
                     while (moves.MoveNext()) do
                         if (moveList.Promotion) then
-                            for p in [Promotion.Rook;Promotion.Knight;Promotion.Bishop;Promotion.Queen] do
+                            for p in Proms do
                                 this.Internal.[i] <- new OrderedMoveEntry(from, move, p)
                                 this.Internal.[i].Score <- this.ScoreMove(Piece.Pawn, board, this.Internal.[i], transpositionMove)
                                 i<-i+1

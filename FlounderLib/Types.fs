@@ -11,12 +11,14 @@ module Types =
         |Queen = 4
         |King = 5
         |Empty = 6
+    let Pcs = [|Piece.Pawn;Piece.Rook;Piece.Knight;Piece.Bishop;Piece.Queen;Piece.King|]
 
     type PieceColor =
         // The color of the piece.
         |White = 0
         |Black = 1
         |None = 2
+    let Cols = [|PieceColor.White;PieceColor.Black|]
 
     type Square =
         // Squares on a chess board.
@@ -38,6 +40,7 @@ module Types =
         |Bishop = 3
         |Rook = 1
         |Queen = 4
+    let Proms = [|Promotion.Queen;Promotion.Rook;Promotion.Bishop;Promotion.Knight|]
 
     type MoveTranspositionTableEntryType =
         | Exact = 0

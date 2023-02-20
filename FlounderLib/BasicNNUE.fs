@@ -43,8 +43,8 @@ type BasicNNUE =
         let pieceStride = 64
         Array.Clear(this.WhitePOV)
         Array.Clear(this.BlackPOV)
-        for color in [PieceColor.White;PieceColor.Black] do
-            for ipiece in [Piece.Pawn;Piece.Rook;Piece.Knight;Piece.Bishop;Piece.Queen;Piece.King] do
+        for color in Cols do
+            for ipiece in Pcs do
                 let mutable piece = ipiece
                 let mutable whiteIterator = map.[piece, color].GetEnumerator()
                 let mutable blackIterator = map.[piece, color].GetEnumerator()
