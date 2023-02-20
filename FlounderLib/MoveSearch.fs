@@ -7,34 +7,6 @@ module MoveSearch =
     let mutable ReductionDepthTable = LogarithmicReductionDepthTable.Default()
 
 type MoveSearch(board:EngineBoard, table:MoveTranspositionTable, timeControl:TimeControl) =
-
-    let POS_INFINITY = 100000000
-    let NEG_INFINITY = -POS_INFINITY
-    let MATE = POS_INFINITY - 1
-    let NULL_MOVE_REDUCTION = 4
-    let NULL_MOVE_DEPTH = 2
-    let NULL_MOVE_SCALING_FACTOR = 3
-    let NULL_MOVE_SCALING_CORRECTION = 1
-    let ASPIRATION_BOUND = 3500
-    let ASPIRATION_SIZE = 16
-    let ASPIRATION_DELTA = 23
-    let ASPIRATION_DEPTH = 4
-    let RAZORING_EVALUATION_THRESHOLD = 150
-    let LMR_FULL_SEARCH_THRESHOLD = 4
-    let LMR_DEPTH_THRESHOLD = 3
-    let LMP_QUIET_THRESHOLD_BASE = 3
-    let LMP_DEPTH_THRESHOLD = 3
-    let NODE_COUNTING_DEPTH = 8
-    let NODE_COUNTING_REQUIRED_EFFORT = 95
-    let REVERSE_FUTILITY_D = 67
-    let REVERSE_FUTILITY_I = 76
-    let REVERSE_FUTILITY_DEPTH_THRESHOLD = 7
-    let IIR_DEPTH_THRESHOLD = 3
-    let IIR_DEPTH_REDUCTION = 1
-    let FUTILITY_DEPTH_FACTOR = 150
-    let CHECK_EXTENSION = 1
-    let TIME_TO_DEPTH_THRESHOLD = 0.2
-
     let mutable tableCutoffCount = 0
     let mutable totalNodeSearchCount = 0
     let mutable selectiveDepth = 0
@@ -73,8 +45,8 @@ type MoveSearch(board:EngineBoard, table:MoveTranspositionTable, timeControl:Tim
 
         // Check whether we're past the depth to start reducing our search time with node counting and make sure that
         // we're past the required effort threshold to do this move quickly.
-        if (depth >= NODE_COUNTING_DEPTH && TimeCntrl.TimeLeft() <> 0 && not timePreviouslyUpdated
-            && SearchEffort.[bestMove.From, bestMove.To] * 100 / this.TotalNodeSearchCount >= NODE_COUNTING_REQUIRED_EFFORT) then
+        if (depth >= 8 && TimeCntrl.TimeLeft() <> 0 && not timePreviouslyUpdated
+            && SearchEffort.[bestMove.From, bestMove.To] * 100 / this.TotalNodeSearchCount >= 95) then
             timePreviouslyUpdated <- true
             TimeCntrl.ChangeTime(TimeCntrl.Time / 3)
             ReducedTimeMove <- bestMove
@@ -237,8 +209,8 @@ type MoveSearch(board:EngineBoard, table:MoveTranspositionTable, timeControl:Tim
                                 // If we are not at the root, we should check and see if there is a ready mate.
                                 // If there is, we shouldn't really care about other moves or slower mates, but instead
                                 // we should prune as fast as possible. It's crucial to ensuring we hit high depths.
-                                alpha <- Math.Max(alpha, -MATE + plyFromRoot)
-                                beta <- Math.Min(beta, MATE - plyFromRoot - 1);
+                                alpha <- Math.Max(alpha, plyFromRoot - 99999999)
+                                beta <- Math.Min(beta, 99999999 - plyFromRoot)
                                 if (alpha >= beta) then ans <- alpha|>Some
         if ans.IsSome then 
             ans.Value
@@ -306,7 +278,7 @@ type MoveSearch(board:EngineBoard, table:MoveTranspositionTable, timeControl:Tim
                     // Roughly estimate whether the deeper search improves the position or not.
                     improving <- plyFromRoot >= 2 && positionalEvaluation >= MvSrchStck.[plyFromRoot - 2].PositionalEvaluation
 
-                    if (depth < REVERSE_FUTILITY_DEPTH_THRESHOLD && Math.Abs(beta) < MATE &&
+                    if (depth < 7 && Math.Abs(beta) < 99999999 &&
                         // If our depth is less than our threshold and our beta is less than mate on each end of the number
                         // line, then attempting reverse futility pruning is safe.
                 
@@ -315,20 +287,20 @@ type MoveSearch(board:EngineBoard, table:MoveTranspositionTable, timeControl:Tim
                         // If it is greater or equal than beta, then in most cases than not, it is futile to further evaluate
                         // this tree and hence better to just return early.
                         let improvingInt = if improving then 1 else 0
-                        positionalEvaluation - REVERSE_FUTILITY_D * depth + REVERSE_FUTILITY_I * improvingInt >= beta) then
+                        positionalEvaluation - 67 * depth + 76 * improvingInt >= beta) then
                         ans <- beta|>Some
             
-                    elif (depth = 1 && positionalEvaluation + RAZORING_EVALUATION_THRESHOLD < alpha) then
+                    elif (depth = 1 && positionalEvaluation + 150 < alpha) then
                         // If after any move, the positional evaluation of the resulting position with some added threshold is
                         // less than alpha, then the opponent will be able to find at least one move that improves their
                         // position.
                         // Thus, we can avoid trying moves and jump into QSearch to get exact evaluation of the position.
                         ans <- this.QSearch(false, board, plyFromRoot, 15, alpha, beta)|>Some
         
-                    elif (notRootNode && depth > NULL_MOVE_DEPTH) then
+                    elif (notRootNode && depth > 2) then
                         // Reduced depth for null move pruning.
-                        let reducedDepth = depth - NULL_MOVE_REDUCTION - 
-                                           (depth / NULL_MOVE_SCALING_FACTOR - NULL_MOVE_SCALING_CORRECTION)
+                        let reducedDepth = depth - 4 - 
+                                           (depth / 3 - 1)
                 
                         // For null move pruning, we give the turn to the opponent and let them make the move.
                         let mutable rv = board.NullMove()
@@ -351,13 +323,13 @@ type MoveSearch(board:EngineBoard, table:MoveTranspositionTable, timeControl:Tim
                     // If we're in check, then it's better to evaluate this position deeper as to get good idea of situation,
                     // avoiding unseen blunders. Due to the number of moves being very less when under check, one shouldn't
                     // be concerned about search explosion.
-                    depth <- depth + CHECK_EXTENSION
+                    depth <- depth + 1
 
                 if ans.IsSome then 
                     ans.Value
                 else
                     // Reduce depth if there are no transposition hits and we're at a high enough depth to do it safely.
-                    if (depth > IIR_DEPTH_THRESHOLD && not transpositionHit) then depth <- depth - IIR_DEPTH_REDUCTION
+                    if (depth > 3 && not transpositionHit) then depth <- depth - 1
 
                     // Allocate memory on the stack to be used for our move-list.
                     let moveSpanarr = Array.zeroCreate<OrderedMoveEntry>(OrderedMoveList.SIZE)//stackalloc OrderedMoveEntry[OrderedMoveList.SIZE];
@@ -369,12 +341,12 @@ type MoveSearch(board:EngineBoard, table:MoveTranspositionTable, timeControl:Tim
                         // means we lost as nothing can save the king anymore. Otherwise, it's a stalemate where we can't really do
                         // anything but the opponent cannot kill our king either. It isn't a beneficial position or a position
                         // that's bad for us, so returning 0 is fine here.
-                        ans <- (if inCheck then -MATE + plyFromRoot else 0)|>Some
+                        ans <- (if inCheck then -99999999 + plyFromRoot else 0)|>Some
                     if ans.IsSome then 
                         ans.Value
                     else
 
-                        let mutable bestEvaluation = NEG_INFINITY
+                        let mutable bestEvaluation = -100000000
                         let mutable bestMoveSoFar = OrderedMoveEntry(Square.Na, Square.Na, Promotion.None)
                         let mutable transpositionTableEntryType = MoveTranspositionTableEntryType.AlphaUnchanged
                         let historyBonus = depth * depth
@@ -422,9 +394,9 @@ type MoveSearch(board:EngineBoard, table:MoveTranspositionTable, timeControl:Tim
             
                         let mutable i = 0
                         let mutable quietMoveCounter = 0
-                        let lmpQuietThreshold = LMP_QUIET_THRESHOLD_BASE + depth * depth;
-                        let lmp = notRootNode && (not inCheck) && depth <= LMP_DEPTH_THRESHOLD
-                        let lmr = depth >= LMR_DEPTH_THRESHOLD && (not inCheck)
+                        let lmpQuietThreshold = 3 + depth * depth;
+                        let lmp = notRootNode && (not inCheck) && depth <= 3
+                        let lmr = depth >= 3 && (not inCheck)
 
                         let mutable keepgoing = true
                         while (i < moveCount && keepgoing) do
@@ -439,13 +411,13 @@ type MoveSearch(board:EngineBoard, table:MoveTranspositionTable, timeControl:Tim
                             quietMoveCounter <- quietMoveCounter + quietInt
 
                             //Futility Pruning
-                            if (i > 0 && quietMove && positionalEvaluation + depth * FUTILITY_DEPTH_FACTOR <= alpha) then
+                            if (i > 0 && quietMove && positionalEvaluation + depth * 150 <= alpha) then
                                 // If our move is a quiet and static evaluation of a position with a depth-relative margin is below
                                 // our alpha, then the move won't really help us improve our position. And nor will any future move.
                                 // Hence, it's futile to evaluate this position any further.
                                 keepgoing <- false
                             //Late Move Pruning
-                            elif (not isPvNode && lmp && bestEvaluation > NEG_INFINITY && quietMoveCounter > lmpQuietThreshold) then 
+                            elif (not isPvNode && lmp && bestEvaluation > -100000000 && quietMoveCounter > lmpQuietThreshold) then 
                                 // If we are past a certain threshold and we have searched the required quiet moves for this depth for
                                 // pruning to be relatively safe, we can avoid searching any more moves since the likely best move
                                 // will have been determined by now.
@@ -471,7 +443,7 @@ type MoveSearch(board:EngineBoard, table:MoveTranspositionTable, timeControl:Tim
                 
                                     //Late Move Reduction
                 
-                                    if (i >= LMR_FULL_SEARCH_THRESHOLD && lmr) then
+                                    if (i >= 4 && lmr) then
                                         // If we're past the move count and depth threshold where we can usually safely apply LMR and we
                                         // also aren't in check, then we can reduce the depth of the subtree, speeding up search.
 
@@ -546,15 +518,15 @@ type MoveSearch(board:EngineBoard, table:MoveTranspositionTable, timeControl:Tim
                         bestEvaluation
     member this.AspirationSearch(board:EngineBoard, depth:int, previousEvaluation:int, bestMove:byref<OrderedMoveEntry>) =
         // Set base window size.
-        let mutable alpha = NEG_INFINITY
-        let mutable beta = POS_INFINITY
+        let mutable alpha = -100000000
+        let mutable beta = 100000000
 
-        if (depth > ASPIRATION_DEPTH) then
+        if depth > 4 then
             // If we're searching deeper than our aspiration depth, then we should modify the window based on our
             // previous evaluation and aspiration size. If the window isn't reasonably correct, it'll get reset later
             // anyways.
-            alpha <- previousEvaluation - ASPIRATION_SIZE
-            beta <- previousEvaluation + ASPIRATION_SIZE
+            alpha <- previousEvaluation - 16
+            beta <- previousEvaluation + 16
 
         let mutable research = 0
         let mutable ans = None
@@ -566,10 +538,10 @@ type MoveSearch(board:EngineBoard, table:MoveTranspositionTable, timeControl:Tim
             // We should reset our window if it's too far gone because the gradual increase isn't working.
             // In the case our alpha is far below our aspiration bound, we should reset it to negative infinity for
             // our research.
-            if (alpha < -ASPIRATION_BOUND) then alpha <- NEG_INFINITY
+            if (alpha < -3500) then alpha <- -100000000
             // In the case our beta is far too above our aspiration bound, we should reset it to positive infinity for
             // our research.
-            if (beta > ASPIRATION_BOUND) then beta <- POS_INFINITY
+            if (beta > 3500) then beta <- 100000000
             // Get our best evaluation so far so we can decide whether we need to do a research or not.
             // Researches are reasonably fast thanks to transposition tables.
             let bestEvaluation = this.AbSearch(true, board, 0, depth, alpha, beta)
@@ -578,12 +550,12 @@ type MoveSearch(board:EngineBoard, table:MoveTranspositionTable, timeControl:Tim
             if (bestEvaluation <= alpha) then
                 research <- research+1                
                 // If our best evaluation was somehow worse than our alpha, we should resize our window and research.
-                alpha <- Math.Max(alpha - research * research * ASPIRATION_DELTA, NEG_INFINITY)
+                alpha <- Math.Max(alpha - research * research * 23, -100000000)
             elif (bestEvaluation >= beta) then
                 research <- research+1 
                 
                 // If our evaluation was somehow better than our beta, we should resize our window and research.
-                beta <- Math.Min(beta + research * research * ASPIRATION_DELTA, POS_INFINITY)
+                beta <- Math.Min(beta + research * research * 23, 100000000)
                 
                 // Update our best move in case our evaluation was better than beta.
                 // The move we get in future surely can't be worse than this so it's fine to update our best move
@@ -597,7 +569,7 @@ type MoveSearch(board:EngineBoard, table:MoveTranspositionTable, timeControl:Tim
         ans.Value
     member this.IterativeDeepening(selectedDepth:int) =
         let mutable bestMove = OrderedMoveEntry.Default
-        let mutable evaluation = NEG_INFINITY
+        let mutable evaluation = -100000000
         try 
             let mutable depth = 1
             let stopwatch = Stopwatch.StartNew()
@@ -614,7 +586,7 @@ type MoveSearch(board:EngineBoard, table:MoveTranspositionTable, timeControl:Tim
                 
                 // In the case we are past a certain depth, and are really low on time, it's highly unlikely we'll
                 // finish the next depth in time. To save time, we should just exit the search early.
-                if (depth > 5 && float(TimeCntrl.TimeLeft()) <= float(TimeCntrl.Time) * TIME_TO_DEPTH_THRESHOLD) then keepgoing <- false
+                if (depth > 5 && float(TimeCntrl.TimeLeft()) <= float(TimeCntrl.Time) * 0.2) then keepgoing <- false
                 
                 depth <- depth+1
         with
