@@ -34,7 +34,6 @@ type MoveSearch =
             TimeCntrl = timeControl
             MvTrnTbl = Some(table)
         }
-        
     member this.PvLine() = 
         let pv = StringBuilder()
         let count = this.PvTable.Count()
@@ -361,7 +360,7 @@ type MoveSearch =
                         let historyBonus = depth * depth
 
                         //NB this neeeds move passing in not byref -TODO: check when used that this is OK! Should be fine as I can't see it being changed. 
-                        let handleEvaluation(evaluation:int,imove:OrderedMoveEntry, quietMove:bool) =
+                        let inline handleEvaluation(evaluation:int,imove:OrderedMoveEntry, quietMove:bool) =
                             let mutable move = imove
                             if (evaluation <= bestEvaluation) then true
                             else

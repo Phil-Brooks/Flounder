@@ -47,8 +47,6 @@
     <Compile Include="SEE.fs" />
     <Compile Include="MoveSearch.fs" />
     <Compile Include="Perft.fs" />
-    <Compile Include="Util.fs" />
-    <Compile Include="Version.fs" />
   </ItemGroup>
 
   <ItemGroup>

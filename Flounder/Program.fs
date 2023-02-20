@@ -5,8 +5,6 @@ open System.IO
 
 [<EntryPoint>]
 let main argv =
-    Util.RunStaticConstructor()        
-        
     AttackTable1.SetUp()
     Zobrist.Setup()
         
@@ -19,7 +17,7 @@ let main argv =
         Tester.Test()
         0
     else
-        Console.WriteLine("Flounder v" + Version.Current)
+        Console.WriteLine("Flounder v" + VersionNo)
         let mutable requiredInterface = ""
         let rec MainInterface() =
             requiredInterface <- Console.ReadLine()

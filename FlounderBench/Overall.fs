@@ -16,10 +16,8 @@ type Overall() =
     
     [<GlobalSetup>]
     member _.Setup() =
-        Util.RunStaticConstructor()
         AttackTable1.SetUp()
         BlackMagicBitBoardFactory.SetUp()
-
      
     [<Benchmark>]
     member _.Overall() = 
