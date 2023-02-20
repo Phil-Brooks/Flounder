@@ -6,32 +6,41 @@ open System.Text
 module MoveSearch =
     let mutable ReductionDepthTable = LogarithmicReductionDepthTable.Default()
 
-type MoveSearch(board:EngineBoard, table:MoveTranspositionTable, timeControl:TimeControl) =
-    let mutable tableCutoffCount = 0
-    let mutable totalNodeSearchCount = 0
-    let mutable selectiveDepth = 0
-    let mutable HistTbl = HistoryTable.Default()
-    let mutable KillerMvTbl = KillerMoveTable.Default()
-    let mutable SearchEffort = MoveSearchEffortTable.Default()
-    let mutable PvTable = PrincipleVariationTable.Default()
-    let mutable MvSrchStck = MoveSearchStack.Default()
-    let mutable ReducedTimeMove = OrderedMoveEntry.Default
-
-    let mutable Board:EngineBoard option =  None
-    let mutable TimeCntrl:TimeControl = TimeControl(9999999)
-    let mutable Table:MoveTranspositionTable option = None
-    do
-        Board <- board|>Some
-        TimeCntrl <- timeControl
-        Table <- Some(table)
-    member _.TotalNodeSearchCount = totalNodeSearchCount
-    member _.TableCutoffCount = tableCutoffCount
-    member _.PvLine() = 
+type MoveSearch =
+    val mutable TableCutoffCount:int
+    val mutable TotalNodeSearchCount:int
+    val mutable SelectiveDepth:int 
+    val mutable HistTbl:HistoryTable
+    val mutable KillerMvTbl:KillerMoveTable
+    val mutable SearchEffort:MoveSearchEffortTable
+    val mutable PvTable:PrincipleVariationTable
+    val mutable MvSrchStck:MoveSearchStack
+    val mutable ReducedTimeMove:OrderedMoveEntry
+    val mutable EngBrd:EngineBoard option
+    val mutable TimeCntrl:TimeControl
+    val mutable MvTrnTbl:MoveTranspositionTable option
+    new(board:EngineBoard, table:MoveTranspositionTable, timeControl:TimeControl) =
+        {
+            TableCutoffCount = 0
+            TotalNodeSearchCount = 0
+            SelectiveDepth = 0
+            HistTbl = HistoryTable.Default()
+            KillerMvTbl = KillerMoveTable.Default()
+            SearchEffort = MoveSearchEffortTable.Default()
+            PvTable = PrincipleVariationTable.Default()
+            MvSrchStck = MoveSearchStack.Default()
+            ReducedTimeMove = OrderedMoveEntry.Default
+            EngBrd = Some(board)
+            TimeCntrl = timeControl
+            MvTrnTbl = Some(table)
+        }
+        
+    member this.PvLine() = 
         let pv = StringBuilder()
-        let count = PvTable.Count()
+        let count = this.PvTable.Count()
         
         for i = 0 to count-1 do
-            let move:OrderedMoveEntry = PvTable.Get(i)
+            let move:OrderedMoveEntry = this.PvTable.Get(i)
             
             pv.Append(move.From).Append(move.To)|>ignore
             if (move.Promotion <> Promotion.None) then pv.Append(Promotion.ToStr(move.Promotion))|>ignore
@@ -45,21 +54,21 @@ type MoveSearch(board:EngineBoard, table:MoveTranspositionTable, timeControl:Tim
 
         // Check whether we're past the depth to start reducing our search time with node counting and make sure that
         // we're past the required effort threshold to do this move quickly.
-        if (depth >= 8 && TimeCntrl.TimeLeft() <> 0 && not timePreviouslyUpdated
-            && SearchEffort.[bestMove.From, bestMove.To] * 100 / this.TotalNodeSearchCount >= 95) then
+        if (depth >= 8 && this.TimeCntrl.TimeLeft() <> 0 && not timePreviouslyUpdated
+            && this.SearchEffort.[bestMove.From, bestMove.To] * 100 / this.TotalNodeSearchCount >= 95) then
             timePreviouslyUpdated <- true
-            TimeCntrl.ChangeTime(TimeCntrl.Time / 3)
-            ReducedTimeMove <- bestMove
-        if (timePreviouslyUpdated && bestMove <> ReducedTimeMove) then
+            this.TimeCntrl.ChangeTime(this.TimeCntrl.Time / 3)
+            this.ReducedTimeMove <- bestMove
+        if (timePreviouslyUpdated && bestMove <> this.ReducedTimeMove) then
             // In the rare case that our previous node count guess was incorrect, give us a little bit more time
             // to see if we can find a better move.
-            TimeCntrl.ChangeTime(TimeCntrl.Time * 3)
+            this.TimeCntrl.ChangeTime(this.TimeCntrl.Time * 3)
         timePreviouslyUpdated
     member this.DepthSearchLog(depth:int, evaluation:int, stopwatch:Stopwatch) =
         let elapSec = float(stopwatch.ElapsedMilliseconds) / 1000.0
         let ratio = int(float(this.TotalNodeSearchCount) / elapSec)
         Console.Write(
-            "info depth " + depth.ToString() + " seldepth " + selectiveDepth.ToString() + " score cp " + evaluation.ToString() + " nodes " + 
+            "info depth " + depth.ToString() + " seldepth " + this.SelectiveDepth.ToString() + " score cp " + evaluation.ToString() + " nodes " + 
             this.TotalNodeSearchCount.ToString() + " nps " + ratio.ToString() 
             + " pv " + this.PvLine() + "\n"
         )
@@ -68,13 +77,13 @@ type MoveSearch(board:EngineBoard, table:MoveTranspositionTable, timeControl:Tim
         //// If we're out of time, we should exit the search as fast as possible.
         //// NOTE: Due to the nature of this exit (using exceptions to do it as fast as possible), the board state
         //// is not reverted. Thus, a cloned board must be provided.
-        if (TimeCntrl.Finished()) then raise (OperationCanceledException())
+        if (this.TimeCntrl.Finished()) then raise (OperationCanceledException())
         
-        if isPvNode then selectiveDepth <- Math.Max(selectiveDepth, plyFromRoot)
+        if isPvNode then this.SelectiveDepth <- Math.Max(this.SelectiveDepth, plyFromRoot)
 
         let mutable ans = None 
         if not isPvNode then
-            let storedEntry = Table.Value.[board.Brd.ZobristHash]
+            let storedEntry = this.MvTrnTbl.Value.[board.Brd.ZobristHash]
             if (storedEntry.ZobristHash = board.Brd.ZobristHash &&
                 (storedEntry.Type = MoveTranspositionTableEntryType.Exact ||
                 storedEntry.Type = MoveTranspositionTableEntryType.BetaCutoff &&
@@ -105,7 +114,7 @@ type MoveSearch(board:EngineBoard, table:MoveTranspositionTable, timeControl:Tim
                 // Allocate memory on the stack to be used for our move-list.
                 let moveSpanarr = Array.zeroCreate<OrderedMoveEntry>(OrderedMoveList.SIZE)//stackalloc OrderedMoveEntry[OrderedMoveList.SIZE];
                 let mutable moveSpan = new Span<OrderedMoveEntry>(moveSpanarr)
-                let moveList = OrderedMoveList(moveSpan, plyFromRoot, KillerMvTbl, HistTbl)
+                let moveList = OrderedMoveList(moveSpan, plyFromRoot, this.KillerMvTbl, this.HistTbl)
                 let moveCount = moveList.QSearchMoveGeneration(board.Brd, SearchedMove.Default)
         
                 let mutable bestEvaluation = earlyEval
@@ -154,7 +163,7 @@ type MoveSearch(board:EngineBoard, table:MoveTranspositionTable, timeControl:Tim
                     else
                         // Make the move.
                         let mutable rv = board.Move(&move)
-                        totalNodeSearchCount <- totalNodeSearchCount+1
+                        this.TotalNodeSearchCount <- this.TotalNodeSearchCount+1
         
                         // Evaluate position by searching deeper and negating the result. An evaluation that's good for
                         // our opponent will obviously be bad for us.
@@ -176,11 +185,11 @@ type MoveSearch(board:EngineBoard, table:MoveTranspositionTable, timeControl:Tim
         // If we're out of time, we should exit the search as fast as possible.
         // NOTE: Due to the nature of this exit (using exceptions to do it as fast as possible), the board state
         // is not reverted. Thus, a cloned board must be provided.
-        if (TimeCntrl.Finished()) then raise (OperationCanceledException())
+        if (this.TimeCntrl.Finished()) then raise (OperationCanceledException())
         
-        if isPvNode then PvTable.InitializeLength(plyFromRoot)
+        if isPvNode then this.PvTable.InitializeLength(plyFromRoot)
 
-        if isPvNode then selectiveDepth <- Math.Max(selectiveDepth, plyFromRoot)
+        if isPvNode then this.SelectiveDepth <- Math.Max(this.SelectiveDepth, plyFromRoot)
         
         // At depth 0 (or less in the case of reductions etc.), since we may be having a capture train, we should
         // jump into QSearch and evaluate even deeper. In the case of no captures available, QSearch will throw us
@@ -215,7 +224,7 @@ type MoveSearch(board:EngineBoard, table:MoveTranspositionTable, timeControl:Tim
         if ans.IsSome then 
             ans.Value
         else
-            let storedEntry = Table.Value.[board.Brd.ZobristHash]
+            let storedEntry = this.MvTrnTbl.Value.[board.Brd.ZobristHash]
             let valid = storedEntry.Type <> MoveTranspositionTableEntryType.Invalid
             let mutable transpositionMove = SearchedMove.Default
             let mutable transpositionHit = false
@@ -249,7 +258,7 @@ type MoveSearch(board:EngineBoard, table:MoveTranspositionTable, timeControl:Tim
 
                     if (alpha >= beta) then
 #if DEBUG
-                        tableCutoffCount<-tableCutoffCount+1
+                        this.TableCutoffCount<-this.TableCutoffCount+1
 #endif
                         // In the case that our alpha was equal or greater than our beta, we should return the stored
                         // evaluation earlier because it was the best one possible at this transposition. Otherwise,
@@ -272,11 +281,11 @@ type MoveSearch(board:EngineBoard, table:MoveTranspositionTable, timeControl:Tim
                 let positionalEvaluation = if transpositionHit then transpositionMove.Evaluation else Evaluation.Relative(board.Brd)
             
                 // Also store the evaluation to later check if it improved.
-                MvSrchStck.[plyFromRoot].PositionalEvaluation <- positionalEvaluation
+                this.MvSrchStck.[plyFromRoot].PositionalEvaluation <- positionalEvaluation
         
                 if (not isPvNode && not inCheck) then
                     // Roughly estimate whether the deeper search improves the position or not.
-                    improving <- plyFromRoot >= 2 && positionalEvaluation >= MvSrchStck.[plyFromRoot - 2].PositionalEvaluation
+                    improving <- plyFromRoot >= 2 && positionalEvaluation >= this.MvSrchStck.[plyFromRoot - 2].PositionalEvaluation
 
                     if (depth < 7 && Math.Abs(beta) < 99999999 &&
                         // If our depth is less than our threshold and our beta is less than mate on each end of the number
@@ -334,7 +343,7 @@ type MoveSearch(board:EngineBoard, table:MoveTranspositionTable, timeControl:Tim
                     // Allocate memory on the stack to be used for our move-list.
                     let moveSpanarr = Array.zeroCreate<OrderedMoveEntry>(OrderedMoveList.SIZE)//stackalloc OrderedMoveEntry[OrderedMoveList.SIZE];
                     let mutable moveSpan = new Span<OrderedMoveEntry>(moveSpanarr)
-                    let moveList = OrderedMoveList(moveSpan, plyFromRoot, KillerMvTbl, HistTbl)
+                    let moveList = OrderedMoveList(moveSpan, plyFromRoot, this.KillerMvTbl, this.HistTbl)
                     let moveCount = moveList.NormalMoveGeneration(board.Brd, transpositionMove)
                     if (moveCount = 0) then
                         // If we had no moves at this depth, we should check if our king is in check. If our king is in check, it
@@ -363,16 +372,16 @@ type MoveSearch(board:EngineBoard, table:MoveTranspositionTable, timeControl:Tim
 
                                 if isPvNode then
                                     // Insert move into PV Table.
-                                    PvTable.Insert(plyFromRoot, &move)
+                                    this.PvTable.Insert(plyFromRoot, &move)
             
                                     // Copy moves from lesser ply to current ply PV Line.
                                     let mutable nextPly = plyFromRoot + 1
-                                    while (PvTable.PlyInitialized(plyFromRoot, nextPly)) do
-                                        PvTable.Copy(plyFromRoot, nextPly)
+                                    while (this.PvTable.PlyInitialized(plyFromRoot, nextPly)) do
+                                        this.PvTable.Copy(plyFromRoot, nextPly)
                                         nextPly <- nextPly+1
             
                                     // Update our PV Length.
-                                    PvTable.UpdateLength(plyFromRoot)
+                                    this.PvTable.UpdateLength(plyFromRoot)
 
                                 if (evaluation <= alpha) then true
                                 else
@@ -426,7 +435,7 @@ type MoveSearch(board:EngineBoard, table:MoveTranspositionTable, timeControl:Tim
 
                                 // Make the move.
                                 let mutable rv = board.Move(&move)
-                                totalNodeSearchCount <- totalNodeSearchCount+1
+                                this.TotalNodeSearchCount <- this.TotalNodeSearchCount+1
             
                                 let mutable evaluation = 0
             
@@ -486,34 +495,34 @@ type MoveSearch(board:EngineBoard, table:MoveTranspositionTable, timeControl:Tim
                                 board.UndoMove(&rv)
                                 if not (handleEvaluation(evaluation, move, quietMove)) then
                                     if (quietMove) then
-                                        if (KillerMvTbl.[0, plyFromRoot] <> move) then
+                                        if (this.KillerMvTbl.[0, plyFromRoot] <> move) then
                                             // Given this move isn't a capture move (quiet move), we store it as a killer move (cutoff move)
                                             // to better sort quiet moves like these in the future, allowing us to achieve a cutoff faster.
                                             // Also make sure we are not saving same move in both of our caches.
-                                            KillerMvTbl.ReOrder(plyFromRoot)
-                                            KillerMvTbl.[0, plyFromRoot] <- move
+                                            this.KillerMvTbl.ReOrder(plyFromRoot)
+                                            this.KillerMvTbl.[0, plyFromRoot] <- move
                     
                                         // Increment the move that caused a beta cutoff to get a historical heuristic of best quiet moves.
-                                        HistTbl.[board.PieceOnly(move.From), board.Brd.ColorToMove, move.To] <- HistTbl.[board.PieceOnly(move.From), board.Brd.ColorToMove, move.To] + historyBonus
+                                        this.HistTbl.[board.PieceOnly(move.From), board.Brd.ColorToMove, move.To] <- this.HistTbl.[board.PieceOnly(move.From), board.Brd.ColorToMove, move.To] + historyBonus
                     
                                         // Decrement all other quiet moves to ensure a branch local history heuristic.
                                         let mutable j = 1
                                         while (j < quietMoveCounter) do
                                             let otherMove = moveList.[i - j]
-                                            HistTbl.[board.PieceOnly(otherMove.From), board.Brd.ColorToMove, otherMove.To] <- HistTbl.[board.PieceOnly(otherMove.From), board.Brd.ColorToMove, otherMove.To] - historyBonus
+                                            this.HistTbl.[board.PieceOnly(otherMove.From), board.Brd.ColorToMove, otherMove.To] <- this.HistTbl.[board.PieceOnly(otherMove.From), board.Brd.ColorToMove, otherMove.To] - historyBonus
                                             j <- j+1
 
                                     // We had a beta cutoff, hence it's a beta cutoff entry.
                                     transpositionTableEntryType <- MoveTranspositionTableEntryType.BetaCutoff
                                     keepgoing <- false
 
-                                if (rootNode) then SearchEffort.[move.From, move.To] <- this.TotalNodeSearchCount - previousNodeCount
+                                if (rootNode) then this.SearchEffort.[move.From, move.To] <- this.TotalNodeSearchCount - previousNodeCount
             
                                 i <- i+1
                         
                         let bestMove = SearchedMove(&bestMoveSoFar, bestEvaluation)
                         let mutable entry = MoveTranspositionTableEntry(board.Brd.ZobristHash, transpositionTableEntryType, bestMove, depth)
-                        Table.Value.InsertEntry(board.Brd.ZobristHash, &entry)
+                        this.MvTrnTbl.Value.InsertEntry(board.Brd.ZobristHash, &entry)
 
                         bestEvaluation
     member this.AspirationSearch(board:EngineBoard, depth:int, previousEvaluation:int, bestMove:byref<OrderedMoveEntry>) =
@@ -534,7 +543,7 @@ type MoveSearch(board:EngineBoard, table:MoveTranspositionTable, timeControl:Tim
             // If we're out of time, we should exit the search as fast as possible.
             // NOTE: Due to the nature of this exit (using exceptions to do it as fast as possible), the board state
             // is not reverted. Thus, a cloned board must be provided.
-            if (TimeCntrl.Finished()) then raise (OperationCanceledException())
+            if this.TimeCntrl.Finished() then raise (OperationCanceledException())
             // We should reset our window if it's too far gone because the gradual increase isn't working.
             // In the case our alpha is far below our aspiration bound, we should reset it to negative infinity for
             // our research.
@@ -560,7 +569,7 @@ type MoveSearch(board:EngineBoard, table:MoveTranspositionTable, timeControl:Tim
                 // Update our best move in case our evaluation was better than beta.
                 // The move we get in future surely can't be worse than this so it's fine to update our best move
                 // directly on a beta cutoff.
-                bestMove <- PvTable.Get(0);
+                bestMove <- this.PvTable.Get(0);
 
                 // If our evaluation was within our window, we should return the result avoiding any researches.
             else 
@@ -575,9 +584,9 @@ type MoveSearch(board:EngineBoard, table:MoveTranspositionTable, timeControl:Tim
             let stopwatch = Stopwatch.StartNew()
             let mutable timePreviouslyUpdated = false
             let mutable keepgoing = true
-            while (keepgoing && not (TimeCntrl.Finished()) && depth <= selectedDepth) do
-                evaluation <- this.AspirationSearch(Board.Value, depth, evaluation, &bestMove)
-                bestMove <- PvTable.Get(0)
+            while (keepgoing && not (this.TimeCntrl.Finished()) && depth <= selectedDepth) do
+                evaluation <- this.AspirationSearch(this.EngBrd.Value, depth, evaluation, &bestMove)
+                bestMove <- this.PvTable.Get(0)
 
                 // Try counting nodes to see if we can exit the search early.
                 timePreviouslyUpdated <- this.NodeCounting(depth, bestMove, timePreviouslyUpdated)
@@ -586,7 +595,7 @@ type MoveSearch(board:EngineBoard, table:MoveTranspositionTable, timeControl:Tim
                 
                 // In the case we are past a certain depth, and are really low on time, it's highly unlikely we'll
                 // finish the next depth in time. To save time, we should just exit the search early.
-                if (depth > 5 && float(TimeCntrl.TimeLeft()) <= float(TimeCntrl.Time) * 0.2) then keepgoing <- false
+                if (depth > 5 && float(this.TimeCntrl.TimeLeft()) <= float(this.TimeCntrl.Time) * 0.2) then keepgoing <- false
                 
                 depth <- depth+1
         with

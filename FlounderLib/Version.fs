@@ -1,4 +1,4 @@
 ﻿namespace FlounderLib
 
 module Version =
-    let Current = "0.3.2.1"
+    let Current = "0.3.2.2"
