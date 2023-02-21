@@ -4,7 +4,7 @@ open System.Diagnostics
 open System.Text
 
 module MoveSearch =
-    let mutable ReductionDepthTable = LogarithmicReductionDepthTable.Default()
+    let mutable RedDpthTbl = LogarithmicReductionDepthTable.Default()
 
 type MoveSearch =
     val mutable TableCutoffCount:int
@@ -29,7 +29,7 @@ type MoveSearch =
             SearchEffort = MoveSearchEffortTable.Default()
             PvTable = PrincipleVariationTable.Default()
             MvSrchStck = MoveSearchStack.Default()
-            ReducedTimeMove = OrderedMoveEntry.Default
+            ReducedTimeMove = OrderedMoveEntry.Default()
             EngBrd = Some(board)
             TimeCntrl = timeControl
             MvTrnTbl = Some(table)
@@ -456,11 +456,11 @@ type MoveSearch =
                                         // also aren't in check, then we can reduce the depth of the subtree, speeding up search.
 
                                         // Logarithmic reduction: ln(depth) * ln(i) / 2 - 0.2
-                                        let mutable r = MoveSearch.ReductionDepthTable.[depth, i]
+                                        let mutable r = MoveSearch.RedDpthTbl.[depth, i]
                                         // Reduce more on non-PV nodes.
-                                        if not isPvNode then r <- r+1
+                                        if not isPvNode then r <- r + 1
                                         // Reduce if not improving.
-                                        if (not improving) then r <- r+1
+                                        if (not improving) then r <- r + 1
                                         // Determine the reduced depth. Ensure it's >= 1 as we want to avoid dropping into QSearch.
                                         let reducedDepth = Math.Max(depth - r, 1)
                                         // Evaluate the position by searching at a reduced depth. The idea is that these moves will likely
@@ -524,21 +524,17 @@ type MoveSearch =
                         this.MvTrnTbl.Value.InsertEntry(board.Brd.ZobristHash, &entry)
 
                         bestEvaluation
-    member this.AspirationSearch(board:EngineBoard, depth:int, previousEvaluation:int, bestMove:byref<OrderedMoveEntry>) =
+    member this.AspirationSearch(board:EngineBoard, depth:int, previousEvaluation:int) =
         // Set base window size.
         let mutable alpha = -100000000
         let mutable beta = 100000000
-
         if depth > 4 then
             // If we're searching deeper than our aspiration depth, then we should modify the window based on our
             // previous evaluation and aspiration size. If the window isn't reasonably correct, it'll get reset later
             // anyways.
             alpha <- previousEvaluation - 16
             beta <- previousEvaluation + 16
-
-        let mutable research = 0
-        let mutable ans = None
-        while (ans.IsNone) do
+        let rec geteval res =
             // If we're out of time, we should exit the search as fast as possible.
             // NOTE: Due to the nature of this exit (using exceptions to do it as fast as possible), the board state
             // is not reverted. Thus, a cloned board must be provided.
@@ -554,52 +550,39 @@ type MoveSearch =
             // Researches are reasonably fast thanks to transposition tables.
             let bestEvaluation = this.AbSearch(true, board, 0, depth, alpha, beta)
             //Modify Window
-
             if (bestEvaluation <= alpha) then
-                research <- research+1                
+                let newres = res + 1                
                 // If our best evaluation was somehow worse than our alpha, we should resize our window and research.
-                alpha <- Math.Max(alpha - research * research * 23, -100000000)
+                alpha <- Math.Max(alpha - newres * newres * 23, -100000000)
+                geteval newres
             elif (bestEvaluation >= beta) then
-                research <- research+1 
-                
+                let newres = res + 1 
                 // If our evaluation was somehow better than our beta, we should resize our window and research.
-                beta <- Math.Min(beta + research * research * 23, 100000000)
-                
-                // Update our best move in case our evaluation was better than beta.
-                // The move we get in future surely can't be worse than this so it's fine to update our best move
-                // directly on a beta cutoff.
-                bestMove <- this.PvTable.Get(0);
-
+                beta <- Math.Min(beta + newres * newres * 23, 100000000)
+                geteval newres
                 // If our evaluation was within our window, we should return the result avoiding any researches.
             else 
-                ans <- bestEvaluation|>Some
-
-        ans.Value
+                bestEvaluation
+        geteval 0
     member this.IterativeDeepening(selectedDepth:int) =
-        let mutable bestMove = OrderedMoveEntry.Default
-        let mutable evaluation = -100000000
+        let mutable bestMove = OrderedMoveEntry.Default()
         try 
-            let mutable depth = 1
             let stopwatch = Stopwatch.StartNew()
             let mutable timePreviouslyUpdated = false
-            let mutable keepgoing = true
-            while (keepgoing && not (this.TimeCntrl.Finished()) && depth <= selectedDepth) do
-                evaluation <- this.AspirationSearch(this.EngBrd.Value, depth, evaluation, &bestMove)
-                bestMove <- this.PvTable.Get(0)
-
-                // Try counting nodes to see if we can exit the search early.
-                timePreviouslyUpdated <- this.NodeCounting(depth, bestMove, timePreviouslyUpdated)
-                
-                this.DepthSearchLog(depth, evaluation, stopwatch)
-                
-                // In the case we are past a certain depth, and are really low on time, it's highly unlikely we'll
-                // finish the next depth in time. To save time, we should just exit the search early.
-                if (depth > 5 && float(this.TimeCntrl.TimeLeft()) <= float(this.TimeCntrl.Time) * 0.2) then keepgoing <- false
-                
-                depth <- depth+1
+            let rec getbm cureval curdepth =
+                if not (this.TimeCntrl.Finished() || curdepth > selectedDepth) then
+                    let eval = this.AspirationSearch(this.EngBrd.Value, curdepth, cureval)
+                    bestMove <- this.PvTable.Get(0)
+                    // Try counting nodes to see if we can exit the search early.
+                    timePreviouslyUpdated <- this.NodeCounting(curdepth, bestMove, timePreviouslyUpdated)
+                    this.DepthSearchLog(curdepth, eval, stopwatch)
+                    // In the case we are past a certain depth, and are really low on time, it's highly unlikely we'll
+                    // finish the next depth in time. To save time, we should just exit the search early.
+                    if not (curdepth > 5 && float(this.TimeCntrl.TimeLeft()) <= float(this.TimeCntrl.Time) * 0.2) then
+                        getbm eval (curdepth + 1)
+            getbm -100000000 1                    
         with
             | :? OperationCanceledException -> ()
-        
         NNUE.ResetAccumulator()
         bestMove
         
