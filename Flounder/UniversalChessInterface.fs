@@ -8,46 +8,39 @@ open FlounderLib
 module Program =
     let RunPerft(board:Board, depth:int) =
         Console.WriteLine("Running PERFT @ depth " + depth.ToString() + ": ")
-        
         let watch = Stopwatch()
         let mutable result = 0uL
         watch.Start()
         result <- Perft.MoveGeneration(board, depth)
         watch.Stop()
-            
         let output = "Searched " + result.ToString("N0") + " nodes (" + watch.ElapsedMilliseconds.ToString() + " ms)."
-        let mutable ttHitResult = ""
-        Console.WriteLine(output + ttHitResult)
-
+        Console.WriteLine(output)
 module UniversalChessInterface =
     let NAME = "Flounder"
     let AUTHOR = "Phil Brooks"
-
-    let mutable TranspositionTable:MoveTranspositionTable option = None
-    let mutable TranspositionTableSizeMb = 16
-
-    let mutable Board:EngineBoard = EngineBoard.Default()
+    let mutable MvTrnsTbl:MoveTranspositionTable option = None
+    let mutable MvTrnsTblMb = 16
+    let mutable EngBrd:EngineBoard = EngineBoard.Default()
     let mutable Busy = false
-    let mutable ActiveTimeControl = FlounderLib.TimeControl(9999999)
-    let mutable MoveCount = 0
-
+    let mutable TmCntrl = FlounderLib.TimeControl(9999999)
+    let mutable MvCount = 0
     let HandleSetOption(input:string) =
         if (input.ToLower().Contains("setoption")) then
             let args = input.Split(" ")
             if (args.[2] = "Hash") then
-                TranspositionTableSizeMb <- int(args.[4])
+                MvTrnsTblMb <- int(args.[4])
                 Busy <- true
-                TranspositionTable.Value.FreeMemory()
-                TranspositionTable <- None
-                TranspositionTable <- Some(MoveTranspositionTable.GenerateTable(TranspositionTableSizeMb))
+                MvTrnsTbl.Value.FreeMemory()
+                MvTrnsTbl <- None
+                MvTrnsTbl <- Some(MoveTranspositionTable.GenerateTable(MvTrnsTblMb))
                 Busy <- false
     let HandleIsReady(input:string) =
         if (input.ToLower().Equals("isready")) then
             Console.WriteLine("readyok")
     let HandleQuit(thread:Thread, input:string) =
         if (input.ToLower().Equals("quit")) then
-            TranspositionTable.Value.FreeMemory()
-            TranspositionTable <- None
+            MvTrnsTbl.Value.FreeMemory()
+            MvTrnsTbl <- None
             UciStdInputThread.Running <- false
             thread.IsBackground <- true
             Environment.Exit(0)
@@ -57,18 +50,17 @@ module UniversalChessInterface =
             Busy <- true
             let mutable argsParsed = 1
             if (args.[1].ToLower()="startpos") then
-                Board <- EngineBoard.Default()
+                EngBrd <- EngineBoard.Default()
                 argsParsed<-argsParsed+1
             elif (args.[1].ToLower()="fen") then
                 let p = args.[2]
                 let s = args.[3]
                 let c = args.[4]
                 let ep = args.[5]
-                Board <- EngineBoard.FromFen(p + " " + s + " " + c + " " + ep)
+                EngBrd <- EngineBoard.FromFen(p + " " + s + " " + c + " " + ep)
                 argsParsed<-argsParsed+7
             else
                 failwith("Invalid Position provided.")
-
             if (args.Length < argsParsed + 1) then
                 Busy <- false
             else
@@ -81,31 +73,29 @@ module UniversalChessInterface =
                         let mutable promotion = Promotion.None
                         if (args.[i].Length > 4) then
                             promotion <- Promotion.FromChar(args.[i].ToLower().[4])
-                        Board.GuiMove(from, mto, promotion)
+                        EngBrd.GuiMove(from, mto, promotion)
                 Busy <- false
     let HandleDraw(input:string) =
         if (input.ToLower() = "draw" || input.ToLower() = "d") then
-            Console.WriteLine(Board.ToString())
+            Console.WriteLine(EngBrd.ToString())
     let HandleGo(input:string) =
         let args = input.Split(" ")
         if (args.[0].ToLower().Equals("go")) then
             if (input.ToLower().Contains("perft")) then
                 // Just run PERFT.
-                Program.RunPerft(Board.Brd, int(args.[2]))
+                Program.RunPerft(EngBrd.Brd, int(args.[2]))
             else
                 let maxTime = 999_999_999
                 let maxDepth = 63
                 let mutable time = maxTime
                 let mutable depth = maxDepth
                 let mutable movesToGo = -1
-
                 if (args.Length = 1) then
-                    ActiveTimeControl <- new FlounderLib.TimeControl(time)
+                    TmCntrl <- new FlounderLib.TimeControl(time)
                 else
                     let mutable timeSpecified = false
                     let timeForColor = Array.zeroCreate<int>(2)
                     let timeIncForColor = Array.zeroCreate<int>(2)
-        
                     let rec getargs argPosition =
                         if (argPosition < args.Length) then
                             let str = args.[argPosition].ToLower()
@@ -138,15 +128,12 @@ module UniversalChessInterface =
                                 getargs (argPosition+2)
                             else
                                 getargs (argPosition+1)
-                    
                     getargs 1
-                    if (time = maxTime || timeSpecified) then ActiveTimeControl <- new FlounderLib.TimeControl(time)
-                    else ActiveTimeControl <- FlounderLib.TimeControl(movesToGo, timeForColor, timeIncForColor, Board.Brd.ColorToMove, MoveCount)
-
+                    if (time = maxTime || timeSpecified) then TmCntrl <- new FlounderLib.TimeControl(time)
+                    else TmCntrl <- FlounderLib.TimeControl(movesToGo, timeForColor, timeIncForColor, EngBrd.Brd.ColorToMove, MvCount)
                 let factory = TaskFactory()
-                let bestMove = OrderedMoveEntry()
                 let doSearch() =
-                    let search = FlounderLib.MoveSearch(Board.Clone(), TranspositionTable.Value, ActiveTimeControl)
+                    let search = FlounderLib.MoveSearch(EngBrd.Clone(), MvTrnsTbl.Value, TmCntrl)
                     Busy <- true
                     let bestMove = search.IterativeDeepening(depth)
                     Busy <- false
@@ -157,13 +144,11 @@ module UniversalChessInterface =
         #if DEBUG
                     Console.WriteLine("TT Count: " + search.TableCutoffCount.ToString())
         #endif
-                    MoveCount <- MoveCount+1
-
-                factory.StartNew(doSearch, ActiveTimeControl.Token)|>ignore
+                    MvCount <- MvCount + 1
+                factory.StartNew(doSearch, TmCntrl.Token)|>ignore
     let HandleStop(input:string) =
         if (input.ToLower().Equals("stop")) && Busy then
-            ActiveTimeControl.ChangeTime(0)
-
+            TmCntrl.ChangeTime(0)
     let Setup() =
         Busy <- false
         UciStdInputThread.CommandReceived.Add(fun (_ ,input) -> HandleSetOption(input))
@@ -173,19 +158,15 @@ module UniversalChessInterface =
         UciStdInputThread.CommandReceived.Add(fun (_ ,input) -> HandleDraw(input))
         UciStdInputThread.CommandReceived.Add(fun (_ ,input) -> HandleGo(input))
         UciStdInputThread.CommandReceived.Add(fun (_ ,input) -> HandleStop(input))
-        
     let LaunchUci() =
         // Initialize default UCI parameters.
-        TranspositionTable <- Some(MoveTranspositionTable.GenerateTable(TranspositionTableSizeMb))
-        
+        MvTrnsTbl <- Some(MoveTranspositionTable.GenerateTable(MvTrnsTblMb))
         // Provide identification information.
         Console.WriteLine("id name " + NAME)
         Console.WriteLine("id author " + AUTHOR)
         Console.WriteLine("option name Hash type spin default 16 min 4 max 512")
-        
         // Let GUI know engine is ready in UCI mode.
         Console.WriteLine("uciok")
-        
         // Start an input thread.
         let inputThread = Thread(UciStdInputThread.StartAcceptingInput)
         inputThread.Start()

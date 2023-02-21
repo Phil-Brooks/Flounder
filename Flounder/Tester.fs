@@ -59,7 +59,7 @@ module Tester =
         "3rr1k1/1b1q1p1p/p2b1npB/2pP4/1p2n3/4N1P1/PPQ1NPBP/R2R2K1 b - - 0 0";
         "5r1k/5Bpp/p1p1Qb2/1pq5/4Pp2/7R/Pr3PPP/5RK1 w - - 0 0"
     |]
-    let mutable bms = [|"e1g1";"e7d6";"a1a2";"g4f4";"e3e4";"f1f4";"c6d5";"g1h1";"g1h2";"c5b4";"e2d4";"g5g4";
+    let bms = [|"e1g1";"e7d6";"a1a2";"g4f4";"e3e4";"f1f4";"c6d5";"g1h1";"g1h2";"c5b4";"e2d4";"g5g4";
                         "a5b6";"d5a5";"d4c5";"h5g4";"c7a5";"b1b6";"d3e3";"a8d5";"f2e1";"d1f3";"d7d5";"d8f8";
                         "g2g4";"h4g5";"d3d4";"e4d5";"f3g5";"e6f6";"d3d6";"c6d4";"d6c6";"d6c6";"d1d2";"d4c2";
                         "d4c2";"b7b6";"h8g8";"d1a4";"a2a3";"c8c1";"c5a7";"c2d2";"c7b8";"f2f3";"c7c5";"e5f6";
@@ -75,7 +75,6 @@ module Tester =
             let board = EngineBoard.FromFen(fen)
             let search = MoveSearch(board, table, timeControl)
             let bestMove = search.IterativeDeepening(DEPTH)
-            
             let from = bestMove.From.ToString().ToLower()
             let mto = bestMove.To.ToString().ToLower()
             let promotion = if bestMove.Promotion <> Promotion.None then Promotion.ToStr(bestMove.Promotion) else ""

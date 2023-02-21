@@ -7,9 +7,7 @@ open System.IO
 let main argv =
     AttackTable1.SetUp()
     Zobrist.Setup()
-        
     let command = Environment.CommandLine
-
     if (command.ToLower().Contains("bench")) then
         OpenBenchBenchmark.Bench()
         0
@@ -22,7 +20,6 @@ let main argv =
         let rec MainInterface() =
             requiredInterface <- Console.ReadLine()
             if requiredInterface="uci" then
-                //TODO
                 let standardOutput = new StreamWriter(Console.OpenStandardOutput())
                 standardOutput.AutoFlush <- true
                 Console.SetOut(standardOutput)

@@ -61,25 +61,21 @@ module OpenBenchBenchmark =
         let mutable total = 0uL
         let mutable table = MoveTranspositionTable.GenerateTable(16)
         let timeControl = FlounderLib.TimeControl(9999999)
-
         let mutable elapsedMs = 0.0
         for i = 0 to (BenchmarkFen.Length-1) do
             let fen = BenchmarkFen.[i]
             Console.WriteLine("Position (" + (i + 1).ToString() + "/" + BenchmarkFen.Length.ToString() + "): " + fen)
             let board = EngineBoard.FromFen(fen)
             let search = FlounderLib.MoveSearch(board, table, timeControl)
-            
             let stopwatch = Stopwatch.StartNew()
             let bestMove = search.IterativeDeepening(DEPTH)
             stopwatch.Stop()
             elapsedMs <- elapsedMs + stopwatch.Elapsed.TotalMilliseconds
-            
             let from = bestMove.From.ToString().ToLower()
             let mto = bestMove.To.ToString().ToLower()
             let promotion = if bestMove.Promotion <> Promotion.None then Promotion.ToStr(bestMove.Promotion) else ""
             Console.WriteLine("bestmove " + from + mto + promotion)
             total <- total + uint64(search.TotalNodeSearchCount)
-
         let speed = int(float(total) / (elapsedMs / 1000.0));
         Console.WriteLine(total.ToString() + " nodes " + speed.ToString() + " nps")
     
