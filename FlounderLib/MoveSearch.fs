@@ -2,6 +2,7 @@
 open System
 open System.Diagnostics
 open System.Text
+open System.Runtime.CompilerServices
 
 module MoveSearch =
     let mutable RedDpthTbl = LogarithmicReductionDepthTable.Default()
@@ -328,45 +329,14 @@ type MoveSearch =
                         let mutable transpositionTableEntryType = MoveTranspositionTableEntryType.AlphaUnchanged
                         let historyBonus = depth * depth
 
-                        //NB this neeeds move passing in not byref -TODO: check when used that this is OK! Should be fine as I can't see it being changed. 
-                        let inline handleEvaluation(evaluation:int, imove:OrderedMoveEntry, quietMove:bool) =
-                            let mutable move = imove
-                            if (evaluation <= bestEvaluation) then true
-                            else
-                                // If our evaluation was better than our current best evaluation, we should update our evaluation
-                                // with the new evaluation. We should also take into account that it was our best move so far.
-                                bestEvaluation <- evaluation
-                                bestMoveSoFar <- move
-                                if isPvNode then
-                                    // Insert move into PV Table.
-                                    this.PvTable.Insert(plyFromRoot, &move)
-                                    // Copy moves from lesser ply to current ply PV Line.
-                                    let mutable nextPly = plyFromRoot + 1
-                                    while (this.PvTable.PlyInitialized(plyFromRoot, nextPly)) do
-                                        this.PvTable.Copy(plyFromRoot, nextPly)
-                                        nextPly <- nextPly+1
-                                    // Update our PV Length.
-                                    this.PvTable.UpdateLength(plyFromRoot)
-                                if evaluation <= alpha then true
-                                else
-                                    // If our evaluation was better than our alpha (best unavoidable evaluation so far), then we should
-                                    // replace our alpha with our evaluation.
-                                    alpha <- evaluation
-                                    // Our alpha changed, so it is no longer an unchanged alpha entry.
-                                    transpositionTableEntryType <- MoveTranspositionTableEntryType.Exact
-                                    // If the evaluation was better than beta, it means the position was too good. Thus, there
-                                    // is a good chance that the opponent will avoid this path. Hence, there is currently no
-                                    // reason to evaluate it further.
-                                    evaluation < beta
-
                         // Calculate next iteration variables before getting into the loop.
                         let nextDepth = depth - 1
             
                         let mutable i = 0
                         let mutable quietMoveCounter = 0
-                        let lmpQuietThreshold = 3 + depth * depth;
-                        let lmp = not rootNode && (not inCheck) && depth <= 3
-                        let lmr = depth >= 3 && (not inCheck)
+                        let lmpQuietThreshold = 3 + depth * depth
+                        let lmp = not rootNode && not inCheck && depth <= 3
+                        let lmr = depth >= 3 && not inCheck
 
                         let mutable keepgoing = true
                         while (i < moveCount && keepgoing) do
@@ -441,7 +411,7 @@ type MoveSearch =
                                             evaluation <- -this.AbSearch(true, board, nextPlyFromRoot, nextDepth, -beta, -alpha)
                                 // Undo the move.
                                 board.UndoMove(&rv)
-                                if not (handleEvaluation(evaluation, move, quietMove)) then
+                                if not (this.HandleEvaluation(evaluation, move, &bestEvaluation,&bestMoveSoFar,isPvNode,plyFromRoot,&alpha,beta,&transpositionTableEntryType)) then
                                     if quietMove then
                                         if this.KillerMvTbl.[0, plyFromRoot] <> move then
                                             // Given this move isn't a capture move (quiet move), we store it as a killer move (cutoff move)
@@ -543,3 +513,32 @@ type MoveSearch =
         // Undo the null move so we can get back to original state of the board.
         board.UndoNullMove(rv)
         evaluation
+    [<MethodImpl(MethodImplOptions.AggressiveInlining)>]
+    member this.HandleEvaluation(evaluation:int, move:OrderedMoveEntry, bestEvaluation:byref<int>, bestMoveSoFar:byref<OrderedMoveEntry>, isPvNode:bool, plyFromRoot:int, alpha:byref<int>, beta:int, transpositionTableEntryType:byref<MoveTranspositionTableEntryType>) =
+        if (evaluation <= bestEvaluation) then true
+        else
+            // If our evaluation was better than our current best evaluation, we should update our evaluation
+            // with the new evaluation. We should also take into account that it was our best move so far.
+            bestEvaluation <- evaluation
+            bestMoveSoFar <- move
+            if isPvNode then
+                // Insert move into PV Table.
+                this.PvTable.Insert(plyFromRoot, &bestMoveSoFar)
+                // Copy moves from lesser ply to current ply PV Line.
+                let mutable nextPly = plyFromRoot + 1
+                while (this.PvTable.PlyInitialized(plyFromRoot, nextPly)) do
+                    this.PvTable.Copy(plyFromRoot, nextPly)
+                    nextPly <- nextPly+1
+                // Update our PV Length.
+                this.PvTable.UpdateLength(plyFromRoot)
+            if evaluation <= alpha then true
+            else
+                // If our evaluation was better than our alpha (best unavoidable evaluation so far), then we should
+                // replace our alpha with our evaluation.
+                alpha <- evaluation
+                // Our alpha changed, so it is no longer an unchanged alpha entry.
+                transpositionTableEntryType <- MoveTranspositionTableEntryType.Exact
+                // If the evaluation was better than beta, it means the position was too good. Thus, there
+                // is a good chance that the opponent will avoid this path. Hence, there is currently no
+                // reason to evaluate it further.
+                evaluation < beta
