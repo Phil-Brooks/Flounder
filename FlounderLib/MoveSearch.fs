@@ -346,8 +346,7 @@ type MoveSearch =
                             let previousNodeCount = this.TotalNodeSearchCount
                             let mutable move = moveList.[i]
                             let quietMove = not (board.Brd.All(oppositeColor).[move.To])
-                            let quietInt = if quietMove then 1 else 0
-                            quietMoveCounter <- quietMoveCounter + quietInt
+                            if quietMove then quietMoveCounter <- quietMoveCounter + 1
                             //Futility Pruning
                                 // If our move is a quiet and static evaluation of a position with a depth-relative margin is below
                                 // our alpha, then the move won't really help us improve our position. And nor will any future move.
@@ -413,20 +412,7 @@ type MoveSearch =
                                 board.UndoMove(&rv)
                                 if not (this.HandleEvaluation(evaluation, move, &bestEvaluation,&bestMoveSoFar,isPvNode,plyFromRoot,&alpha,beta,&transpositionTableEntryType)) then
                                     if quietMove then
-                                        if this.KillerMvTbl.[0, plyFromRoot] <> move then
-                                            // Given this move isn't a capture move (quiet move), we store it as a killer move (cutoff move)
-                                            // to better sort quiet moves like these in the future, allowing us to achieve a cutoff faster.
-                                            // Also make sure we are not saving same move in both of our caches.
-                                            this.KillerMvTbl.ReOrder(plyFromRoot)
-                                            this.KillerMvTbl.[0, plyFromRoot] <- move
-                                        // Increment the move that caused a beta cutoff to get a historical heuristic of best quiet moves.
-                                        this.HistTbl.[board.PieceOnly(move.From), board.Brd.ColorToMove, move.To] <- this.HistTbl.[board.PieceOnly(move.From), board.Brd.ColorToMove, move.To] + historyBonus
-                                        // Decrement all other quiet moves to ensure a branch local history heuristic.
-                                        let mutable j = 1
-                                        while (j < quietMoveCounter) do
-                                            let otherMove = moveList.[i - j]
-                                            this.HistTbl.[board.PieceOnly(otherMove.From), board.Brd.ColorToMove, otherMove.To] <- this.HistTbl.[board.PieceOnly(otherMove.From), board.Brd.ColorToMove, otherMove.To] - historyBonus
-                                            j <- j+1
+                                        this.DoQuiet(plyFromRoot,move,board,historyBonus,quietMoveCounter,moveList,i)
                                     // We had a beta cutoff, hence it's a beta cutoff entry.
                                     transpositionTableEntryType <- MoveTranspositionTableEntryType.BetaCutoff
                                     keepgoing <- false
@@ -499,6 +485,7 @@ type MoveSearch =
             | :? OperationCanceledException -> ()
         NNUE.ResetAccumulator()
         bestMove
+    [<MethodImpl(MethodImplOptions.AggressiveInlining)>]
     member this.NullMovePrune(board:EngineBoard, nextPlyFromRoot:int, idepth:int, beta:int) =        
         // Reduced depth for null move pruning.
         let reducedDepth = idepth - 4 - (idepth / 3 - 1)
@@ -542,3 +529,17 @@ type MoveSearch =
                 // is a good chance that the opponent will avoid this path. Hence, there is currently no
                 // reason to evaluate it further.
                 evaluation < beta
+    [<MethodImpl(MethodImplOptions.AggressiveInlining)>]
+    member this.DoQuiet(plyFromRoot:int, move:OrderedMoveEntry, board:EngineBoard, historyBonus:int, quietMoveCounter, moveList:OrderedMoveList, i:int) =
+        if this.KillerMvTbl.[0, plyFromRoot] <> move then
+            // Given this move isn't a capture move (quiet move), we store it as a killer move (cutoff move)
+            // to better sort quiet moves like these in the future, allowing us to achieve a cutoff faster.
+            // Also make sure we are not saving same move in both of our caches.
+            this.KillerMvTbl.ReOrder(plyFromRoot)
+            this.KillerMvTbl.[0, plyFromRoot] <- move
+        // Increment the move that caused a beta cutoff to get a historical heuristic of best quiet moves.
+        this.HistTbl.[board.PieceOnly(move.From), board.Brd.ColorToMove, move.To] <- this.HistTbl.[board.PieceOnly(move.From), board.Brd.ColorToMove, move.To] + historyBonus
+        // Decrement all other quiet moves to ensure a branch local history heuristic.
+        for j = 1 to quietMoveCounter-1 do
+            let otherMove = moveList.[i - j]
+            this.HistTbl.[board.PieceOnly(otherMove.From), board.Brd.ColorToMove, otherMove.To] <- this.HistTbl.[board.PieceOnly(otherMove.From), board.Brd.ColorToMove, otherMove.To] - historyBonus
