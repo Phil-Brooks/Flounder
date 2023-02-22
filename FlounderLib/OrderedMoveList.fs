@@ -189,10 +189,8 @@ type OrderedMoveList =
             &(this.Internal.[i])
         member this.SortNext(sorted:int, maxSelection:int) =
             let mutable index = sorted
-            let mutable i = 1 + sorted
-            while (i < maxSelection) do
+            for i = 1 + sorted to maxSelection - 1 do
                 if (this.Internal.[i].Score > this.Internal.[index].Score) then index <- i
-                i<-i+1
             this.Swap(index, sorted)
         member this.Swap(firstIndex:int, secondIndex:int) = 
             let nf = this.Internal.[secondIndex]
