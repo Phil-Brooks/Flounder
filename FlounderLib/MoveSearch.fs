@@ -190,9 +190,9 @@ type MoveSearch =
         // jump into QSearch and evaluate even deeper. In the case of no captures available, QSearch will throw us
         // out instantly.
         let rootNode = plyFromRoot = 0
-        if (idepth <= 0) then ans <- this.QSearch(isPvNode, board, plyFromRoot, 15, alpha, beta)|>Some
+        if idepth <= 0 then ans <- this.QSearch(isPvNode, board, plyFromRoot, 15, alpha, beta)|>Some
         else
-            if (not rootNode) then
+            if not rootNode then
                 // We had a three-fold repetition, so return earlier.
                 if (board.IsRepetition()) then ans <- 0|>Some
                 else
@@ -222,13 +222,13 @@ type MoveSearch =
             let mutable transpositionMove = SearchedMove.Default
             let mutable transpositionHit = false
 
-            if (valid && storedEntry.ZobristHash = board.Brd.ZobristHash) then
+            if valid && storedEntry.ZobristHash = board.Brd.ZobristHash then
                 // We had a transposition table hit. However, at this point, we don't know if this is a trustworthy
                 // transposition hit or not.
                 transpositionMove <- storedEntry.BestMove
                 transpositionHit <- true
 
-                if (not isPvNode && int(storedEntry.Depth) >= idepth) then
+                if not isPvNode && int(storedEntry.Depth) >= idepth then
                     // If it came from a higher depth search than our current depth, it means the results are definitely
                     // more trustworthy than the ones we could achieve at this depth.
                     if storedEntry.Type=MoveTranspositionTableEntryType.Exact then
@@ -249,7 +249,7 @@ type MoveSearch =
                             // that if alpha would remain unchanged, we would receive a beta-cutoff.
                             beta <- Math.Min(beta, storedEntry.BestMove.Evaluation)
 
-                    if (alpha >= beta) then
+                    if alpha >= beta then
 #if DEBUG
                         this.TableCutoffCount<-this.TableCutoffCount+1
 #endif
@@ -276,46 +276,29 @@ type MoveSearch =
                 // Also store the evaluation to later check if it improved.
                 this.MvSrchStck.[plyFromRoot].PositionalEvaluation <- positionalEvaluation
         
-                if (not isPvNode && not inCheck) then
+                if not isPvNode && not inCheck then
                     // Roughly estimate whether the deeper search improves the position or not.
                     improving <- plyFromRoot >= 2 && positionalEvaluation >= this.MvSrchStck.[plyFromRoot - 2].PositionalEvaluation
+                    // If our depth is less than our threshold and our beta is less than mate on each end of the number
+                    // line, then attempting reverse futility pruning is safe.
+                    // We calculate margined positional evaluation as the difference between the current positional
+                    // evaluation and a margin: D * depth + I * improving.
+                    // If it is greater or equal than beta, then in most cases than not, it is futile to further evaluate
+                    // this tree and hence better to just return early.
+                    let improvingInt = if improving then 1 else 0
 
-                    if (idepth < 7 && Math.Abs(beta) < 99999999 &&
-                        // If our depth is less than our threshold and our beta is less than mate on each end of the number
-                        // line, then attempting reverse futility pruning is safe.
-                        // We calculate margined positional evaluation as the difference between the current positional
-                        // evaluation and a margin: D * depth + I * improving.
-                        // If it is greater or equal than beta, then in most cases than not, it is futile to further evaluate
-                        // this tree and hence better to just return early.
-                        let improvingInt = if improving then 1 else 0
-                        positionalEvaluation - 67 * idepth + 76 * improvingInt >= beta) then
+                    if idepth < 7 && Math.Abs(beta) < 99999999 && positionalEvaluation - 67 * idepth + 76 * improvingInt >= beta then
                         ans <- beta|>Some
-            
-                    elif (idepth = 1 && positionalEvaluation + 150 < alpha) then
+                    elif idepth = 1 && positionalEvaluation + 150 < alpha then
                         // If after any move, the positional evaluation of the resulting position with some added threshold is
                         // less than alpha, then the opponent will be able to find at least one move that improves their
                         // position.
                         // Thus, we can avoid trying moves and jump into QSearch to get exact evaluation of the position.
                         ans <- this.QSearch(false, board, plyFromRoot, 15, alpha, beta)|>Some
-        
-                    elif (not rootNode && idepth > 2) then
-                        // Reduced depth for null move pruning.
-                        let reducedDepth = idepth - 4 - (idepth / 3 - 1)
-                        // For null move pruning, we give the turn to the opponent and let them make the move.
-                        let mutable rv = board.NullMove()
-                        // Then we evaluate position by searching at a reduced depth using same characteristics as normal
-                        // search. The idea is that if there are cutoffs, most will be found using this reduced search and we
-                        // can cutoff this branch earlier.
-                        // Being reduced, it's not as expensive as the regular search (especially if we can avoid a jump into
-                        // QSearch).
-                        let evaluation = -this.AbSearch(false, board, nextPlyFromRoot, reducedDepth, -beta, -beta + 1);
-                        // Undo the null move so we can get back to original state of the board.
-                        board.UndoNullMove(rv);
-        
+                    elif not rootNode && idepth > 2 then
+                        let evaluation = this.NullMovePrune(board,nextPlyFromRoot,idepth,beta)
                         // In the case our evaluation was better than our beta, we achieved a cutoff here. 
-                        if (evaluation >= beta) then ans <- beta|>Some
-
-                elif (inCheck) then
+                        if evaluation >= beta then ans <- beta|>Some
 
                 if ans.IsSome then 
                     ans.Value
@@ -331,7 +314,7 @@ type MoveSearch =
                     let mutable moveSpan = new Span<OrderedMoveEntry>(moveSpanarr)
                     let moveList = OrderedMoveList(moveSpan, plyFromRoot, this.KillerMvTbl, this.HistTbl)
                     let moveCount = moveList.NormalMoveGeneration(board.Brd, transpositionMove)
-                    if (moveCount = 0) then
+                    if moveCount = 0 then
                         // If we had no moves at this depth, we should check if our king is in check. If our king is in check, it
                         // means we lost as nothing can save the king anymore. Otherwise, it's a stalemate where we can't really do
                         // anything but the opponent cannot kill our king either. It isn't a beneficial position or a position
@@ -546,4 +529,17 @@ type MoveSearch =
             | :? OperationCanceledException -> ()
         NNUE.ResetAccumulator()
         bestMove
-        
+    member this.NullMovePrune(board:EngineBoard, nextPlyFromRoot:int, idepth:int, beta:int) =        
+        // Reduced depth for null move pruning.
+        let reducedDepth = idepth - 4 - (idepth / 3 - 1)
+        // For null move pruning, we give the turn to the opponent and let them make the move.
+        let mutable rv = board.NullMove()
+        // Then we evaluate position by searching at a reduced depth using same characteristics as normal
+        // search. The idea is that if there are cutoffs, most will be found using this reduced search and we
+        // can cutoff this branch earlier.
+        // Being reduced, it's not as expensive as the regular search (especially if we can avoid a jump into
+        // QSearch).
+        let evaluation = -this.AbSearch(false, board, nextPlyFromRoot, reducedDepth, -beta, -beta + 1);
+        // Undo the null move so we can get back to original state of the board.
+        board.UndoNullMove(rv)
+        evaluation
