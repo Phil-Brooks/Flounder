@@ -176,7 +176,6 @@ type MoveSearch =
                     i <- i+1
                 bestEvaluation
     member this.AbSearch(isPvNode:bool, board:EngineBoard, plyFromRoot:int, idepth:int, ialpha:int, ibeta:int) =
-        let mutable depth = idepth
         let mutable alpha = ialpha
         let mutable beta = ibeta
         let mutable ans = None
@@ -191,7 +190,7 @@ type MoveSearch =
         // jump into QSearch and evaluate even deeper. In the case of no captures available, QSearch will throw us
         // out instantly.
         let rootNode = plyFromRoot = 0
-        if (depth <= 0) then ans <- this.QSearch(isPvNode, board, plyFromRoot, 15, alpha, beta)|>Some
+        if (idepth <= 0) then ans <- this.QSearch(isPvNode, board, plyFromRoot, 15, alpha, beta)|>Some
         else
             if (not rootNode) then
                 // We had a three-fold repetition, so return earlier.
@@ -229,7 +228,7 @@ type MoveSearch =
                 transpositionMove <- storedEntry.BestMove
                 transpositionHit <- true
 
-                if (not isPvNode && int(storedEntry.Depth) >= depth) then
+                if (not isPvNode && int(storedEntry.Depth) >= idepth) then
                     // If it came from a higher depth search than our current depth, it means the results are definitely
                     // more trustworthy than the ones we could achieve at this depth.
                     if storedEntry.Type=MoveTranspositionTableEntryType.Exact then
@@ -281,40 +280,35 @@ type MoveSearch =
                     // Roughly estimate whether the deeper search improves the position or not.
                     improving <- plyFromRoot >= 2 && positionalEvaluation >= this.MvSrchStck.[plyFromRoot - 2].PositionalEvaluation
 
-                    if (depth < 7 && Math.Abs(beta) < 99999999 &&
+                    if (idepth < 7 && Math.Abs(beta) < 99999999 &&
                         // If our depth is less than our threshold and our beta is less than mate on each end of the number
                         // line, then attempting reverse futility pruning is safe.
-                
                         // We calculate margined positional evaluation as the difference between the current positional
                         // evaluation and a margin: D * depth + I * improving.
                         // If it is greater or equal than beta, then in most cases than not, it is futile to further evaluate
                         // this tree and hence better to just return early.
                         let improvingInt = if improving then 1 else 0
-                        positionalEvaluation - 67 * depth + 76 * improvingInt >= beta) then
+                        positionalEvaluation - 67 * idepth + 76 * improvingInt >= beta) then
                         ans <- beta|>Some
             
-                    elif (depth = 1 && positionalEvaluation + 150 < alpha) then
+                    elif (idepth = 1 && positionalEvaluation + 150 < alpha) then
                         // If after any move, the positional evaluation of the resulting position with some added threshold is
                         // less than alpha, then the opponent will be able to find at least one move that improves their
                         // position.
                         // Thus, we can avoid trying moves and jump into QSearch to get exact evaluation of the position.
                         ans <- this.QSearch(false, board, plyFromRoot, 15, alpha, beta)|>Some
         
-                    elif (not rootNode && depth > 2) then
+                    elif (not rootNode && idepth > 2) then
                         // Reduced depth for null move pruning.
-                        let reducedDepth = depth - 4 - 
-                                           (depth / 3 - 1)
-                
+                        let reducedDepth = idepth - 4 - (idepth / 3 - 1)
                         // For null move pruning, we give the turn to the opponent and let them make the move.
                         let mutable rv = board.NullMove()
-                
                         // Then we evaluate position by searching at a reduced depth using same characteristics as normal
                         // search. The idea is that if there are cutoffs, most will be found using this reduced search and we
                         // can cutoff this branch earlier.
                         // Being reduced, it's not as expensive as the regular search (especially if we can avoid a jump into
                         // QSearch).
                         let evaluation = -this.AbSearch(false, board, nextPlyFromRoot, reducedDepth, -beta, -beta + 1);
-                
                         // Undo the null move so we can get back to original state of the board.
                         board.UndoNullMove(rv);
         
@@ -323,19 +317,17 @@ type MoveSearch =
 
                 elif (inCheck) then
 
-                    // If we're in check, then it's better to evaluate this position deeper as to get good idea of situation,
-                    // avoiding unseen blunders. Due to the number of moves being very less when under check, one shouldn't
-                    // be concerned about search explosion.
-                    depth <- depth + 1
-
                 if ans.IsSome then 
                     ans.Value
                 else
+                    // If we're in check, then it's better to evaluate this position deeper as to get good idea of situation,
+                    // avoiding unseen blunders. Due to the number of moves being very less when under check, one shouldn't
+                    // be concerned about search explosion.                    
+                    let cdepth = if inCheck then idepth + 1 else idepth
                     // Reduce depth if there are no transposition hits and we're at a high enough depth to do it safely.
-                    if (depth > 3 && not transpositionHit) then depth <- depth - 1
-
+                    let depth = if (cdepth > 3 && not transpositionHit) then cdepth - 1 else cdepth
                     // Allocate memory on the stack to be used for our move-list.
-                    let moveSpanarr = Array.zeroCreate<OrderedMoveEntry>(OrderedMoveList.SIZE)//stackalloc OrderedMoveEntry[OrderedMoveList.SIZE];
+                    let moveSpanarr = Array.zeroCreate<OrderedMoveEntry>(OrderedMoveList.SIZE)
                     let mutable moveSpan = new Span<OrderedMoveEntry>(moveSpanarr)
                     let moveList = OrderedMoveList(moveSpan, plyFromRoot, this.KillerMvTbl, this.HistTbl)
                     let moveCount = moveList.NormalMoveGeneration(board.Brd, transpositionMove)
@@ -404,17 +396,16 @@ type MoveSearch =
                             let quietInt = if quietMove then 1 else 0
                             quietMoveCounter <- quietMoveCounter + quietInt
                             //Futility Pruning
-                            if (i > 0 && quietMove && positionalEvaluation + depth * 150 <= alpha) then
                                 // If our move is a quiet and static evaluation of a position with a depth-relative margin is below
                                 // our alpha, then the move won't really help us improve our position. And nor will any future move.
                                 // Hence, it's futile to evaluate this position any further.
-                                keepgoing <- false
+                            let futTest = i > 0 && quietMove && positionalEvaluation + depth * 150 <= alpha
                             //Late Move Pruning
-                            elif (not isPvNode && lmp && bestEvaluation > -100000000 && quietMoveCounter > lmpQuietThreshold) then 
                                 // If we are past a certain threshold and we have searched the required quiet moves for this depth for
                                 // pruning to be relatively safe, we can avoid searching any more moves since the likely best move
                                 // will have been determined by now.
-                                keepgoing <- false
+                            let lmpTest = not isPvNode && lmp && bestEvaluation > -100000000 && quietMoveCounter > lmpQuietThreshold
+                            if futTest || lmpTest then keepgoing <- false
                             else
                                 // Make the move.
                                 let mutable rv = board.Move(&move)
@@ -448,10 +439,10 @@ type MoveSearch =
                                         // for our opponent will be bad for us.
                                         evaluation <- 
                                             -this.AbSearch(false, board, nextPlyFromRoot, reducedDepth, -alpha - 1, -alpha)
-                                        // In the case that LMR fails, our evaluation will be greater than alpha which will force a
-                                        // principle variation research. However, in the case we couldn't apply LMR (due to safety reasons,
-                                        // setting the evaluation to be a value greater than alpha allows us to force the principle
-                                        // variation search.
+                                    // In the case that LMR fails, our evaluation will be greater than alpha which will force a
+                                    // principle variation research. However, in the case we couldn't apply LMR (due to safety reasons,
+                                    // setting the evaluation to be a value greater than alpha allows us to force the principle
+                                    // variation search.
                                     else evaluation <- alpha + 1
                                     //Principle Variation Search
                                     if (evaluation > alpha) then
