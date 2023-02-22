@@ -320,9 +320,7 @@ type MoveSearch =
                         // means we lost as nothing can save the king anymore. Otherwise, it's a stalemate where we can't really do
                         // anything but the opponent cannot kill our king either. It isn't a beneficial position or a position
                         // that's bad for us, so returning 0 is fine here.
-                        ans <- (if inCheck then -99999999 + plyFromRoot else 0)|>Some
-                    if ans.IsSome then 
-                        ans.Value
+                        if inCheck then -99999999 + plyFromRoot else 0
                     else
                         let mutable bestEvaluation = -100000000
                         let mutable bestMoveSoFar = OrderedMoveEntry(Square.Na, Square.Na, Promotion.None)
@@ -362,52 +360,20 @@ type MoveSearch =
                                 // Make the move.
                                 let mutable rv = board.Move(&move)
                                 this.TotalNodeSearchCount <- this.TotalNodeSearchCount+1
-                                let mutable evaluation = 0
-                                if i = 0 then
-                                    // If we haven't searched any moves, we should do a full depth search without any reductions.
-                                    // Without a full depth search beforehand, there's no way to guarantee principle variation search being
-                                    // safe.
-                                    evaluation <- -this.AbSearch(isPvNode, board, nextPlyFromRoot, nextDepth, -beta, -alpha)
-                                else 
-                                    // Otherwise, to speed up search, we should try applying certain reductions to see if we can speed up
-                                    // the search. Moreover, even if those reductions are still unsafe, we can still save time by trying
-                                    // search inside our principle variation window. In most cases, this will allow us to get a beta cutoff
-                                    // earlier.
-                                    //Late Move Reduction
-                                    if i >= 4 && lmr then
-                                        // If we're past the move count and depth threshold where we can usually safely apply LMR and we
-                                        // also aren't in check, then we can reduce the depth of the subtree, speeding up search.
-                                        // Logarithmic reduction: ln(depth) * ln(i) / 2 - 0.2
-                                        let mutable r = MoveSearch.RedDpthTbl.[depth, i]
-                                        // Reduce more on non-PV nodes.
-                                        if not isPvNode then r <- r + 1
-                                        // Reduce if not improving.
-                                        if not improving then r <- r + 1
-                                        // Determine the reduced depth. Ensure it's >= 1 as we want to avoid dropping into QSearch.
-                                        let reducedDepth = Math.Max(depth - r, 1)
-                                        // Evaluate the position by searching at a reduced depth. The idea is that these moves will likely
-                                        // not improve alpha, and thus not trigger researches. Therefore, one will be able to get away with
-                                        // reduced depth searches with reasonable safety. Result is negated as an evaluation that's good
-                                        // for our opponent will be bad for us.
-                                        evaluation <- 
-                                            -this.AbSearch(false, board, nextPlyFromRoot, reducedDepth, -alpha - 1, -alpha)
-                                    // In the case that LMR fails, our evaluation will be greater than alpha which will force a
-                                    // principle variation research. However, in the case we couldn't apply LMR (due to safety reasons,
-                                    // setting the evaluation to be a value greater than alpha allows us to force the principle
-                                    // variation search.
-                                    else evaluation <- alpha + 1
-                                    //Principle Variation Search
-                                    if (evaluation > alpha) then
-                                        // If we couldn't attempt LMR because it was unsafe or if LMR failed, we should try a null-window
-                                        // search at a normal progressive depth. If this is a research, it'll likely be fast enough to have
-                                        // no impact due to transposition tables.
-                                        evaluation <- -this.AbSearch(false, board, nextPlyFromRoot, nextDepth, -alpha - 1, -alpha)
-                                        if (evaluation > alpha && evaluation < beta) then
-                                            // If our evaluation was good enough to change our alpha but not our beta, it means we're on a
-                                            // principle variation node. Essentially: beta - alpha > 1.
-                                            // This means this is our best move from the search, and it isn't too good to be deemed
-                                            // an unlikely path. Thus, we should evaluate it clearly using a full-window research.
-                                            evaluation <- -this.AbSearch(true, board, nextPlyFromRoot, nextDepth, -beta, -alpha)
+                                let mutable evaluation = 
+                                    this.SetEvaluation(i,lmr,isPvNode,board,nextPlyFromRoot,nextDepth,beta,alpha,depth,improving)
+                                //Principle Variation Search
+                                if i > 0 && evaluation > alpha then
+                                    // If we couldn't attempt LMR because it was unsafe or if LMR failed, we should try a null-window
+                                    // search at a normal progressive depth. If this is a research, it'll likely be fast enough to have
+                                    // no impact due to transposition tables.
+                                    evaluation <- -this.AbSearch(false, board, nextPlyFromRoot, nextDepth, -alpha - 1, -alpha)
+                                    if (evaluation > alpha && evaluation < beta) then
+                                        // If our evaluation was good enough to change our alpha but not our beta, it means we're on a
+                                        // principle variation node. Essentially: beta - alpha > 1.
+                                        // This means this is our best move from the search, and it isn't too good to be deemed
+                                        // an unlikely path. Thus, we should evaluate it clearly using a full-window research.
+                                        evaluation <- -this.AbSearch(true, board, nextPlyFromRoot, nextDepth, -beta, -alpha)
                                 // Undo the move.
                                 board.UndoMove(&rv)
                                 if not (this.HandleEvaluation(evaluation, move, &bestEvaluation,&bestMoveSoFar,isPvNode,plyFromRoot,&alpha,beta,&transpositionTableEntryType)) then
@@ -500,6 +466,42 @@ type MoveSearch =
         // Undo the null move so we can get back to original state of the board.
         board.UndoNullMove(rv)
         evaluation
+    [<MethodImpl(MethodImplOptions.AggressiveInlining)>]
+    member this.SetEvaluation(i:int, lmr:bool, isPvNode:bool, board:EngineBoard, nextPlyFromRoot:int, nextDepth:int, beta:int, alpha:int, depth:int, improving:bool) =
+        if i = 0 then
+            // If we haven't searched any moves, we should do a full depth search without any reductions.
+            // Without a full depth search beforehand, there's no way to guarantee principle variation search being
+            // safe.
+            -this.AbSearch(isPvNode, board, nextPlyFromRoot, nextDepth, -beta, -alpha)
+        else 
+            // Otherwise, to speed up search, we should try applying certain reductions to see if we can speed up
+            // the search. Moreover, even if those reductions are still unsafe, we can still save time by trying
+            // search inside our principle variation window. In most cases, this will allow us to get a beta cutoff
+            // earlier.
+            //Late Move Reduction
+            if i >= 4 && lmr then
+                // If we're past the move count and depth threshold where we can usually safely apply LMR and we
+                // also aren't in check, then we can reduce the depth of the subtree, speeding up search.
+                // Logarithmic reduction: ln(depth) * ln(i) / 2 - 0.2
+                let mutable r = MoveSearch.RedDpthTbl.[depth, i]
+                // Reduce more on non-PV nodes.
+                if not isPvNode then r <- r + 1
+                // Reduce if not improving.
+                if not improving then r <- r + 1
+                // Determine the reduced depth. Ensure it's >= 1 as we want to avoid dropping into QSearch.
+                let reducedDepth = Math.Max(depth - r, 1)
+                // Evaluate the position by searching at a reduced depth. The idea is that these moves will likely
+                // not improve alpha, and thus not trigger researches. Therefore, one will be able to get away with
+                // reduced depth searches with reasonable safety. Result is negated as an evaluation that's good
+                // for our opponent will be bad for us.
+                -this.AbSearch(false, board, nextPlyFromRoot, reducedDepth, -alpha - 1, -alpha)
+            // In the case that LMR fails, our evaluation will be greater than alpha which will force a
+            // principle variation research. However, in the case we couldn't apply LMR (due to safety reasons,
+            // setting the evaluation to be a value greater than alpha allows us to force the principle
+            // variation search.
+            else alpha + 1
+
+
     [<MethodImpl(MethodImplOptions.AggressiveInlining)>]
     member this.HandleEvaluation(evaluation:int, move:OrderedMoveEntry, bestEvaluation:byref<int>, bestMoveSoFar:byref<OrderedMoveEntry>, isPvNode:bool, plyFromRoot:int, alpha:byref<int>, beta:int, transpositionTableEntryType:byref<MoveTranspositionTableEntryType>) =
         if (evaluation <= bestEvaluation) then true

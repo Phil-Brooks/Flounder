@@ -2,7 +2,7 @@
 
 [<AutoOpen>]
 module Types =
-    let VersionNo = "0.3.3.0"
+    let VersionNo = "0.3.3.1"
     
     type Piece =
         // The type of piece.
