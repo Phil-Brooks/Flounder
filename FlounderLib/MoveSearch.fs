@@ -38,12 +38,10 @@ type MoveSearch =
     member this.PvLine() = 
         let pv = StringBuilder()
         let count = this.PvTable.Count()
-        
         for i = 0 to count-1 do
             let move:OrderedMoveEntry = this.PvTable.Get(i)
-            
             pv.Append(move.From).Append(move.To)|>ignore
-            if (move.Promotion <> Promotion.None) then pv.Append(Promotion.ToStr(move.Promotion))|>ignore
+            if move.Promotion <> Promotion.None then pv.Append(Promotion.ToStr(move.Promotion))|>ignore
             pv.Append(' ')|>ignore
         pv.ToString().ToLower()
     member this.NodeCounting(depth:int, bestMove:OrderedMoveEntry, itimePreviouslyUpdated:bool) = 
@@ -51,15 +49,14 @@ type MoveSearch =
         // This idea is from the Koivisto Engine:
         // The branch being searched the most is likely the best branch as we're having to evaluate it very deeply
         // across depths. Thus it's reasonable to end the search earlier and make the move instantly.
-
         // Check whether we're past the depth to start reducing our search time with node counting and make sure that
         // we're past the required effort threshold to do this move quickly.
-        if (depth >= 8 && this.TimeCntrl.TimeLeft() <> 0 && not timePreviouslyUpdated
-            && this.SearchEffort.[bestMove.From, bestMove.To] * 100 / this.TotalNodeSearchCount >= 95) then
+        if depth >= 8 && this.TimeCntrl.TimeLeft() <> 0 && not timePreviouslyUpdated
+           && this.SearchEffort.[bestMove.From, bestMove.To] * 100 / this.TotalNodeSearchCount >= 95 then
             timePreviouslyUpdated <- true
             this.TimeCntrl.ChangeTime(this.TimeCntrl.Time / 3)
             this.ReducedTimeMove <- bestMove
-        if (timePreviouslyUpdated && bestMove <> this.ReducedTimeMove) then
+        if timePreviouslyUpdated && bestMove <> this.ReducedTimeMove then
             // In the rare case that our previous node count guess was incorrect, give us a little bit more time
             // to see if we can find a better move.
             this.TimeCntrl.ChangeTime(this.TimeCntrl.Time * 3)
@@ -78,9 +75,7 @@ type MoveSearch =
         //// NOTE: Due to the nature of this exit (using exceptions to do it as fast as possible), the board state
         //// is not reverted. Thus, a cloned board must be provided.
         if (this.TimeCntrl.Finished()) then raise (OperationCanceledException())
-        
         if isPvNode then this.SelectiveDepth <- Math.Max(this.SelectiveDepth, plyFromRoot)
-
         let mutable ans = None 
         if not isPvNode then
             let storedEntry = this.MvTrnTbl.Value.[board.Brd.ZobristHash]
@@ -96,62 +91,34 @@ type MoveSearch =
                 // - Alpha Unchanged with transposition evaluation <= alpha
                 // we can return early.
                 ans <- storedEntry.BestMove.Evaluation|>Some
-
         if ans.IsSome then 
             ans.Value
         else
             let mutable earlyEval = Evaluation.Relative(board.Brd)
             // In the rare case our evaluation is already too good, we don't need to further evaluate captures any further,
             // as this position is overwhelmingly winning.
-            if (earlyEval >= beta) then ans <- beta|>Some
-
+            if earlyEval >= beta then ans <- beta|>Some
             if ans.IsSome then ans.Value
             else
                 // In the case that our current evaluation is better than our alpha, we need to recalibrate alpha to make sure
                 // we don't skip over our already good move.
-                if (earlyEval > alpha) then alpha <- earlyEval
- 
+                if earlyEval > alpha then alpha <- earlyEval
                 // Allocate memory on the stack to be used for our move-list.
                 let moveSpanarr = Array.zeroCreate<OrderedMoveEntry>(OrderedMoveList.SIZE)//stackalloc OrderedMoveEntry[OrderedMoveList.SIZE];
                 let mutable moveSpan = new Span<OrderedMoveEntry>(moveSpanarr)
                 let moveList = OrderedMoveList(moveSpan, plyFromRoot, this.KillerMvTbl, this.HistTbl)
                 let moveCount = moveList.QSearchMoveGeneration(board.Brd, SearchedMove.Default)
-        
                 let mutable bestEvaluation = earlyEval
-        
-                let inline handleEvaluation(evaluation:int) =
-                    if (evaluation <= bestEvaluation) then true
-            
-                    // If our evaluation was better than our current best evaluation, we should update our evaluation
-                    // with the new evaluation.
-                    else
-                        bestEvaluation <- evaluation
-
-                        if (evaluation <= alpha) then true
-                        else
-                            // If our evaluation was better than our alpha (best unavoidable evaluation so far), then we should
-                            // replace our alpha with our evaluation.
-                            alpha <- evaluation
-            
-                            // If the evaluation was better than beta, it means the position was too good. Thus, there
-                            // is a good chance that the opponent will avoid this path. Hence, there is currently no
-                            // reason to evaluate it further.
-                            evaluation < beta
-
                 // Calculate next iteration variables before getting into the loop.
                 let nextDepth = depth - 1
                 let nextPlyFromRoot = plyFromRoot + 1
-            
                 let mutable i = 0
                 let mutable keepgoing = true
-                
                 while (keepgoing && i < moveCount) do
                     // We should being the move that's likely to be the best move at this depth to the top. This ensures
                     // that we are searching through the likely best moves first, allowing us to return early.
                     moveList.SortNext(i, moveCount)
-            
                     let mutable move = moveList.[i]
-
                     // Calculate approximation of SEE.
                     let see = SEE.Approximate(board, move)
                     // If SEE + the positional evaluation is greater than beta, then this capture is far too good, and hence
@@ -164,16 +131,13 @@ type MoveSearch =
                         // Make the move.
                         let mutable rv = board.Move(&move)
                         this.TotalNodeSearchCount <- this.TotalNodeSearchCount+1
-        
                         // Evaluate position by searching deeper and negating the result. An evaluation that's good for
                         // our opponent will obviously be bad for us.
                         let evaluation = -this.QSearch(isPvNode, board, nextPlyFromRoot, nextDepth, -beta, -alpha)
-                
                         // Undo the move.
                         board.UndoMove(&rv)
-
-                        if not (handleEvaluation(evaluation)) then keepgoing <- false
-            
+                        if not (this.HandleEvaluationQ(evaluation,&bestEvaluation,&alpha,beta)) then 
+                            keepgoing <- false
                     i <- i+1
                 bestEvaluation
     member this.AbSearch(isPvNode:bool, board:EngineBoard, plyFromRoot:int, idepth:int, ialpha:int, ibeta:int) =
@@ -195,11 +159,11 @@ type MoveSearch =
         else
             if not rootNode then
                 // We had a three-fold repetition, so return earlier.
-                if (board.IsRepetition()) then ans <- 0|>Some
+                if board.IsRepetition() then ans <- 0|>Some
                 else
                     let allPiecesCount = board.Brd.All().Count
                     // If only the kings are left, it's a draw.
-                    if (allPiecesCount = 2) then ans <- 0|>Some
+                    if allPiecesCount = 2 then ans <- 0|>Some
                     else
                         let knightLeft = board.Brd.All(Piece.Knight, PieceColor.White).ToBool() || board.Brd.All(Piece.Knight, PieceColor.Black).ToBool()
                         // If only the kings and one knight is left, it's a draw.
@@ -207,7 +171,7 @@ type MoveSearch =
                         else
                             let bishopLeft = board.Brd.All(Piece.Bishop, PieceColor.White).ToBool() || board.Brd.All(Piece.Bishop, PieceColor.Black).ToBool()
                             // If only the kings and one bishop is left, it's a draw.
-                            if (allPiecesCount = 3 && bishopLeft) then ans <- 0|>Some
+                            if allPiecesCount = 3 && bishopLeft then ans <- 0|>Some
                             else
                                 // If we are not at the root, we should check and see if there is a ready mate.
                                 // If there is, we shouldn't really care about other moves or slower mates, but instead
@@ -228,7 +192,6 @@ type MoveSearch =
                 // transposition hit or not.
                 transpositionMove <- storedEntry.BestMove
                 transpositionHit <- true
-
                 if not isPvNode && int(storedEntry.Depth) >= idepth then
                     // If it came from a higher depth search than our current depth, it means the results are definitely
                     // more trustworthy than the ones we could achieve at this depth.
@@ -236,7 +199,6 @@ type MoveSearch =
                             // In the case of an exact evaluation, we have previously found this was our best move
                             // in said transposition. Therefore, it is reasonable to return early.
                             ans <- storedEntry.BestMove.Evaluation|>Some
-                    
                         // In the case that we didn't have an exact, we must alter our bounds to make our search for this
                         // depth as best as possible (and possibly get a cutoff without having to search).
                     elif storedEntry.Type=MoveTranspositionTableEntryType.BetaCutoff then
@@ -249,7 +211,6 @@ type MoveSearch =
                             // be the minimum value between our current beta and the stored unchanged alpha. This ensures
                             // that if alpha would remain unchanged, we would receive a beta-cutoff.
                             beta <- Math.Min(beta, storedEntry.BestMove.Evaluation)
-
                     if alpha >= beta then
 #if DEBUG
                         this.TableCutoffCount<-this.TableCutoffCount+1
@@ -273,7 +234,6 @@ type MoveSearch =
                 // We should use the evaluation from our transposition table if we had a hit.
                 // As that evaluation isn't truly static and may have been from a previous deep search.
                 let positionalEvaluation = if transpositionHit then transpositionMove.Evaluation else Evaluation.Relative(board.Brd)
-            
                 // Also store the evaluation to later check if it improved.
                 this.MvSrchStck.[plyFromRoot].PositionalEvaluation <- positionalEvaluation
         
@@ -325,11 +285,8 @@ type MoveSearch =
                         let mutable bestEvaluation = -100000000
                         let mutable bestMoveSoFar = OrderedMoveEntry(Square.Na, Square.Na, Promotion.None)
                         let mutable transpositionTableEntryType = MoveTranspositionTableEntryType.AlphaUnchanged
-                        let historyBonus = depth * depth
-
                         // Calculate next iteration variables before getting into the loop.
                         let nextDepth = depth - 1
-            
                         let mutable i = 0
                         let mutable quietMoveCounter = 0
                         let lmpQuietThreshold = 3 + depth * depth
@@ -364,21 +321,12 @@ type MoveSearch =
                                     this.SetEvaluation(i,lmr,isPvNode,board,nextPlyFromRoot,nextDepth,beta,alpha,depth,improving)
                                 //Principle Variation Search
                                 if i > 0 && evaluation > alpha then
-                                    // If we couldn't attempt LMR because it was unsafe or if LMR failed, we should try a null-window
-                                    // search at a normal progressive depth. If this is a research, it'll likely be fast enough to have
-                                    // no impact due to transposition tables.
-                                    evaluation <- -this.AbSearch(false, board, nextPlyFromRoot, nextDepth, -alpha - 1, -alpha)
-                                    if (evaluation > alpha && evaluation < beta) then
-                                        // If our evaluation was good enough to change our alpha but not our beta, it means we're on a
-                                        // principle variation node. Essentially: beta - alpha > 1.
-                                        // This means this is our best move from the search, and it isn't too good to be deemed
-                                        // an unlikely path. Thus, we should evaluate it clearly using a full-window research.
-                                        evaluation <- -this.AbSearch(true, board, nextPlyFromRoot, nextDepth, -beta, -alpha)
+                                    this.PvSearch(&evaluation,board,nextPlyFromRoot,nextDepth,alpha,beta)
                                 // Undo the move.
                                 board.UndoMove(&rv)
                                 if not (this.HandleEvaluation(evaluation, move, &bestEvaluation,&bestMoveSoFar,isPvNode,plyFromRoot,&alpha,beta,&transpositionTableEntryType)) then
                                     if quietMove then
-                                        this.DoQuiet(plyFromRoot,move,board,historyBonus,quietMoveCounter,moveList,i)
+                                        this.DoQuiet(plyFromRoot,move,board,depth,quietMoveCounter,moveList,i)
                                     // We had a beta cutoff, hence it's a beta cutoff entry.
                                     transpositionTableEntryType <- MoveTranspositionTableEntryType.BetaCutoff
                                     keepgoing <- false
@@ -416,12 +364,12 @@ type MoveSearch =
             // Researches are reasonably fast thanks to transposition tables.
             let bestEvaluation = this.AbSearch(true, board, 0, depth, alpha, beta)
             //Modify Window
-            if (bestEvaluation <= alpha) then
+            if bestEvaluation <= alpha then
                 let newres = res + 1                
                 // If our best evaluation was somehow worse than our alpha, we should resize our window and research.
                 alpha <- Math.Max(alpha - newres * newres * 23, -100000000)
                 geteval newres
-            elif (bestEvaluation >= beta) then
+            elif bestEvaluation >= beta then
                 let newres = res + 1 
                 // If our evaluation was somehow better than our beta, we should resize our window and research.
                 beta <- Math.Min(beta + newres * newres * 23, 100000000)
@@ -451,6 +399,22 @@ type MoveSearch =
             | :? OperationCanceledException -> ()
         NNUE.ResetAccumulator()
         bestMove
+    [<MethodImpl(MethodImplOptions.AggressiveInlining)>]
+    member this.HandleEvaluationQ(evaluation:int, bestEvaluation:byref<int>, alpha:byref<int>, beta:int) =
+        if evaluation <= bestEvaluation then true
+        // If our evaluation was better than our current best evaluation, we should update our evaluation
+        // with the new evaluation.
+        else
+            bestEvaluation <- evaluation
+            if evaluation <= alpha then true
+            else
+                // If our evaluation was better than our alpha (best unavoidable evaluation so far), then we should
+                // replace our alpha with our evaluation.
+                alpha <- evaluation
+                // If the evaluation was better than beta, it means the position was too good. Thus, there
+                // is a good chance that the opponent will avoid this path. Hence, there is currently no
+                // reason to evaluate it further.
+                evaluation < beta
     [<MethodImpl(MethodImplOptions.AggressiveInlining)>]
     member this.NullMovePrune(board:EngineBoard, nextPlyFromRoot:int, idepth:int, beta:int) =        
         // Reduced depth for null move pruning.
@@ -500,8 +464,18 @@ type MoveSearch =
             // setting the evaluation to be a value greater than alpha allows us to force the principle
             // variation search.
             else alpha + 1
-
-
+    [<MethodImpl(MethodImplOptions.AggressiveInlining)>]
+    member this.PvSearch(evaluation:byref<int>, board:EngineBoard, nextPlyFromRoot:int, nextDepth:int, alpha:int, beta:int) =
+        // If we couldn't attempt LMR because it was unsafe or if LMR failed, we should try a null-window
+        // search at a normal progressive depth. If this is a research, it'll likely be fast enough to have
+        // no impact due to transposition tables.
+        evaluation <- -this.AbSearch(false, board, nextPlyFromRoot, nextDepth, -alpha - 1, -alpha)
+        if (evaluation > alpha && evaluation < beta) then
+            // If our evaluation was good enough to change our alpha but not our beta, it means we're on a
+            // principle variation node. Essentially: beta - alpha > 1.
+            // This means this is our best move from the search, and it isn't too good to be deemed
+            // an unlikely path. Thus, we should evaluate it clearly using a full-window research.
+            evaluation <- -this.AbSearch(true, board, nextPlyFromRoot, nextDepth, -beta, -alpha)
     [<MethodImpl(MethodImplOptions.AggressiveInlining)>]
     member this.HandleEvaluation(evaluation:int, move:OrderedMoveEntry, bestEvaluation:byref<int>, bestMoveSoFar:byref<OrderedMoveEntry>, isPvNode:bool, plyFromRoot:int, alpha:byref<int>, beta:int, transpositionTableEntryType:byref<MoveTranspositionTableEntryType>) =
         if (evaluation <= bestEvaluation) then true
@@ -532,7 +506,8 @@ type MoveSearch =
                 // reason to evaluate it further.
                 evaluation < beta
     [<MethodImpl(MethodImplOptions.AggressiveInlining)>]
-    member this.DoQuiet(plyFromRoot:int, move:OrderedMoveEntry, board:EngineBoard, historyBonus:int, quietMoveCounter, moveList:OrderedMoveList, i:int) =
+    member this.DoQuiet(plyFromRoot:int, move:OrderedMoveEntry, board:EngineBoard,depth:int, quietMoveCounter, moveList:OrderedMoveList, i:int) =
+        let historyBonus = depth * depth
         if this.KillerMvTbl.[0, plyFromRoot] <> move then
             // Given this move isn't a capture move (quiet move), we store it as a killer move (cutoff move)
             // to better sort quiet moves like these in the future, allowing us to achieve a cutoff faster.
