@@ -8,10 +8,7 @@ let main argv =
     AttackTable1.SetUp()
     Zobrist.Setup()
     let command = Environment.CommandLine
-    if (command.ToLower().Contains("bench")) then
-        OpenBenchBenchmark.Bench()
-        0
-    elif (command.ToLower().Contains("test")) then
+    if (command.ToLower().Contains("test")) then
         Tester.Test()
         0
     else

@@ -399,6 +399,27 @@ type MoveSearch =
             | :? OperationCanceledException -> ()
         NNUE.ResetAccumulator()
         bestMove
+    member this.DoTest(selectedDepth:int, bm:string) =
+        let mutable bestMove = OrderedMoveEntry.Default()
+        try 
+            let stopwatch = Stopwatch.StartNew()
+            let mutable timePreviouslyUpdated = false
+            let rec getbm cureval curdepth =
+                if not (this.TimeCntrl.Finished() || curdepth > selectedDepth) then
+                    let eval = this.AspirationSearch(this.EngBrd.Value, curdepth, cureval)
+                    bestMove <- this.PvTable.Get(0)
+                    // Try counting nodes to see if we can exit the search early.
+                    timePreviouslyUpdated <- this.NodeCounting(curdepth, bestMove, timePreviouslyUpdated)
+                    this.DepthSearchLog(curdepth, eval, stopwatch)
+                    // In the case we are past a certain depth, and are really low on time, it's highly unlikely we'll
+                    // finish the next depth in time. To save time, we should just exit the search early.
+                    if not (bm = bestMove.ToString()) then
+                        getbm eval (curdepth + 1)
+            getbm -100000000 1                    
+        with
+            | :? OperationCanceledException -> ()
+        NNUE.ResetAccumulator()
+        bestMove
     [<MethodImpl(MethodImplOptions.AggressiveInlining)>]
     member this.HandleEvaluationQ(evaluation:int, bestEvaluation:byref<int>, alpha:byref<int>, beta:int) =
         if evaluation <= bestEvaluation then true

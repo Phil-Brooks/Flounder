@@ -13,6 +13,12 @@ type OrderedMoveEntry =
                 Promotion = promotion
                 Score = 0
             }
+        override this.ToString() =
+            let from = this.From.ToString().ToLower()
+            let mto = this.To.ToString().ToLower()
+            let promotion = if this.Promotion <> Promotion.None then Promotion.ToStr(this.Promotion) else ""
+            from + mto + promotion
+            
     end
 module OrderedMoveEntry =
     let Default() = OrderedMoveEntry(Square.Na, Square.Na, Promotion.None)

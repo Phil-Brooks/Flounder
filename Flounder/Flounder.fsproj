@@ -13,7 +13,6 @@
     <Compile Include="UciStdInputThread.fs" />
     <Compile Include="UniversalChessInterface.fs" />
     <Compile Include="Tester.fs" />
-    <Compile Include="OpenBenchBenchmark.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
 

@@ -4,88 +4,51 @@ open FlounderLib
 open System.Diagnostics
 
 module Tester =
-    let DEPTH = 13
-    let TesterFen = [|
-        "r3k2r/2pb1ppp/2pp1q2/p7/1nP1B3/1P2P3/P2N1PPP/R2QK2R w KQkq a6 0 14";
-        "4rrk1/2p1b1p1/p1p3q1/4p3/2P2n1p/1P1NR2P/PB3PP1/3R1QK1 b - - 2 24";
-        "r3qbrk/6p1/2b2pPp/p3pP1Q/PpPpP2P/3P1B2/2PB3K/R5R1 w - - 16 42";
-        "6k1/1R3p2/6p1/2Bp3p/3P2q1/P7/1P2rQ1K/5R2 b - - 4 44";
-        "8/8/1p2k1p1/3p3p/1p1P1P1P/1P2PK2/8/8 w - - 3 54";
-        "7r/2p3k1/1p1p1qp1/1P1Bp3/p1P2r1P/P7/4R3/Q4RK1 w - - 0 36";
-        "r1bq1rk1/pp2b1pp/n1pp1n2/3P1p2/2P1p3/2N1P2N/PP2BPPP/R1BQ1RK1 b - - 2 10";
-        "3r3k/2r4p/1p1b3q/p4P2/P2Pp3/1B2P3/3BQ1RP/6K1 w - - 3 87";
-        "2r4r/1p4k1/1Pnp4/3Qb1pq/8/4BpPp/5P2/2RR1BK1 w - - 0 42";
-        "4q1bk/6b1/7p/p1p4p/PNPpP2P/KN4P1/3Q4/4R3 b - - 0 37";
-        "2q3r1/1r2pk2/pp3pp1/2pP3p/P1Pb1BbP/1P4Q1/R3NPP1/4R1K1 w - - 2 34";
-        "1r2r2k/1b4q1/pp5p/2pPp1p1/P3Pn2/1P1B1Q1P/2R3P1/4BR1K b - - 1 37";
-        "r3kbbr/pp1n1p1P/3ppnp1/q5N1/1P1pP3/P1N1B3/2P1QP2/R3KB1R b KQkq b3 0 17";
-        "8/6pk/2b1Rp2/3r4/1R1B2PP/P5K1/8/2r5 b - - 16 42";
-        "1r4k1/4ppb1/2n1b1qp/pB4p1/1n1BP1P1/7P/2PNQPK1/3RN3 w - - 8 29";
-        "8/p2B4/PkP5/4p1pK/4Pb1p/5P2/8/8 w - - 29 68";
-        "3r4/ppq1ppkp/4bnp1/2pN4/2P1P3/1P4P1/PQ3PBP/R4K2 b - - 2 20";
-        "5rr1/4n2k/4q2P/P1P2n2/3B1p2/4pP2/2N1P3/1RR1K2Q w - - 1 49";
-        "1r5k/2pq2p1/3p3p/p1pP4/4QP2/PP1R3P/6PK/8 w - - 1 51";
-        "q5k1/5ppp/1r3bn1/1B6/P1N2P2/BQ2P1P1/5K1P/8 b - - 2 34";
-        "r1b2k1r/5n2/p4q2/1ppn1Pp1/3pp1p1/NP2P3/P1PPBK2/1RQN2R1 w - - 0 22";
-        "r1bqk2r/pppp1ppp/5n2/4b3/4P3/P1N5/1PP2PPP/R1BQKB1R w KQkq - 0 5";
-        "r1bqr1k1/pp1p1ppp/2p5/8/3N1Q2/P2BB3/1PP2PPP/R3K2n b Q - 1 12";
-        "r1bq2k1/p4r1p/1pp2pp1/3p4/1P1B3Q/P2B1N2/2P3PP/4R1K1 b - - 2 19";
-        "r4qk1/6r1/1p4p1/2ppBbN1/1p5Q/P7/2P3PP/5RK1 w - - 2 25";
-        "r7/6k1/1p6/2pp1p2/7Q/8/p1P2K1P/8 w - - 0 32";
-        "r3k2r/ppp1pp1p/2nqb1pn/3p4/4P3/2PP4/PP1NBPPP/R2QK1NR w KQkq - 1 5";
-        "3r1rk1/1pp1pn1p/p1n1q1p1/3p4/Q3P3/2P5/PP1NBPPP/4RRK1 w - - 0 12";
-        "5rk1/1pp1pn1p/p3Brp1/8/1n6/5N2/PP3PPP/2R2RK1 w - - 2 20";
-        "8/1p2pk1p/p1p1r1p1/3n4/8/5R2/PP3PPP/4R1K1 b - - 3 27";
-        "8/4pk2/1p1r2p1/p1p4p/Pn5P/3R4/1P3PP1/4RK2 w - - 1 33";
-        "8/5k2/1pnrp1p1/p1p4p/P6P/4R1PK/1P3P2/4R3 b - - 1 38";
-        "8/8/1p1kp1p1/p1pr1n1p/P6P/1R4P1/1P3PK1/1R6 b - - 15 45";
-        "8/8/1p1k2p1/p1prp2p/P2n3P/6P1/1P1R1PK1/4R3 b - - 5 49";
-        "8/8/1p4p1/p1p2k1p/P2npP1P/4K1P1/1P6/3R4 w - - 6 54";
-        "8/8/1p4p1/p1p2k1p/P2n1P1P/4K1P1/1P6/6R1 b - - 6 59";
-        "8/5k2/1p4p1/p1pK3p/P2n1P1P/6P1/1P6/4R3 b - - 14 63";
-        "8/1R6/1p1K1kp1/p6p/P1p2P1P/6P1/1Pn5/8 w - - 0 67";
-        "1rb1rn1k/p3q1bp/2p3p1/2p1p3/2P1P2N/PP1RQNP1/1B3P2/4R1K1 b - - 4 23";
-        "4rrk1/pp1n1pp1/q5p1/P1pP4/2n3P1/7P/1P3PB1/R1BQ1RK1 w - - 3 22";
-        "r2qr1k1/pb1nbppp/1pn1p3/2ppP3/3P4/2PB1NN1/PP3PPP/R1BQR1K1 w - - 4 12";
-        "2r2k2/8/4P1R1/1p6/8/P4K1N/7b/2B5 b - - 0 55";
-        "6k1/5pp1/8/2bKP2P/2P5/p4PNb/B7/8 b - - 1 44";
-        "2rqr1k1/1p3p1p/p2p2p1/P1nPb3/2B1P3/5P2/1PQ2NPP/R1R4K w - - 3 25";
-        "r1b2rk1/p1q1ppbp/6p1/2Q5/8/4BP2/PPP3PP/2KR1B1R b - - 2 14";
-        "6r1/5k2/p1b1r2p/1pB1p1p1/1Pp3PP/2P1R1K1/2P2P2/3R4 w - - 1 36";
-        "rnbqkb1r/pppppppp/5n2/8/2PP4/8/PP2PPPP/RNBQKBNR b KQkq c3 0 2";
-        "2rr2k1/1p4bp/p1q1p1p1/4Pp1n/2PB4/1PN3P1/P3Q2P/2RR2K1 w - f6 0 20";
-        "3br1k1/p1pn3p/1p3n2/5pNq/2P1p3/1PN3PP/P2Q1PB1/4R1K1 w - - 0 23";
-        "2r2b2/5p2/5k2/p1r1pP2/P2pB3/1P3P2/K1P3R1/7R w - - 23 93";
-        "3rr1k1/1b1q1p1p/p2b1npB/2pP4/1p2n3/4N1P1/PPQ1NPBP/R2R2K1 b - - 0 0";
-        "5r1k/5Bpp/p1p1Qb2/1pq5/4Pp2/7R/Pr3PPP/5RK1 w - - 0 0"
-    |]
-    let bms = [|"e1g1";"e7d6";"a1a2";"g4f4";"e3e4";"f1f4";"c6d5";"g1h1";"g1h2";"c5b4";"e2d4";"g5g4";
-                        "a5b6";"d5a5";"d4c5";"h5g4";"c7a5";"b1b6";"d3e3";"a8d5";"f2e1";"d1f3";"d7d5";"d8f8";
-                        "g2g4";"h4g5";"d3d4";"e4d5";"f3g5";"e6f6";"d3d6";"c6d4";"d6c6";"d6c6";"d1d2";"d4c2";
-                        "d4c2";"b7b6";"h8g8";"d1a4";"a2a3";"c8c1";"c5a7";"c2d2";"c7b8";"f2f3";"c7c5";"e5f6";
-                        "g3g4";"h1h8";"e4f2";"h3h7"|]
+    let MaxDepth = 22
+    let TesterFen = 
+        [|
+            "2rr3k/pp3pp1/1nnqbN1p/3pN3/2pP4/2P3Q1/PPB4P/R4RK1 w - - bm g3g6"
+            "8/7p/5k2/5p2/p1p2P2/Pr1pPK2/1P1R3P/8 b - - bm b3b2"
+            "5rk1/1ppb3p/p1pb4/6q1/3P1p1r/2P1R2P/PP1BQ1P1/5RKN w - - bm e3g3"
+            "r1bq2rk/pp3pbp/2p1p1pQ/7P/3P4/2PB1N2/PP3PPR/2KR4 w - - bm h6h7"
+            "5k2/6pp/p1qN4/1p1p4/3P4/2PKP2Q/PP3r2/3R4 b - - bm c6c4"
+            "7k/p7/1R5K/6r1/6p1/6P1/8/8 w - - bm b6b7"
+            "rnbqkb1r/pppp1ppp/8/4P3/6n1/7P/PPPNPPP1/R1BQKBNR b KQkq - bm g4e3"
+            "r4q1k/p2bR1rp/2p2Q1N/5p2/5p2/2P5/PP3PPP/R5K1 w - - bm e7f7"
+            "3q1rk1/p4pp1/2pb3p/3p4/6Pr/1PNQ4/P1PB1PP1/4RRK1 b - - bm d6h2"
+            "2br2k1/2q3rn/p2NppQ1/2p1P3/Pp5R/4P3/1P3PPP/3R2K1 w - - bm h4h7"
+            "r1b1kb1r/3q1ppp/pBp1pn2/8/Np3P2/5B2/PPP3PP/R2Q1RK1 w kq - bm f3c6"
+            "4k1r1/2p3r1/1pR1p3/3pP2p/3P2qP/P4N2/1PQ4P/5R1K b - - bm g4f3"
+            "5rk1/pp4p1/2n1p2p/2Npq3/2p5/6P1/P3P1BP/R4Q1K w - - bm f1f8"
+            "r2rb1k1/pp1q1p1p/2n1p1p1/2bp4/5P2/PP1BPR1Q/1BPN2PP/R5K1 w - - bm h3h7"
+            "1R6/1brk2p1/4p2p/p1P1Pp2/P7/6P1/1P4P1/2R3K1 w - - bm b8b7"
+            "r4rk1/ppp2ppp/2n5/2bqp3/8/P2PB3/1PP1NPPP/R2Q1RK1 w - - bm e2c3"
+            "1k5r/pppbn1pp/4q1r1/1P3p2/2NPp3/1QP5/P4PPP/R1B1R1K1 w - - bm c4e5"
+            "R7/P4k2/8/8/8/8/r7/6K1 w - - bm a8h8"
+            "r1b2rk1/ppbn1ppp/4p3/1QP4q/3P4/N4N2/5PPP/R1B2RK1 w - - bm c5c6"
+            "r2qkb1r/1ppb1ppp/p7/4p3/P1Q1P3/2P5/5PPP/R1B2KNR b kq - bm d7b5"
+        |]
     let Test() =
         let mutable table = MoveTranspositionTable.GenerateTable(16)
         let timeControl = FlounderLib.TimeControl(9999999)
         let stopwatch = new Stopwatch()
         stopwatch.Start()
         for i = 0 to (TesterFen.Length-1) do
-            let fen = TesterFen.[i]
+            let bits = TesterFen.[i].Split("bm") 
+            let fen = bits.[0]
+            let ebm = bits.[1].Trim()
             Console.WriteLine("Position (" + (i + 1).ToString() + "/" + TesterFen.Length.ToString() + "): " + fen)
             let board = EngineBoard.FromFen(fen)
             let search = MoveSearch(board, table, timeControl)
-            let bestMove = search.IterativeDeepening(DEPTH)
-            let from = bestMove.From.ToString().ToLower()
-            let mto = bestMove.To.ToString().ToLower()
-            let promotion = if bestMove.Promotion <> Promotion.None then Promotion.ToStr(bestMove.Promotion) else ""
-            let bm = from + mto + promotion
+            let bestMove = search.DoTest(MaxDepth,ebm)
+            let bm = bestMove.ToString()
             Console.WriteLine("bestmove " + bm)
-            if bm <> bms.[i] then failwith("Test " + (i + 1).ToString() + " failed with wrong best move: " + bm)
+            if bm <> ebm then failwith("Test " + (i + 1).ToString() + " failed with wrong best move: " + bm)
         Console.WriteLine(TesterFen.Length.ToString() + " run successfully.")
         stopwatch.Stop()
         let elap = stopwatch.ElapsedMilliseconds
         Console.WriteLine(elap.ToString() + "ms taken.")
-        let expElap = 10000L
+        let expElap = 4000L
         let pc = (100L * elap)/expElap - 100L
         if pc>0 then
             Console.WriteLine("BAD: " + pc.ToString() + "% extra time taken.")
