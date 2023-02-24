@@ -12,6 +12,8 @@ The engine includes:
 
 - Null Move Pruning
 
+- Late Move Pruning
+
 - .....
 
 ## Not Included
