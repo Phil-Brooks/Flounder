@@ -24,6 +24,7 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tester", "Tester", "{BB717AFA-FA4F-4234-9636-5EF08BBA11BC}"
 	ProjectSection(SolutionItems) = preProject
 		docs\Tester\Tester.bat = docs\Tester\Tester.bat
+		docs\Tester\uciwacnew.epd = docs\Tester\uciwacnew.epd
 		docs\Tester\wacnew.epd = docs\Tester\wacnew.epd
 	EndProjectSection
 EndProject

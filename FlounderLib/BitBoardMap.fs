@@ -98,7 +98,7 @@ type BitBoardMap =
             let whiteKCastle = if castlingData.Contains('K') then 0x1 else 0x0
             let whiteQCastle = if castlingData.Contains('Q') then 0x2 else 0x0
             let blackKCastle = if castlingData.Contains('k') then 0x4 else 0x0
-            let blackQCastle = if castlingData.Contains('K') then 0x8 else 0x0
+            let blackQCastle = if castlingData.Contains('q') then 0x8 else 0x0
             let mutable enPassantTarget = Square.Na
             if (enPassantTargetData.Length = 2) then
                 enPassantTarget <- System.Enum.Parse<Square>(enPassantTargetData, true)

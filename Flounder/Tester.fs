@@ -1,5 +1,6 @@
 ﻿namespace Flounder
 open System
+open System.IO
 open FlounderLib
 open System.Diagnostics
 
@@ -28,16 +29,20 @@ module Tester =
             "r1b2rk1/ppbn1ppp/4p3/1QP4q/3P4/N4N2/5PPP/R1B2RK1 w - - bm c5c6"
             "r2qkb1r/1ppb1ppp/p7/4p3/P1Q1P3/2P5/5PPP/R1B2KNR b kq - bm d7b5"
         |]
-    let Test() =
+    let Test (argv:string array) =
         let mutable table = MoveTranspositionTable.GenerateTable(16)
         let timeControl = FlounderLib.TimeControl(9999999)
         let stopwatch = new Stopwatch()
         stopwatch.Start()
-        for i = 0 to (TesterFen.Length-1) do
-            let bits = TesterFen.[i].Split("bm") 
+        let fens =
+            if argv.Length > 1 then 
+                File.ReadAllLines(argv.[1])
+            else TesterFen
+        for i = 0 to fens.Length-1 do
+            let bits = fens.[i].Split("bm") 
             let fen = bits.[0]
             let ebm = bits.[1].Trim()
-            Console.WriteLine("Position (" + (i + 1).ToString() + "/" + TesterFen.Length.ToString() + "): " + fen)
+            Console.WriteLine("Position (" + (i + 1).ToString() + "/" + fens.Length.ToString() + "): " + fen)
             let board = EngineBoard.FromFen(fen)
             let search = MoveSearch(board, table, timeControl)
             let bestMove = search.DoTest(MaxDepth,ebm)

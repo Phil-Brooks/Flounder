@@ -302,17 +302,12 @@ type MoveSearch =
                             let mutable move = moveList.[i]
                             let quietMove = not (board.Brd.All(oppositeColor).[move.To])
                             if quietMove then quietMoveCounter <- quietMoveCounter + 1
-                            //Futility Pruning
-                                // If our move is a quiet and static evaluation of a position with a depth-relative margin is below
-                                // our alpha, then the move won't really help us improve our position. And nor will any future move.
-                                // Hence, it's futile to evaluate this position any further.
-                            let futTest = i > 0 && quietMove && positionalEvaluation + depth * 150 <= alpha
                             //Late Move Pruning
                                 // If we are past a certain threshold and we have searched the required quiet moves for this depth for
                                 // pruning to be relatively safe, we can avoid searching any more moves since the likely best move
                                 // will have been determined by now.
                             let lmpTest = not isPvNode && lmp && bestEvaluation > -100000000 && quietMoveCounter > lmpQuietThreshold
-                            if futTest || lmpTest then keepgoing <- false
+                            if lmpTest then keepgoing <- false
                             else
                                 // Make the move.
                                 let mutable rv = board.Move(&move)
