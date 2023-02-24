@@ -5,7 +5,7 @@ open FlounderLib
 open System.Diagnostics
 
 module Tester =
-    let MaxDepth = 22
+    let MaxDepth = 30
     let TesterFen = 
         [|
             "2rr3k/pp3pp1/1nnqbN1p/3pN3/2pP4/2P3Q1/PPB4P/R4RK1 w - - bm g3g6"

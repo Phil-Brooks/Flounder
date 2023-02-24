@@ -23,6 +23,8 @@ Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "FlounderLib", "FlounderLib\
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tester", "Tester", "{BB717AFA-FA4F-4234-9636-5EF08BBA11BC}"
 	ProjectSection(SolutionItems) = preProject
+		docs\Tester\Broken.bat = docs\Tester\Broken.bat
+		docs\Tester\broken.epd = docs\Tester\broken.epd
 		docs\Tester\Tester.bat = docs\Tester\Tester.bat
 		docs\Tester\uciwacnew.epd = docs\Tester\uciwacnew.epd
 		docs\Tester\wacnew.epd = docs\Tester\wacnew.epd
