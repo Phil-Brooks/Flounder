@@ -4,9 +4,6 @@ open System.Diagnostics
 open System.Text
 open System.Runtime.CompilerServices
 
-module MoveSearch =
-    let mutable RedDpthTbl = LogarithmicReductionDepthTable.Default()
-
 type MoveSearch =
     val mutable TableCutoffCount:int
     val mutable TotalNodeSearchCount:int
@@ -291,7 +288,6 @@ type MoveSearch =
                         let mutable quietMoveCounter = 0
                         let lmpQuietThreshold = 3 + depth * depth
                         let lmp = not rootNode && not inCheck && depth <= 3
-                        let lmr = depth >= 3 && not inCheck
 
                         let mutable keepgoing = true
                         while (i < moveCount && keepgoing) do
@@ -313,7 +309,13 @@ type MoveSearch =
                                 let mutable rv = board.Move(&move)
                                 this.TotalNodeSearchCount <- this.TotalNodeSearchCount+1
                                 let mutable evaluation = 
-                                    this.SetEvaluation(i,lmr,isPvNode,board,nextPlyFromRoot,nextDepth,beta,alpha,depth,improving)
+                                    if i = 0 then
+                                        // If we haven't searched any moves, we should do a full depth search without any reductions.
+                                        // Without a full depth search beforehand, there's no way to guarantee principle variation search being
+                                        // safe.
+                                        -this.AbSearch(isPvNode, board, nextPlyFromRoot, nextDepth, -beta, -alpha)
+                                    else 
+                                        alpha + 1
                                 //Principle Variation Search
                                 if i > 0 && evaluation > alpha then
                                     this.PvSearch(&evaluation,board,nextPlyFromRoot,nextDepth,alpha,beta)
@@ -446,40 +448,6 @@ type MoveSearch =
         // Undo the null move so we can get back to original state of the board.
         board.UndoNullMove(rv)
         evaluation
-    [<MethodImpl(MethodImplOptions.AggressiveInlining)>]
-    member this.SetEvaluation(i:int, lmr:bool, isPvNode:bool, board:EngineBoard, nextPlyFromRoot:int, nextDepth:int, beta:int, alpha:int, depth:int, improving:bool) =
-        if i = 0 then
-            // If we haven't searched any moves, we should do a full depth search without any reductions.
-            // Without a full depth search beforehand, there's no way to guarantee principle variation search being
-            // safe.
-            -this.AbSearch(isPvNode, board, nextPlyFromRoot, nextDepth, -beta, -alpha)
-        else 
-            // Otherwise, to speed up search, we should try applying certain reductions to see if we can speed up
-            // the search. Moreover, even if those reductions are still unsafe, we can still save time by trying
-            // search inside our principle variation window. In most cases, this will allow us to get a beta cutoff
-            // earlier.
-            //Late Move Reduction
-            if i >= 4 && lmr then
-                // If we're past the move count and depth threshold where we can usually safely apply LMR and we
-                // also aren't in check, then we can reduce the depth of the subtree, speeding up search.
-                // Logarithmic reduction: ln(depth) * ln(i) / 2 - 0.2
-                let mutable r = MoveSearch.RedDpthTbl.[depth, i]
-                // Reduce more on non-PV nodes.
-                if not isPvNode then r <- r + 1
-                // Reduce if not improving.
-                if not improving then r <- r + 1
-                // Determine the reduced depth. Ensure it's >= 1 as we want to avoid dropping into QSearch.
-                let reducedDepth = Math.Max(depth - r, 1)
-                // Evaluate the position by searching at a reduced depth. The idea is that these moves will likely
-                // not improve alpha, and thus not trigger researches. Therefore, one will be able to get away with
-                // reduced depth searches with reasonable safety. Result is negated as an evaluation that's good
-                // for our opponent will be bad for us.
-                -this.AbSearch(false, board, nextPlyFromRoot, reducedDepth, -alpha - 1, -alpha)
-            // In the case that LMR fails, our evaluation will be greater than alpha which will force a
-            // principle variation research. However, in the case we couldn't apply LMR (due to safety reasons,
-            // setting the evaluation to be a value greater than alpha allows us to force the principle
-            // variation search.
-            else alpha + 1
     [<MethodImpl(MethodImplOptions.AggressiveInlining)>]
     member this.PvSearch(evaluation:byref<int>, board:EngineBoard, nextPlyFromRoot:int, nextDepth:int, alpha:int, beta:int) =
         // If we couldn't attempt LMR because it was unsafe or if LMR failed, we should try a null-window

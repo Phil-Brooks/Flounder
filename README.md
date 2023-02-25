@@ -22,5 +22,7 @@ The following features were not included as they were tested and seemed to give 
 
 - Futility Pruning
 
+- Late Move Reduction
+
 - .....
 

@@ -49,7 +49,7 @@ module Tester =
             let bm = bestMove.ToString()
             Console.WriteLine("bestmove " + bm)
             if bm <> ebm then failwith("Test " + (i + 1).ToString() + " failed with wrong best move: " + bm)
-        Console.WriteLine(TesterFen.Length.ToString() + " run successfully.")
+        Console.WriteLine(fens.Length.ToString() + " run successfully.")
         stopwatch.Stop()
         let elap = stopwatch.ElapsedMilliseconds
         Console.WriteLine(elap.ToString() + "ms taken.")
