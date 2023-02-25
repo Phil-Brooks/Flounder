@@ -5,7 +5,9 @@ open System.Text
 open System.Runtime.CompilerServices
 
 type MoveSearch =
+#if DEBUG
     val mutable TableCutoffCount:int
+#endif
     val mutable TotalNodeSearchCount:int
     val mutable SelectiveDepth:int 
     val mutable HistTbl:HistoryTable
@@ -19,7 +21,9 @@ type MoveSearch =
     val mutable MvTrnTbl:MoveTranspositionTable option
     new(board:EngineBoard, table:MoveTranspositionTable, timeControl:TimeControl) =
         {
+#if DEBUG
             TableCutoffCount = 0
+#endif
             TotalNodeSearchCount = 0
             SelectiveDepth = 0
             HistTbl = HistoryTable.Default()

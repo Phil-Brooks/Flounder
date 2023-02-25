@@ -11,18 +11,18 @@ The code has then been significantly re-factored to be more in line with standar
 The engine includes:
 
 - Null Move Pruning
-
 - Late Move Pruning
-
-- .....
+- Reverse Futility Pruning
+- Three-fold Repetition Pruning
+- Mate Distance Pruning
+- Material Draw Pruning
+- Check Extension
+- Quiescence Search with SEE Pruning
 
 ## Not Included
 
 The following features were not included as they were tested and seemed to give no benefit:
 
 - Futility Pruning
-
 - Late Move Reduction
-
-- .....
 
