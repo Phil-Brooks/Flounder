@@ -19,7 +19,7 @@ The engine includes:
 - Check Extension
 - Quiescence Search with SEE Pruning
 
-## Not Included
+### Not Included
 
 The following features were not included as they were tested and seemed to give no benefit:
 
