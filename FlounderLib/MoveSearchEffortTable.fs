@@ -12,5 +12,5 @@ type MoveSearchEffortTable =
             and set(from:Square, mto:Square) value = this.Internal.[int(from) * 64 + int(mto)] <- value
     end 
 module MoveSearchEffortTable =
-    let Default() = MoveSearchEffortTable(4096)
+    let Default = MoveSearchEffortTable(4096)
 

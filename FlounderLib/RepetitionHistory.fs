@@ -26,4 +26,4 @@ type RepetitionHistory =
             history
     end
 module RepetitionHistory =
-    let Default() = RepetitionHistory(1024)
+    let Default = RepetitionHistory(1024)

@@ -30,7 +30,7 @@ module Tester =
             "r2qkb1r/1ppb1ppp/p7/4p3/P1Q1P3/2P5/5PPP/R1B2KNR b kq - bm d7b5"
         |]
     let Test (argv:string array) =
-        let mutable table = MoveTranspositionTable.GenerateTable(16)
+        let mutable table = MoveTranDict.GenerateTable(16)
         let timeControl = FlounderLib.TimeControl(9999999)
         let stopwatch = new Stopwatch()
         stopwatch.Start()

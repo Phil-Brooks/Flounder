@@ -18,20 +18,20 @@ type MoveSearch =
     val mutable ReducedTimeMove:OrderedMoveEntry
     val mutable EngBrd:EngineBoard option
     val mutable TimeCntrl:TimeControl
-    val mutable MvTrnTbl:MoveTranspositionTable option
-    new(board:EngineBoard, table:MoveTranspositionTable, timeControl:TimeControl) =
+    val mutable MvTrnTbl:MoveTranDict option
+    new(board:EngineBoard, table:MoveTranDict, timeControl:TimeControl) =
         {
 #if DEBUG
             TableCutoffCount = 0
 #endif
             TotalNodeSearchCount = 0
             SelectiveDepth = 0
-            HistTbl = HistoryTable.Default()
-            KillerMvTbl = KillerMoveTable.Default()
-            SearchEffort = MoveSearchEffortTable.Default()
-            PvTable = PrincipleVariationTable.Default()
-            MvSrchStck = MoveSearchStack.Default()
-            ReducedTimeMove = OrderedMoveEntry.Default()
+            HistTbl = HistoryTable.Default
+            KillerMvTbl = KillerMoveTable.Default
+            SearchEffort = MoveSearchEffortTable.Default
+            PvTable = PrincipleVariationTable.Default
+            MvSrchStck = MoveSearchStack.Default
+            ReducedTimeMove = OrderedMoveEntry.Default
             EngBrd = Some(board)
             TimeCntrl = timeControl
             MvTrnTbl = Some(table)
@@ -80,12 +80,11 @@ type MoveSearch =
         let mutable ans = None 
         if not isPvNode then
             let storedEntry = this.MvTrnTbl.Value.[board.Brd.ZobristHash]
-            if (storedEntry.ZobristHash = board.Brd.ZobristHash &&
-                (storedEntry.Type = MoveTranspositionTableEntryType.Exact ||
+            if (storedEntry.Type = MoveTranspositionTableEntryType.Exact ||
                 storedEntry.Type = MoveTranspositionTableEntryType.BetaCutoff &&
                 storedEntry.BestMove.Evaluation >= beta ||
                 storedEntry.Type = MoveTranspositionTableEntryType.AlphaUnchanged &&
-                storedEntry.BestMove.Evaluation <= alpha)) then
+                storedEntry.BestMove.Evaluation <= alpha) then
                 // If our entry is valid for our position, and it's one of the following caseS:
                 // - Exact
                 // - Beta Cutoff with transposition evaluation >= beta
@@ -188,7 +187,7 @@ type MoveSearch =
             let mutable transpositionMove = SearchedMove.Default
             let mutable transpositionHit = false
 
-            if valid && storedEntry.ZobristHash = board.Brd.ZobristHash then
+            if valid then
                 // We had a transposition table hit. However, at this point, we don't know if this is a trustworthy
                 // transposition hit or not.
                 transpositionMove <- storedEntry.BestMove
@@ -335,7 +334,7 @@ type MoveSearch =
                                 i <- i + 1
                         
                         let bestMove = SearchedMove(&bestMoveSoFar, bestEvaluation)
-                        let mutable entry = MoveTranspositionTableEntry(board.Brd.ZobristHash, transpositionTableEntryType, bestMove, depth)
+                        let mutable entry = MoveTranDictEntry(transpositionTableEntryType, bestMove, depth)
                         this.MvTrnTbl.Value.InsertEntry(board.Brd.ZobristHash, &entry)
 
                         bestEvaluation
@@ -380,7 +379,7 @@ type MoveSearch =
                 bestEvaluation
         geteval 0
     member this.IterativeDeepening(selectedDepth:int) =
-        let mutable bestMove = OrderedMoveEntry.Default()
+        let mutable bestMove = OrderedMoveEntry.Default
         try 
             let stopwatch = Stopwatch.StartNew()
             let mutable timePreviouslyUpdated = false
@@ -401,7 +400,7 @@ type MoveSearch =
         NNUE.ResetAccumulator()
         bestMove
     member this.DoTest(selectedDepth:int, bm:string) =
-        let mutable bestMove = OrderedMoveEntry.Default()
+        let mutable bestMove = OrderedMoveEntry.Default
         try 
             let stopwatch = Stopwatch.StartNew()
             let mutable timePreviouslyUpdated = false

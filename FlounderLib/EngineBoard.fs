@@ -7,7 +7,7 @@ type EngineBoard =
     new(boardData, turnData, castlingData, enPassantTargetData) as this = 
         {
             Brd = Board(boardData, turnData, castlingData, enPassantTargetData)
-            RepHist = RepetitionHistory.Default()
+            RepHist = RepetitionHistory.Default
         } then NNUE.ResetAccumulator();NNUE.RefreshAccumulator(this.Brd.Map)
     new(board:EngineBoard) = 
         {

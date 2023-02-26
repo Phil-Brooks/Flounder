@@ -21,4 +21,4 @@ type OrderedMoveEntry =
             
     end
 module OrderedMoveEntry =
-    let Default() = OrderedMoveEntry(Square.Na, Square.Na, Promotion.None)
+    let Default = OrderedMoveEntry(Square.Na, Square.Na, Promotion.None)
