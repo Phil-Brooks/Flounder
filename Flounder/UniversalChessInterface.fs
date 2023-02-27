@@ -18,7 +18,6 @@ module Program =
 module UniversalChessInterface =
     let NAME = "Flounder"
     let AUTHOR = "Phil Brooks"
-    let mutable MvTrnsTbl:MoveTranDict option = None
     let mutable MvTrnsTblMb = 16
     let mutable EngBrd:EngineBoard = EngineBoard.Default()
     let mutable Busy = false
@@ -29,18 +28,12 @@ module UniversalChessInterface =
             let args = input.Split(" ")
             if (args.[2] = "Hash") then
                 MvTrnsTblMb <- int(args.[4])
-                Busy <- true
-                MvTrnsTbl.Value.FreeMemory()
-                MvTrnsTbl <- None
-                MvTrnsTbl <- Some(MoveTranDict.GenerateTable(MvTrnsTblMb))
-                Busy <- false
     let HandleIsReady(input:string) =
         if (input.ToLower().Equals("isready")) then
             Console.WriteLine("readyok")
     let HandleQuit(thread:Thread, input:string) =
         if (input.ToLower().Equals("quit")) then
-            MvTrnsTbl.Value.FreeMemory()
-            MvTrnsTbl <- None
+            MoveTran.Table.Clear()
             UciStdInputThread.Running <- false
             thread.IsBackground <- true
             Environment.Exit(0)
@@ -133,7 +126,7 @@ module UniversalChessInterface =
                     else TmCntrl <- FlounderLib.TimeControl(movesToGo, timeForColor, timeIncForColor, EngBrd.Brd.ColorToMove, MvCount)
                 let factory = TaskFactory()
                 let doSearch() =
-                    let search = FlounderLib.MoveSearch(EngBrd.Clone(), MvTrnsTbl.Value, TmCntrl)
+                    let search = FlounderLib.MoveSearch(EngBrd.Clone(), TmCntrl)
                     Busy <- true
                     let bestMove = search.IterativeDeepening(depth)
                     Busy <- false
@@ -160,7 +153,7 @@ module UniversalChessInterface =
         UciStdInputThread.CommandReceived.Add(fun (_ ,input) -> HandleStop(input))
     let LaunchUci() =
         // Initialize default UCI parameters.
-        MvTrnsTbl <- Some(MoveTranDict.GenerateTable(MvTrnsTblMb))
+        MoveTran.Init(8,MvTrnsTblMb)
         // Provide identification information.
         Console.WriteLine("id name " + NAME)
         Console.WriteLine("id author " + AUTHOR)

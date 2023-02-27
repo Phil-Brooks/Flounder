@@ -8,9 +8,9 @@ type MoveTranDict =
         {
             TDict = new ConcurrentDictionary<uint64,MoveTranDictEntry>()
         }
-    new(byteSize:int) =
+    new(threads, byteSize:int) =
         {
-            TDict = new ConcurrentDictionary<uint64,MoveTranDictEntry>(8,byteSize/Unsafe.SizeOf<MoveTranspositionTableEntry>())
+            TDict = new ConcurrentDictionary<uint64,MoveTranDictEntry>(threads,byteSize/Unsafe.SizeOf<MoveTranDictEntry>())
         }
     member this.Item 
         with get(zobristHash:uint64) = 
@@ -32,10 +32,12 @@ type MoveTranDict =
                 int(entry.Depth) > int(oldEntry.Depth) - REPLACEMENT_DEPTH_THRESHOLD) then
                     this.TDict.[zobristHash] <- entry
         else this.TDict.[zobristHash] <- entry
-    member this.FreeMemory() = 
+    member this.Clear() = 
         this.TDict.Clear()
 
-module MoveTranDict =
-    let GenerateTable(megabyteSize) = 
+module MoveTran =
+    let mutable Table = MoveTranDict() 
+    let Init(threads,megabyteSize) = 
         let MB_TO_B = 1_048_576
-        MoveTranDict(megabyteSize * MB_TO_B)
+        Table.Clear()
+        Table <- MoveTranDict(megabyteSize * MB_TO_B,threads-1)
