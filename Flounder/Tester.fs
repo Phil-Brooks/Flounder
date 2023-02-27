@@ -30,7 +30,7 @@ module Tester =
             "r2qkb1r/1ppb1ppp/p7/4p3/P1Q1P3/2P5/5PPP/R1B2KNR b kq - bm d7b5"
         |]
     let Test (argv:string array) =
-        let mutable table = MoveTran.Init(8,16)
+        MoveTran.Init(8,16)
         let timeControl = FlounderLib.TimeControl(9999999)
         let stopwatch = new Stopwatch()
         stopwatch.Start()
@@ -45,6 +45,7 @@ module Tester =
             Console.WriteLine("Position (" + (i + 1).ToString() + "/" + fens.Length.ToString() + "): " + fen)
             let board = EngineBoard.FromFen(fen)
             let search = MoveSearch(board, timeControl)
+            MoveTran.Table.Clear()
             let bestMove = search.DoTest(MaxDepth,ebm)
             let bm = bestMove.ToString()
             Console.WriteLine("bestmove " + bm)

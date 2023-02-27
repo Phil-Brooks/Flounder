@@ -40,4 +40,4 @@ module MoveTran =
     let Init(threads,megabyteSize) = 
         let MB_TO_B = 1_048_576
         Table.Clear()
-        Table <- MoveTranDict(megabyteSize * MB_TO_B,threads-1)
+        Table <- MoveTranDict(threads-1,megabyteSize * MB_TO_B)
