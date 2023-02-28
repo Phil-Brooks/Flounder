@@ -1,27 +1,15 @@
 ﻿namespace FlounderLib
-open System.Runtime.CompilerServices
 open System.Collections.Concurrent
 
-type MoveTranDict =
-    val mutable TDict:ConcurrentDictionary<uint64,MoveTranDictEntry>
-    new() =
-        {
-            TDict = new ConcurrentDictionary<uint64,MoveTranDictEntry>()
-        }
-    new(threads, byteSize:int) =
-        {
-            TDict = new ConcurrentDictionary<uint64,MoveTranDictEntry>(threads,byteSize/Unsafe.SizeOf<MoveTranDictEntry>())
-        }
-    member this.Item 
-        with get(zobristHash:uint64) = 
-            if this.TDict.ContainsKey(zobristHash) then
-                let ans = this.TDict.[zobristHash]
-                ans
-            else MoveTranDictEntry.Default
-    member this.InsertEntry(zobristHash:uint64, entry:byref<MoveTranDictEntry>) =
-        if this.TDict.ContainsKey(zobristHash) then 
+module MoveTran =
+    let mutable Table:ConcurrentDictionary<uint64,MoveTranDictEntry> = new ConcurrentDictionary<uint64,MoveTranDictEntry>()
+    let Init(threads) = 
+        Table.Clear()
+        Table <- new ConcurrentDictionary<uint64,MoveTranDictEntry>(threads-1,99999)
+    let InsertEntry(zobristHash:uint64, entry:byref<MoveTranDictEntry>) =
+        if Table.ContainsKey(zobristHash) then 
             let REPLACEMENT_DEPTH_THRESHOLD = 3
-            let oldEntry = this.TDict.[zobristHash]
+            let oldEntry = Table.[zobristHash]
             // Replace Scheme:
             // - ENTRY_TYPE == EXACT
             // - OLD_ENTRY_TYPE == ALPHA_UNCHANGED && ENTRY_TYPE == BETA_CUTOFF
@@ -30,14 +18,21 @@ type MoveTranDict =
                 (oldEntry.Type = MoveTranspositionTableEntryType.AlphaUnchanged && 
                 entry.Type = MoveTranspositionTableEntryType.BetaCutoff) ||
                 int(entry.Depth) > int(oldEntry.Depth) - REPLACEMENT_DEPTH_THRESHOLD) then
-                    this.TDict.[zobristHash] <- entry
-        else this.TDict.[zobristHash] <- entry
-    member this.Clear() = 
-        this.TDict.Clear()
-
-module MoveTran =
-    let mutable Table = MoveTranDict() 
-    let Init(threads,megabyteSize) = 
-        let MB_TO_B = 1_048_576
-        Table.Clear()
-        Table <- MoveTranDict(threads-1,megabyteSize * MB_TO_B)
+                    Table.[zobristHash] <- entry
+        else Table.[zobristHash] <- entry
+    let GetEvalQ(zobristHash:uint64, alpha, beta) =
+        let intable,storedEntry = Table.TryGetValue(zobristHash)
+        if intable then
+            if (storedEntry.Type = MoveTranspositionTableEntryType.Exact ||
+                storedEntry.Type = MoveTranspositionTableEntryType.BetaCutoff &&
+                storedEntry.BestMove.Evaluation >= beta ||
+                storedEntry.Type = MoveTranspositionTableEntryType.AlphaUnchanged &&
+                storedEntry.BestMove.Evaluation <= alpha) then
+                // If our entry is valid for our position, and it's one of the following caseS:
+                // - Exact
+                // - Beta Cutoff with transposition evaluation >= beta
+                // - Alpha Unchanged with transposition evaluation <= alpha
+                // we can return early.
+                storedEntry.BestMove.Evaluation|>Some
+            else None
+        else None

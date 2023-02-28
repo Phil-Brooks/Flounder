@@ -60,18 +60,7 @@ type MoveSearch =
         if isPvNode then this.SelectiveDepth <- Math.Max(this.SelectiveDepth, plyFromRoot)
         let mutable ans = None 
         if not isPvNode then
-            let storedEntry = MoveTran.Table.[board.Brd.ZobristHash]
-            if (storedEntry.Type = MoveTranspositionTableEntryType.Exact ||
-                storedEntry.Type = MoveTranspositionTableEntryType.BetaCutoff &&
-                storedEntry.BestMove.Evaluation >= beta ||
-                storedEntry.Type = MoveTranspositionTableEntryType.AlphaUnchanged &&
-                storedEntry.BestMove.Evaluation <= alpha) then
-                // If our entry is valid for our position, and it's one of the following caseS:
-                // - Exact
-                // - Beta Cutoff with transposition evaluation >= beta
-                // - Alpha Unchanged with transposition evaluation <= alpha
-                // we can return early.
-                ans <- storedEntry.BestMove.Evaluation|>Some
+            ans <- MoveTran.GetEvalQ(board.Brd.ZobristHash,alpha,beta)
         if ans.IsSome then 
             ans.Value
         else
@@ -88,7 +77,7 @@ type MoveSearch =
                 let moveSpanarr = Array.zeroCreate<OrderedMoveEntry>(OrderedMoveList.SIZE)//stackalloc OrderedMoveEntry[OrderedMoveList.SIZE];
                 let mutable moveSpan = new Span<OrderedMoveEntry>(moveSpanarr)
                 let moveList = OrderedMoveList(moveSpan, plyFromRoot, this.KillerMvTbl, this.HistTbl)
-                let moveCount = moveList.QSearchMoveGeneration(board.Brd, SearchedMove.Default)
+                let moveCount = moveList.QSearchMoveGeneration(board.Brd, None)
                 let mutable bestEvaluation = earlyEval
                 // Calculate next iteration variables before getting into the loop.
                 let nextDepth = depth - 1
@@ -163,16 +152,13 @@ type MoveSearch =
         if ans.IsSome then 
             ans.Value
         else
-            let storedEntry = MoveTran.Table.[board.Brd.ZobristHash]
-            let valid = storedEntry.Type <> MoveTranspositionTableEntryType.Invalid
-            let mutable transpositionMove = SearchedMove.Default
-            let mutable transpositionHit = false
+            let mutable transpositionMove = None
+            let intable,storedEntry = MoveTran.Table.TryGetValue(board.Brd.ZobristHash)
 
-            if valid then
+            if intable then
                 // We had a transposition table hit. However, at this point, we don't know if this is a trustworthy
                 // transposition hit or not.
-                transpositionMove <- storedEntry.BestMove
-                transpositionHit <- true
+                transpositionMove <- storedEntry.BestMove|>Some
                 if not isPvNode && int(storedEntry.Depth) >= idepth then
                     // If it came from a higher depth search than our current depth, it means the results are definitely
                     // more trustworthy than the ones we could achieve at this depth.
@@ -214,7 +200,7 @@ type MoveSearch =
                 let mutable improving = false
                 // We should use the evaluation from our transposition table if we had a hit.
                 // As that evaluation isn't truly static and may have been from a previous deep search.
-                let positionalEvaluation = if transpositionHit then transpositionMove.Evaluation else Evaluation.Relative(board.Brd)
+                let positionalEvaluation = if transpositionMove.IsSome then transpositionMove.Value.Evaluation else Evaluation.Relative(board.Brd)
                 // Also store the evaluation to later check if it improved.
                 this.MvSrchStck.[plyFromRoot].PositionalEvaluation <- positionalEvaluation
         
@@ -250,7 +236,7 @@ type MoveSearch =
                     // be concerned about search explosion.                    
                     let cdepth = if inCheck then idepth + 1 else idepth
                     // Reduce depth if there are no transposition hits and we're at a high enough depth to do it safely.
-                    let depth = if (cdepth > 3 && not transpositionHit) then cdepth - 1 else cdepth
+                    let depth = if cdepth > 3 && transpositionMove.IsNone then cdepth - 1 else cdepth
                     // Allocate memory on the stack to be used for our move-list.
                     let moveSpanarr = Array.zeroCreate<OrderedMoveEntry>(OrderedMoveList.SIZE)
                     let mutable moveSpan = new Span<OrderedMoveEntry>(moveSpanarr)
@@ -316,7 +302,7 @@ type MoveSearch =
                         
                         let bestMove = SearchedMove(&bestMoveSoFar, bestEvaluation)
                         let mutable entry = MoveTranDictEntry(transpositionTableEntryType, bestMove, depth)
-                        MoveTran.Table.InsertEntry(board.Brd.ZobristHash, &entry)
+                        MoveTran.InsertEntry(board.Brd.ZobristHash, &entry)
 
                         bestEvaluation
     member this.AspirationSearch(board:EngineBoard, depth:int, previousEvaluation:int) =
