@@ -18,7 +18,8 @@ type MoveSearch =
     val mutable ReducedTimeMove:OrderedMoveEntry
     val mutable EngBrd:EngineBoard option
     val mutable TimeCntrl:TimeControl
-    new(board:EngineBoard, timeControl:TimeControl) =
+    val mutable MvTrnTbl:MoveTranDict option
+    new(board:EngineBoard, table:MoveTranDict, timeControl:TimeControl) =
         {
 #if DEBUG
             TableCutoffCount = 0
@@ -33,6 +34,7 @@ type MoveSearch =
             ReducedTimeMove = OrderedMoveEntry.Default
             EngBrd = Some(board)
             TimeCntrl = timeControl
+            MvTrnTbl = Some(table)
         }
     member this.PvLine() = 
         let pv = StringBuilder()
@@ -77,7 +79,7 @@ type MoveSearch =
         if isPvNode then this.SelectiveDepth <- Math.Max(this.SelectiveDepth, plyFromRoot)
         let mutable ans = None 
         if not isPvNode then
-            let storedEntry = MoveTran.Table.[board.Brd.ZobristHash]
+            let storedEntry = this.MvTrnTbl.Value.[board.Brd.ZobristHash]
             if (storedEntry.Type = MoveTranspositionTableEntryType.Exact ||
                 storedEntry.Type = MoveTranspositionTableEntryType.BetaCutoff &&
                 storedEntry.BestMove.Evaluation >= beta ||
@@ -180,7 +182,7 @@ type MoveSearch =
         if ans.IsSome then 
             ans.Value
         else
-            let storedEntry = MoveTran.Table.[board.Brd.ZobristHash]
+            let storedEntry = this.MvTrnTbl.Value.[board.Brd.ZobristHash]
             let valid = storedEntry.Type <> MoveTranspositionTableEntryType.Invalid
             let mutable transpositionMove = SearchedMove.Default
             let mutable transpositionHit = false
@@ -333,7 +335,7 @@ type MoveSearch =
                         
                         let bestMove = SearchedMove(&bestMoveSoFar, bestEvaluation)
                         let mutable entry = MoveTranDictEntry(transpositionTableEntryType, bestMove, depth)
-                        MoveTran.Table.InsertEntry(board.Brd.ZobristHash, &entry)
+                        this.MvTrnTbl.Value.InsertEntry(board.Brd.ZobristHash, &entry)
 
                         bestEvaluation
     member this.AspirationSearch(board:EngineBoard, depth:int, previousEvaluation:int) =
