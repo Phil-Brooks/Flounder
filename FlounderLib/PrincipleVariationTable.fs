@@ -19,5 +19,5 @@ type PrincipleVariationTable =
         member this.Get(plyIndex:int) = &(this.Internal.[plyIndex])
     end
 module PrincipleVariationTable =
-    let  Default = PrincipleVariationTable(128)    
+    let  Default() = PrincipleVariationTable(128)    
 

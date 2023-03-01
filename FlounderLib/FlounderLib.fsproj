@@ -29,8 +29,6 @@
     <Compile Include="SearchedMove.fs" />
     <Compile Include="MoveTranspositionTableEntry.fs" />
     <Compile Include="MoveTranspositionTable.fs" />
-    <Compile Include="MoveTranDictEntry.fs" />
-    <Compile Include="MoveTranDict.fs" />
     <Compile Include="RepetitionHistory.fs" />
     <Compile Include="AttackTable.fs" />
     <Compile Include="UtilityTable.fs" />

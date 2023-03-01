@@ -13,7 +13,7 @@ type KillerMoveTable =
         member this.ReOrder(ply:int) = this.Internal.[128 + ply] <- this.Internal.[ply]
     end
 module KillerMoveTable =
-    let Default = KillerMoveTable(256)
+    let Default() = KillerMoveTable(256)
 
 
 

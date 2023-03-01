@@ -18,7 +18,7 @@ module Program =
 module UniversalChessInterface =
     let NAME = "Flounder"
     let AUTHOR = "Phil Brooks"
-    let mutable MvTrnsTbl:MoveTranDict option = None
+    let mutable MvTrnsTbl:MoveTranspositionTable option = None
     let mutable MvTrnsTblMb = 16
     let mutable EngBrd:EngineBoard = EngineBoard.Default()
     let mutable Busy = false
@@ -32,7 +32,7 @@ module UniversalChessInterface =
                 Busy <- true
                 MvTrnsTbl.Value.FreeMemory()
                 MvTrnsTbl <- None
-                MvTrnsTbl <- Some(MoveTranDict.GenerateTable(MvTrnsTblMb))
+                MvTrnsTbl <- Some(MoveTranspositionTable.GenerateTable(MvTrnsTblMb))
                 Busy <- false
     let HandleIsReady(input:string) =
         if (input.ToLower().Equals("isready")) then
@@ -160,7 +160,7 @@ module UniversalChessInterface =
         UciStdInputThread.CommandReceived.Add(fun (_ ,input) -> HandleStop(input))
     let LaunchUci() =
         // Initialize default UCI parameters.
-        MvTrnsTbl <- Some(MoveTranDict.GenerateTable(MvTrnsTblMb))
+        MvTrnsTbl <- Some(MoveTranspositionTable.GenerateTable(MvTrnsTblMb))
         // Provide identification information.
         Console.WriteLine("id name " + NAME)
         Console.WriteLine("id author " + AUTHOR)
