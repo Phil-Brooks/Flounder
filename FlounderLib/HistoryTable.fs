@@ -10,6 +10,7 @@ type HistoryTable =
         member this.Item 
             with get(piece:Piece, color:PieceColor, targetSq:Square) = this.Internal.[int(color) * 384 + int(piece) * 64 + int(targetSq)]
             and set(piece:Piece, color:PieceColor, targetSq:Square) value = this.Internal.[int(color) * 384 + int(piece) * 64 + int(targetSq)] <- value
+        member this.Clear() = this.Internal.Initialize()
     end
 module HistoryTable =   
     let Default = HistoryTable(768)

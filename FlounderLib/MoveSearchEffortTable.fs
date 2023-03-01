@@ -10,6 +10,7 @@ type MoveSearchEffortTable =
         member this.Item 
             with get(from:Square, mto:Square) = this.Internal.[int(from) * 64 + int(mto)]
             and set(from:Square, mto:Square) value = this.Internal.[int(from) * 64 + int(mto)] <- value
+        member this.Clear() = this.Internal.Initialize()
     end 
 module MoveSearchEffortTable =
     let Default = MoveSearchEffortTable(4096)

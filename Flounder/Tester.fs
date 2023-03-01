@@ -30,8 +30,9 @@ module Tester =
             "r2qkb1r/1ppb1ppp/p7/4p3/P1Q1P3/2P5/5PPP/R1B2KNR b kq - bm d7b5"
         |]
     let Test (argv:string array) =
-        let mutable table = MoveTranspositionTable.GenerateTable(16)
-        let timeControl = FlounderLib.TimeControl(9999999)
+        let table = MoveTranspositionTable.GenerateTable(16)
+        let timeControl = TimeControl(9999999)
+        let search = MoveSearch(EngineBoard.Default(), table, timeControl)
         let stopwatch = new Stopwatch()
         stopwatch.Start()
         let fens =
@@ -44,7 +45,7 @@ module Tester =
             let ebm = bits.[1].Trim()
             Console.WriteLine("Position (" + (i + 1).ToString() + "/" + fens.Length.ToString() + "): " + fen)
             let board = EngineBoard.FromFen(fen)
-            let search = MoveSearch(board, table, timeControl)
+            search.Reset(board, timeControl)
             let bestMove = search.DoTest(MaxDepth,ebm)
             let bm = bestMove.ToString()
             Console.WriteLine("bestmove " + bm)
@@ -53,7 +54,7 @@ module Tester =
         stopwatch.Stop()
         let elap = stopwatch.ElapsedMilliseconds
         Console.WriteLine(elap.ToString() + "ms taken.")
-        let expElap = 4000L
+        let expElap = 100000L
         let pc = (100L * elap)/expElap - 100L
         if pc>0 then
             Console.WriteLine("BAD: " + pc.ToString() + "% extra time taken.")

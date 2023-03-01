@@ -17,6 +17,9 @@ type PrincipleVariationTable =
         member this.UpdateLength(ply:int) = this.Length.[ply] <- this.Length.[ply + 1]
         member this.Count() = this.Length.[0]
         member this.Get(plyIndex:int) = &(this.Internal.[plyIndex])
+        member this.Clear() = 
+            this.Length.Initialize()
+            this.Internal.Initialize()
     end
 module PrincipleVariationTable =
     let  Default = PrincipleVariationTable(128)    

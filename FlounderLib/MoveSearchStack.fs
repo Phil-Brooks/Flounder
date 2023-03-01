@@ -13,6 +13,7 @@ type MoveSearchStack =
             }
         member this.Item with get(ply:int):byref<MoveSearchStackItem> = 
             &(this.Internal.[ply])
+        member this.Clear() = this.Internal.Initialize()
     end
 module MoveSearchStack =
     let Default = MoveSearchStack(128)

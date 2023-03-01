@@ -44,6 +44,7 @@ type MoveTranspositionTable =
                     this.Internal.[index] <- entry
         member this.FreeMemory() = 
             this.Internal <- null
+        member this.Clear() = this.Internal.Initialize()
     end
 
 module MoveTranspositionTable =

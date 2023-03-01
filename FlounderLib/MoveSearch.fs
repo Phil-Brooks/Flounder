@@ -36,6 +36,20 @@ type MoveSearch =
             TimeCntrl = timeControl
             MvTrnTbl = table
         }
+    member this.Reset(board:EngineBoard, timeControl:TimeControl) =
+#if DEBUG
+        this.TableCutoffCount <- 0
+#endif
+        this.TotalNodeSearchCount <- 0
+        this.SelectiveDepth <- 0
+        this.HistTbl.Clear()
+        this.KillerMvTbl.Clear()
+        this.SearchEffort.Clear()
+        this.PvTable.Clear()
+        this.MvSrchStck.Clear()
+        this.ReducedTimeMove <- OrderedMoveEntry.Default
+        this.EngBrd <- board
+        this.TimeCntrl <- timeControl
     member this.PvLine() = 
         let pv = StringBuilder()
         let count = this.PvTable.Count()

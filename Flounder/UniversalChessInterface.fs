@@ -20,9 +20,10 @@ module UniversalChessInterface =
     let AUTHOR = "Phil Brooks"
     let mutable MvTrnsTbl:MoveTranspositionTable option = None
     let mutable MvTrnsTblMb = 16
+    let mutable Search:MoveSearch option = None
     let mutable EngBrd:EngineBoard = EngineBoard.Default()
     let mutable Busy = false
-    let mutable TmCntrl = FlounderLib.TimeControl(9999999)
+    let mutable TmCntrl = TimeControl(9999999)
     let mutable MvCount = 0
     let HandleSetOption(input:string) =
         if (input.ToLower().Contains("setoption")) then
@@ -91,7 +92,7 @@ module UniversalChessInterface =
                 let mutable depth = maxDepth
                 let mutable movesToGo = -1
                 if (args.Length = 1) then
-                    TmCntrl <- new FlounderLib.TimeControl(time)
+                    TmCntrl <- TimeControl(time)
                 else
                     let mutable timeSpecified = false
                     let timeForColor = Array.zeroCreate<int>(2)
@@ -129,20 +130,20 @@ module UniversalChessInterface =
                             else
                                 getargs (argPosition+1)
                     getargs 1
-                    if (time = maxTime || timeSpecified) then TmCntrl <- new FlounderLib.TimeControl(time)
-                    else TmCntrl <- FlounderLib.TimeControl(movesToGo, timeForColor, timeIncForColor, EngBrd.Brd.ColorToMove, MvCount)
+                    if (time = maxTime || timeSpecified) then TmCntrl <- TimeControl(time)
+                    else TmCntrl <- TimeControl(movesToGo, timeForColor, timeIncForColor, EngBrd.Brd.ColorToMove, MvCount)
                 let factory = TaskFactory()
                 let doSearch() =
-                    let search = FlounderLib.MoveSearch(EngBrd.Clone(), MvTrnsTbl.Value, TmCntrl)
+                    Search.Value.Reset(EngBrd.Clone(), TmCntrl)
                     Busy <- true
-                    let bestMove = search.IterativeDeepening(depth)
+                    let bestMove = Search.Value.IterativeDeepening(depth)
                     Busy <- false
                     let from = bestMove.From.ToString().ToLower()
                     let mto = bestMove.To.ToString().ToLower()
                     let promotion = if bestMove.Promotion <> Promotion.None then Promotion.ToStr(bestMove.Promotion) else ""
                     Console.WriteLine("bestmove " + from + mto + promotion)
         #if DEBUG
-                    Console.WriteLine("TT Count: " + search.TableCutoffCount.ToString())
+                    Console.WriteLine("TT Count: " +  Search.Value.TableCutoffCount.ToString())
         #endif
                     MvCount <- MvCount + 1
                 factory.StartNew(doSearch, TmCntrl.Token)|>ignore
@@ -161,6 +162,7 @@ module UniversalChessInterface =
     let LaunchUci() =
         // Initialize default UCI parameters.
         MvTrnsTbl <- Some(MoveTranspositionTable.GenerateTable(MvTrnsTblMb))
+        Search <- Some(MoveSearch(EngineBoard.Default(), MvTrnsTbl.Value, TmCntrl))
         // Provide identification information.
         Console.WriteLine("id name " + NAME)
         Console.WriteLine("id author " + AUTHOR)
