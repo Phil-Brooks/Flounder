@@ -127,16 +127,16 @@ module UniversalChessInterface =
                     else TmCntrl <- TimeControl(movesToGo, timeForColor, timeIncForColor, EngBrd.Brd.ColorToMove, MvCount)
                 let factory = TaskFactory()
                 let doSearch() =
-                    MoveSearch.Init(EngBrd.Clone(), TmCntrl)
+                    let search = MoveSearch(EngBrd.Clone(), TmCntrl)
                     Busy <- true
-                    let bestMove = MoveSearch.IterativeDeepening(depth)
+                    let bestMove = search.IterativeDeepening(depth)
                     Busy <- false
                     let from = bestMove.From.ToString().ToLower()
                     let mto = bestMove.To.ToString().ToLower()
                     let promotion = if bestMove.Promotion <> Promotion.None then Promotion.ToStr(bestMove.Promotion) else ""
                     Console.WriteLine("bestmove " + from + mto + promotion)
         #if DEBUG
-                    Console.WriteLine("TT Count: " + MoveSearch.main.TableCutoffCount.ToString())
+                    Console.WriteLine("TT Count: " + search.TableCutoffCount.ToString())
                     Console.WriteLine("TT Elements: " + MoveTran.Table.Count.ToString())
         #endif
                     MvCount <- MvCount + 1

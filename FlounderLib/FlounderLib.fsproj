@@ -44,7 +44,6 @@
     <Compile Include="PrincipleVariationTable.fs" />
     <Compile Include="TimeControl.fs" />
     <Compile Include="SEE.fs" />
-    <Compile Include="Searcher.fs" />
     <Compile Include="MoveSearch.fs" />
     <Compile Include="Perft.fs" />
   </ItemGroup>
