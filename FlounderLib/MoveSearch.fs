@@ -43,6 +43,23 @@ type MoveSearch =
             if move.Promotion <> Promotion.None then pv.Append(Promotion.ToStr(move.Promotion))|>ignore
             pv.Append(' ')|>ignore
         pv.ToString().ToLower()
+    member this.NodeCounting(depth:int, bestMove:OrderedMoveEntry, itimePreviouslyUpdated:bool) = 
+        let mutable timePreviouslyUpdated = itimePreviouslyUpdated
+        // This idea is from the Koivisto Engine:
+        // The branch being searched the most is likely the best branch as we're having to evaluate it very deeply
+        // across depths. Thus it's reasonable to end the search earlier and make the move instantly.
+        // Check whether we're past the depth to start reducing our search time with node counting and make sure that
+        // we're past the required effort threshold to do this move quickly.
+        if depth >= 8 && this.TimeCntrl.TimeLeft() <> 0 && not timePreviouslyUpdated
+           && this.SearchEffort.[bestMove.From, bestMove.To] * 100 / this.TotalNodeSearchCount >= 95 then
+            timePreviouslyUpdated <- true
+            this.TimeCntrl.ChangeTime(this.TimeCntrl.Time / 3)
+            this.ReducedTimeMove <- bestMove
+        if timePreviouslyUpdated && bestMove <> this.ReducedTimeMove then
+            // In the rare case that our previous node count guess was incorrect, give us a little bit more time
+            // to see if we can find a better move.
+            this.TimeCntrl.ChangeTime(this.TimeCntrl.Time * 3)
+        timePreviouslyUpdated
     member this.DepthSearchLog(depth:int, evaluation:int, stopwatch:Stopwatch) =
         let elapSec = float(stopwatch.ElapsedMilliseconds) / 1000.0
         let ratio = int(float(this.TotalNodeSearchCount) / elapSec)
@@ -363,10 +380,13 @@ type MoveSearch =
         let mutable bestMove = OrderedMoveEntry.Default
         try 
             let stopwatch = Stopwatch.StartNew()
+            let mutable timePreviouslyUpdated = false
             let rec getbm cureval curdepth =
                 if not (this.TimeCntrl.Finished() || curdepth > selectedDepth) then
                     let eval = this.AspirationSearch(this.EngBrd.Value, curdepth, cureval)
                     bestMove <- this.PvTable.Get(0)
+                    // Try counting nodes to see if we can exit the search early.
+                    timePreviouslyUpdated <- this.NodeCounting(curdepth, bestMove, timePreviouslyUpdated)
                     this.DepthSearchLog(curdepth, eval, stopwatch)
                     // In the case we are past a certain depth, and are really low on time, it's highly unlikely we'll
                     // finish the next depth in time. To save time, we should just exit the search early.
@@ -381,10 +401,13 @@ type MoveSearch =
         let mutable bestMove = OrderedMoveEntry.Default
         try 
             let stopwatch = Stopwatch.StartNew()
+            let mutable timePreviouslyUpdated = false
             let rec getbm cureval curdepth =
                 if not (this.TimeCntrl.Finished() || curdepth > selectedDepth) then
                     let eval = this.AspirationSearch(this.EngBrd.Value, curdepth, cureval)
                     bestMove <- this.PvTable.Get(0)
+                    // Try counting nodes to see if we can exit the search early.
+                    timePreviouslyUpdated <- this.NodeCounting(curdepth, bestMove, timePreviouslyUpdated)
                     this.DepthSearchLog(curdepth, eval, stopwatch)
                     // In the case we are past a certain depth, and are really low on time, it's highly unlikely we'll
                     // finish the next depth in time. To save time, we should just exit the search early.

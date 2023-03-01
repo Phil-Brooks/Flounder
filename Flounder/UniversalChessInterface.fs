@@ -21,7 +21,7 @@ module UniversalChessInterface =
     let mutable MvTrnsTblMb = 16
     let mutable EngBrd:EngineBoard = EngineBoard.Default()
     let mutable Busy = false
-    let mutable TmCntrl = TimeControl(9999999)
+    let mutable TmCntrl = FlounderLib.TimeControl(9999999)
     let mutable MvCount = 0
     let HandleSetOption(input:string) =
         if (input.ToLower().Contains("setoption")) then
@@ -87,7 +87,7 @@ module UniversalChessInterface =
                 let mutable depth = maxDepth
                 let mutable movesToGo = -1
                 if (args.Length = 1) then
-                    TmCntrl <- new TimeControl(time)
+                    TmCntrl <- new FlounderLib.TimeControl(time)
                 else
                     let mutable timeSpecified = false
                     let timeForColor = Array.zeroCreate<int>(2)
@@ -125,11 +125,11 @@ module UniversalChessInterface =
                             else
                                 getargs (argPosition+1)
                     getargs 1
-                    if (time = maxTime || timeSpecified) then TmCntrl <- new TimeControl(time)
-                    else TmCntrl <- TimeControl(movesToGo, timeForColor, timeIncForColor, EngBrd.Brd.ColorToMove, MvCount)
+                    if (time = maxTime || timeSpecified) then TmCntrl <- new FlounderLib.TimeControl(time)
+                    else TmCntrl <- FlounderLib.TimeControl(movesToGo, timeForColor, timeIncForColor, EngBrd.Brd.ColorToMove, MvCount)
                 let factory = TaskFactory()
                 let doSearch() =
-                    let search = MoveSearch(EngBrd.Clone(), TmCntrl)
+                    let search = FlounderLib.MoveSearch(EngBrd.Clone(), TmCntrl)
                     Busy <- true
                     let bestMove = search.IterativeDeepening(depth)
                     Busy <- false
