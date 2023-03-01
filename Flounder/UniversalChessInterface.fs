@@ -18,6 +18,7 @@ module Program =
 module UniversalChessInterface =
     let NAME = "Flounder"
     let AUTHOR = "Phil Brooks"
+    let mutable MvTrnsTblMb = 16
     let mutable EngBrd:EngineBoard = EngineBoard.Default()
     let mutable Busy = false
     let mutable TmCntrl = TimeControl(9999999)
@@ -25,7 +26,8 @@ module UniversalChessInterface =
     let HandleSetOption(input:string) =
         if (input.ToLower().Contains("setoption")) then
             let args = input.Split(" ")
-            ()
+            if (args.[2] = "Hash") then
+                MvTrnsTblMb <- int(args.[4])
     let HandleIsReady(input:string) =
         if (input.ToLower().Equals("isready")) then
             Console.WriteLine("readyok")
@@ -137,7 +139,6 @@ module UniversalChessInterface =
                     Console.WriteLine("bestmove " + from + mto + promotion)
         #if DEBUG
                     Console.WriteLine("TT Count: " + search.TableCutoffCount.ToString())
-                    Console.WriteLine("TT Elements: " + MoveTran.Table.Count.ToString())
         #endif
                     MvCount <- MvCount + 1
                 factory.StartNew(doSearch, TmCntrl.Token)|>ignore
@@ -156,11 +157,11 @@ module UniversalChessInterface =
         UciStdInputThread.CommandReceived.Add(fun (_ ,input) -> HandleStop(input))
     let LaunchUci() =
         // Initialize default UCI parameters.
-        MoveTran.Init(4)
+        MoveTran.Init(8,MvTrnsTblMb)
         // Provide identification information.
         Console.WriteLine("id name " + NAME)
         Console.WriteLine("id author " + AUTHOR)
-        //Console.WriteLine("option name Hash type spin default 16 min 4 max 512")
+        Console.WriteLine("option name Hash type spin default 16 min 4 max 512")
         // Let GUI know engine is ready in UCI mode.
         Console.WriteLine("uciok")
         // Start an input thread.

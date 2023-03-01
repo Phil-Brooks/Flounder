@@ -18,7 +18,7 @@ module OrderedMoveList =
         let moveSpanarr = Array.zeroCreate<OrderedMoveEntry>(OrderedMoveList.SIZE)//stackalloc OrderedMoveEntry[OrderedMoveList.SIZE];
         let mutable moveSpan = new Span<OrderedMoveEntry>(moveSpanarr)
         let moveList = OrderedMoveList(moveSpan, plyFromRoot, KillerMvTbl, HistTbl)
-        let moveCount = moveList.NormalMoveGeneration(board, None)
+        let moveCount = moveList.NormalMoveGeneration(board, SearchedMove.Default)
         moveCount |> should equal 20
         let ans = moveList.[19]
         ans.From |> should equal Square.G1

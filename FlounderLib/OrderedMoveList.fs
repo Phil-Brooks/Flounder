@@ -33,12 +33,12 @@ type OrderedMoveList =
                 KillerMoveTwo =  killerMoveTable.[1, ply]
                 HistTbl =  historyTable
             }
-        member this.ScoreMove(pieceToMove:Piece, board:Board, move:OrderedMoveEntry, tableMove:SearchedMove option) =
+        member this.ScoreMove(pieceToMove:Piece, board:Board, move:OrderedMoveEntry, tableMove:SearchedMove) =
             // Compare our move with the one found from transposition table. There's no guarantee the transposition move
             // is even legal, so this acts as a sort of legal verification for it too.
             // Regardless, if our move is equal to that (also proving that it is legal for this position), then give it
             // highest priority, making it the first move we make.
-            if tableMove.IsSome && move.From = tableMove.Value.From && move.To = tableMove.Value.To && move.Promotion = tableMove.Value.Promotion then this.PRIORITY - 1
+            if (move.From = tableMove.From && move.To = tableMove.To && move.Promotion = tableMove.Promotion) then this.PRIORITY - 1
             // Score promotions based on the type of promotion it is. 
             // Promotion | Score
             // Queen     | PRIORITY - 4 (HIGHEST)
@@ -65,7 +65,7 @@ type OrderedMoveList =
                 elif move.From = this.KillerMoveTwo.From && move.To = this.KillerMoveTwo.To && move.Promotion = this.KillerMoveTwo.Promotion then 800000
                 // Return the updated history score for the move.
                 else this.HistTbl.[pieceToMove, board.ColorToMove, move.To]
-        member this.NormalMoveGeneration(board:Board, transpositionMove:SearchedMove option) =
+        member this.NormalMoveGeneration(board:Board, transpositionMove:SearchedMove) =
             let oppositeColor = PieceColor.OppositeColor(board.ColorToMove)
             // Generate pins and check bitboards.
             let kingSq = board.KingLoc(board.ColorToMove).ToSq()
@@ -125,7 +125,7 @@ type OrderedMoveList =
                     move <- moves.Current
                 from <- fromIterator.Current
             i
-        member this.QSearchMoveGeneration(board:Board, transpositionMove:SearchedMove option) =
+        member this.QSearchMoveGeneration(board:Board, transpositionMove:SearchedMove) =
             let oppositeColor = PieceColor.OppositeColor(board.ColorToMove)
             // If we only want capture moves, we should also define our opposite board.
             let opposite = board.All(oppositeColor)
