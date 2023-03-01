@@ -31,9 +31,6 @@ module UniversalChessInterface =
     let HandleIsReady(input:string) =
         if (input.ToLower().Equals("isready")) then
             Console.WriteLine("readyok")
-    let HandleNewGame(input:string) =
-        if (input.ToLower().Equals("ucinewgame")) then
-            MoveTran.Table.Clear()
     let HandleQuit(thread:Thread, input:string) =
         if (input.ToLower().Equals("quit")) then
             MoveTran.Table.Clear()
@@ -149,7 +146,6 @@ module UniversalChessInterface =
         Busy <- false
         UciStdInputThread.CommandReceived.Add(fun (_ ,input) -> HandleSetOption(input))
         UciStdInputThread.CommandReceived.Add(fun (_ ,input) -> HandleIsReady(input))
-        UciStdInputThread.CommandReceived.Add(fun (_ ,input) -> HandleNewGame(input))
         UciStdInputThread.CommandReceived.Add(fun (thread ,input) -> HandleQuit(thread, input))
         UciStdInputThread.CommandReceived.Add(fun (_ ,input) -> HandlePosition(input))
         UciStdInputThread.CommandReceived.Add(fun (_ ,input) -> HandleDraw(input))
