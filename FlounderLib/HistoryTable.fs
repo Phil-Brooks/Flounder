@@ -12,5 +12,5 @@ type HistoryTable =
             and set(piece:Piece, color:PieceColor, targetSq:Square) value = this.Internal.[int(color) * 384 + int(piece) * 64 + int(targetSq)] <- value
     end
 module HistoryTable =   
-    let Default() = HistoryTable(768)
+    let Default = HistoryTable(768)
 

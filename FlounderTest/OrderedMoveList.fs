@@ -12,8 +12,8 @@ module OrderedMoveList =
     [<Test>]
     let NormalSearcha() =
         let plyFromRoot = 1
-        let HistTbl = HistoryTable.Default()
-        let KillerMvTbl = KillerMoveTable.Default()
+        let HistTbl = HistoryTable.Default
+        let KillerMvTbl = KillerMoveTable.Default
         let board = Board.Default()
         let moveSpanarr = Array.zeroCreate<OrderedMoveEntry>(OrderedMoveList.SIZE)//stackalloc OrderedMoveEntry[OrderedMoveList.SIZE];
         let mutable moveSpan = new Span<OrderedMoveEntry>(moveSpanarr)

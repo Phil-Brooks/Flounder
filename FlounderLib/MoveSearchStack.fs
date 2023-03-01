@@ -15,4 +15,4 @@ type MoveSearchStack =
             &(this.Internal.[ply])
     end
 module MoveSearchStack =
-    let Default() = MoveSearchStack(128)
+    let Default = MoveSearchStack(128)

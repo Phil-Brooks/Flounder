@@ -16,9 +16,9 @@ type MoveSearch =
     val mutable PvTable:PrincipleVariationTable
     val mutable MvSrchStck:MoveSearchStack
     val mutable ReducedTimeMove:OrderedMoveEntry
-    val mutable EngBrd:EngineBoard option
+    val mutable EngBrd:EngineBoard 
     val mutable TimeCntrl:TimeControl
-    val mutable MvTrnTbl:MoveTranspositionTable option
+    val mutable MvTrnTbl:MoveTranspositionTable
     new(board:EngineBoard, table:MoveTranspositionTable, timeControl:TimeControl) =
         {
 #if DEBUG
@@ -26,15 +26,15 @@ type MoveSearch =
 #endif
             TotalNodeSearchCount = 0
             SelectiveDepth = 0
-            HistTbl = HistoryTable.Default()
-            KillerMvTbl = KillerMoveTable.Default()
-            SearchEffort = MoveSearchEffortTable.Default()
-            PvTable = PrincipleVariationTable.Default()
-            MvSrchStck = MoveSearchStack.Default()
-            ReducedTimeMove = OrderedMoveEntry.Default()
-            EngBrd = Some(board)
+            HistTbl = HistoryTable.Default
+            KillerMvTbl = KillerMoveTable.Default
+            SearchEffort = MoveSearchEffortTable.Default
+            PvTable = PrincipleVariationTable.Default
+            MvSrchStck = MoveSearchStack.Default
+            ReducedTimeMove = OrderedMoveEntry.Default
+            EngBrd = board
             TimeCntrl = timeControl
-            MvTrnTbl = Some(table)
+            MvTrnTbl = table
         }
     member this.PvLine() = 
         let pv = StringBuilder()
@@ -79,7 +79,7 @@ type MoveSearch =
         if isPvNode then this.SelectiveDepth <- Math.Max(this.SelectiveDepth, plyFromRoot)
         let mutable ans = None 
         if not isPvNode then
-            let storedEntry = this.MvTrnTbl.Value.[board.Brd.ZobristHash]
+            let storedEntry = this.MvTrnTbl.[board.Brd.ZobristHash]
             if (storedEntry.ZobristHash = board.Brd.ZobristHash &&
                 (storedEntry.Type = MoveTranspositionTableEntryType.Exact ||
                 storedEntry.Type = MoveTranspositionTableEntryType.BetaCutoff &&
@@ -183,7 +183,7 @@ type MoveSearch =
         if ans.IsSome then 
             ans.Value
         else
-            let storedEntry = this.MvTrnTbl.Value.[board.Brd.ZobristHash]
+            let storedEntry = this.MvTrnTbl.[board.Brd.ZobristHash]
             let valid = storedEntry.Type <> MoveTranspositionTableEntryType.Invalid
             let mutable transpositionMove = SearchedMove.Default
             let mutable transpositionHit = false
@@ -336,7 +336,7 @@ type MoveSearch =
                         
                         let bestMove = SearchedMove(&bestMoveSoFar, bestEvaluation)
                         let mutable entry = MoveTranspositionTableEntry(board.Brd.ZobristHash, transpositionTableEntryType, bestMove, depth)
-                        this.MvTrnTbl.Value.InsertEntry(board.Brd.ZobristHash, &entry)
+                        this.MvTrnTbl.InsertEntry(board.Brd.ZobristHash, &entry)
 
                         bestEvaluation
     member this.AspirationSearch(board:EngineBoard, depth:int, previousEvaluation:int) =
@@ -380,13 +380,13 @@ type MoveSearch =
                 bestEvaluation
         geteval 0
     member this.IterativeDeepening(selectedDepth:int) =
-        let mutable bestMove = OrderedMoveEntry.Default()
+        let mutable bestMove = OrderedMoveEntry.Default
         try 
             let stopwatch = Stopwatch.StartNew()
             let mutable timePreviouslyUpdated = false
             let rec getbm cureval curdepth =
                 if not (this.TimeCntrl.Finished() || curdepth > selectedDepth) then
-                    let eval = this.AspirationSearch(this.EngBrd.Value, curdepth, cureval)
+                    let eval = this.AspirationSearch(this.EngBrd, curdepth, cureval)
                     bestMove <- this.PvTable.Get(0)
                     // Try counting nodes to see if we can exit the search early.
                     timePreviouslyUpdated <- this.NodeCounting(curdepth, bestMove, timePreviouslyUpdated)
@@ -401,13 +401,13 @@ type MoveSearch =
         NNUE.ResetAccumulator()
         bestMove
     member this.DoTest(selectedDepth:int, bm:string) =
-        let mutable bestMove = OrderedMoveEntry.Default()
+        let mutable bestMove = OrderedMoveEntry.Default
         try 
             let stopwatch = Stopwatch.StartNew()
             let mutable timePreviouslyUpdated = false
             let rec getbm cureval curdepth =
                 if not (this.TimeCntrl.Finished() || curdepth > selectedDepth) then
-                    let eval = this.AspirationSearch(this.EngBrd.Value, curdepth, cureval)
+                    let eval = this.AspirationSearch(this.EngBrd, curdepth, cureval)
                     bestMove <- this.PvTable.Get(0)
                     // Try counting nodes to see if we can exit the search early.
                     timePreviouslyUpdated <- this.NodeCounting(curdepth, bestMove, timePreviouslyUpdated)
