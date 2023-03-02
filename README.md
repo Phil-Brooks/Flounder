@@ -18,6 +18,12 @@ The engine includes:
 - Material Draw Pruning
 - Check Extension
 - Quiescence Search with SEE Pruning
+- History Table
+- Killer Move Table
+- Search Effort Table
+- Move Search Stack
+- Reduced Time Move
+- MVV-LVA Table
 
 ### Not Included
 
