@@ -26,7 +26,6 @@
     <Compile Include="Evaluation.fs" />
     <Compile Include="InvalidMoveLookupException.fs" />
     <Compile Include="OrderedMoveEntry.fs" />
-    <Compile Include="SearchedMove.fs" />
     <Compile Include="MoveTranspositionTableEntry.fs" />
     <Compile Include="MoveTranspositionTable.fs" />
     <Compile Include="RepetitionHistory.fs" />

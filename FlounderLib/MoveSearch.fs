@@ -97,15 +97,15 @@ type MoveSearch =
             if (storedEntry.ZobristHash = board.Brd.ZobristHash &&
                 (storedEntry.Type = MoveTranspositionTableEntryType.Exact ||
                 storedEntry.Type = MoveTranspositionTableEntryType.BetaCutoff &&
-                storedEntry.BestMove.Evaluation >= beta ||
+                storedEntry.BestMove.Score >= beta ||
                 storedEntry.Type = MoveTranspositionTableEntryType.AlphaUnchanged &&
-                storedEntry.BestMove.Evaluation <= alpha)) then
+                storedEntry.BestMove.Score <= alpha)) then
                 // If our entry is valid for our position, and it's one of the following caseS:
                 // - Exact
                 // - Beta Cutoff with transposition evaluation >= beta
                 // - Alpha Unchanged with transposition evaluation <= alpha
                 // we can return early.
-                ans <- storedEntry.BestMove.Evaluation|>Some
+                ans <- storedEntry.BestMove.Score|>Some
         if ans.IsSome then 
             ans.Value
         else
@@ -122,7 +122,7 @@ type MoveSearch =
                 let moveSpanarr = Array.zeroCreate<OrderedMoveEntry>(OrderedMoveList.SIZE)//stackalloc OrderedMoveEntry[OrderedMoveList.SIZE];
                 let mutable moveSpan = new Span<OrderedMoveEntry>(moveSpanarr)
                 let moveList = OrderedMoveList(moveSpan, plyFromRoot, this.KillerMvTbl, this.HistTbl)
-                let moveCount = moveList.QSearchMoveGeneration(board.Brd, SearchedMove.Default)
+                let moveCount = moveList.QSearchMoveGeneration(board.Brd, OrderedMoveEntry.Default)
                 let mutable bestEvaluation = earlyEval
                 // Calculate next iteration variables before getting into the loop.
                 let nextDepth = depth - 1
@@ -199,7 +199,7 @@ type MoveSearch =
         else
             let storedEntry = this.MvTrnTbl.[board.Brd.ZobristHash]
             let valid = storedEntry.Type <> MoveTranspositionTableEntryType.Invalid
-            let mutable transpositionMove = SearchedMove.Default
+            let mutable transpositionMove = OrderedMoveEntry.Default
             let mutable transpositionHit = false
 
             if valid && storedEntry.ZobristHash = board.Brd.ZobristHash then
@@ -213,19 +213,19 @@ type MoveSearch =
                     if storedEntry.Type=MoveTranspositionTableEntryType.Exact then
                             // In the case of an exact evaluation, we have previously found this was our best move
                             // in said transposition. Therefore, it is reasonable to return early.
-                            ans <- storedEntry.BestMove.Evaluation|>Some
+                            ans <- storedEntry.BestMove.Score|>Some
                         // In the case that we didn't have an exact, we must alter our bounds to make our search for this
                         // depth as best as possible (and possibly get a cutoff without having to search).
                     elif storedEntry.Type=MoveTranspositionTableEntryType.BetaCutoff then
                             // In the case we had a beta-cutoff, we can check the max between our alpha and the stored 
                             // beta-cutoff and set it as our new alpha. This is to ensure all moves will be better than the
                             // stored cutoff.
-                            alpha <- Math.Max(alpha, storedEntry.BestMove.Evaluation)
+                            alpha <- Math.Max(alpha, storedEntry.BestMove.Score)
                     elif storedEntry.Type=MoveTranspositionTableEntryType.AlphaUnchanged then
                             // In the rare case that alpha was unchanged, we must try and change the beta value to
                             // be the minimum value between our current beta and the stored unchanged alpha. This ensures
                             // that if alpha would remain unchanged, we would receive a beta-cutoff.
-                            beta <- Math.Min(beta, storedEntry.BestMove.Evaluation)
+                            beta <- Math.Min(beta, storedEntry.BestMove.Score)
                     if alpha >= beta then
 #if DEBUG
                         this.TableCutoffCount<-this.TableCutoffCount+1
@@ -234,7 +234,7 @@ type MoveSearch =
                         // evaluation earlier because it was the best one possible at this transposition. Otherwise,
                         // we are required to search deeper.
                         // This happens because we edited bounds earlier.
-                        ans <- storedEntry.BestMove.Evaluation|>Some
+                        ans <- storedEntry.BestMove.Score|>Some
 
             if ans.IsSome then 
                 ans.Value
@@ -248,7 +248,7 @@ type MoveSearch =
                 let mutable improving = false
                 // We should use the evaluation from our transposition table if we had a hit.
                 // As that evaluation isn't truly static and may have been from a previous deep search.
-                let positionalEvaluation = if transpositionHit then transpositionMove.Evaluation else Evaluation.Relative(board.Brd)
+                let positionalEvaluation = if transpositionHit then transpositionMove.Score else Evaluation.Relative(board.Brd)
                 // Also store the evaluation to later check if it improved.
                 this.MvSrchStck.[plyFromRoot].PositionalEvaluation <- positionalEvaluation
         
@@ -348,8 +348,8 @@ type MoveSearch =
                                 if rootNode then this.SearchEffort.[move.From, move.To] <- this.TotalNodeSearchCount - previousNodeCount
                                 i <- i + 1
                         
-                        let bestMove = SearchedMove(&bestMoveSoFar, bestEvaluation)
-                        let mutable entry = MoveTranspositionTableEntry(board.Brd.ZobristHash, transpositionTableEntryType, bestMove, depth)
+                        bestMoveSoFar.Score <- bestEvaluation
+                        let mutable entry = MoveTranspositionTableEntry(board.Brd.ZobristHash, transpositionTableEntryType, bestMoveSoFar, depth)
                         this.MvTrnTbl.InsertEntry(board.Brd.ZobristHash, &entry)
 
                         bestEvaluation
