@@ -9,8 +9,20 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <EmbeddedResource Include="BasicNNUEf-0334adf934.nnue.json">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    <EmbeddedResource Include="BasicNNUEf-0334adf934-OutWeight.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </EmbeddedResource>
+    <EmbeddedResource Include="BasicNNUEf-0334adf934-FeatureBias.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </EmbeddedResource>
+    <EmbeddedResource Include="BasicNNUEf-0334adf934-FeatureWeight.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </EmbeddedResource>
+    <EmbeddedResource Include="BasicNNUEf-0334adf934-FlippedFeatureWeight.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </EmbeddedResource>
+    <EmbeddedResource Include="BasicNNUEf-0334adf934-OutBias.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
     <Compile Include="Types.fs" />
     <Compile Include="BitBoardIterator.fs" />
@@ -46,6 +58,8 @@
     <Compile Include="MoveSearch.fs" />
     <Compile Include="Perft.fs" />
   </ItemGroup>
+
+  <ItemGroup />
 
   <ItemGroup>
     <PackageReference Include="Newtonsoft.Json" Version="13.0.2" />

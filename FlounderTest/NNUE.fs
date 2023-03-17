@@ -2,7 +2,9 @@ namespace FlounderTest
 open NUnit.Framework
 open FsUnit
 open FlounderLib
+open System
 open System.IO
+open System.Reflection
 open Newtonsoft.Json
 
 module NNUE =
@@ -12,12 +14,44 @@ module NNUE =
     let prmfen = "rnb1kb1r/ppP1pppp/5n2/2p5/8/8/PPPP1PPP/RNBQKBNR w KQkq - 0 5"
     let prmboard = Board.FromFen(prmfen)
 
-    let path = @"D:\Github\Flounder\FlounderLib"
-    let NNUE_FILE = "BasicNNUE"
-    let HASH = "0334adf934"
-    let inf = Path.Combine(path, NNUE_FILE + "f-" + HASH + ".nnue.json")
-    let txt = File.ReadAllText(inf)
-    let basicNNUE = JsonConvert.DeserializeObject<BasicNNUE>(txt)
+    let basicNNUE = 
+        let path = @"D:\Github\Flounder\FlounderLib"
+        let NNUE_FILE = "BasicNNUEf"
+        let HASH = "0334adf934"
+        let loadtxt str =
+            let pref = NNUE_FILE + "-" + HASH + "-"
+            let fl= Path.Combine(path,pref + str) //e.g "FeatureBias.txt"
+            let txt = File.ReadAllText(fl)
+            let nl = Environment.NewLine
+            txt.Split(nl.ToString(), StringSplitOptions.RemoveEmptyEntries)
+            |>Array.map(fun s -> int16(s))
+        let fb = loadtxt "FeatureBias.txt" 
+        let fw = loadtxt "FeatureWeight.txt" 
+        let ffw = loadtxt "FlippedFeatureWeight.txt" 
+        let ob = loadtxt "OutBias.txt" 
+        let ow = loadtxt "OutWeight.txt" 
+        let nnue =
+            let acca = 
+                let ans = Array.zeroCreate 128
+                ans|>Array.map (fun a -> Array.zeroCreate 256)
+            let accb = 
+                let ans = Array.zeroCreate 128
+                ans|>Array.map (fun a -> Array.zeroCreate 256)
+            {
+                Output = [| -1072 |]
+                CurrentAccumulator = 0
+                FeatureWeight = fw
+                FlippedFeatureWeight = ffw
+                FeatureBias = fb
+                OutWeight = ow
+                OutBias = ob
+                WhitePOV = Array.zeroCreate 768 
+                BlackPOV = Array.zeroCreate 768
+                AccumulatorA = acca
+                AccumulatorB = accb
+                Flatten = Array.zeroCreate 512
+            }
+        nnue
 
     [<SetUp>]
     let Setup () =
@@ -54,3 +88,12 @@ module NNUE =
         basicNNUE.EfficientlyUpdateAccumulator(true, Piece.Pawn, PieceColor.White, Square.E4)
         let ans = basicNNUE.Evaluate(PieceColor.OppositeColor(board.ColorToMove))
         ans |> should equal -44
+
+    [<Test>]
+    let Feature() =
+        basicNNUE.ResetAccumulator()
+        basicNNUE.RefreshAccumulator(board.Map)
+        let farln = basicNNUE.FeatureWeight.Length
+        let ffarln = basicNNUE.FlippedFeatureWeight.Length
+        farln|>should equal ffarln
+        
