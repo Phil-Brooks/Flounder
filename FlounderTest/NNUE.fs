@@ -4,8 +4,6 @@ open FsUnit
 open FlounderLib
 open System
 open System.IO
-open System.Reflection
-open Newtonsoft.Json
 
 module NNUE =
     let board = Board.Default()

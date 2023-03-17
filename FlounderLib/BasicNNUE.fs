@@ -2,7 +2,6 @@
 open System
 open System.Runtime.CompilerServices
 
-[<Serializable>]
 type BasicNNUE =
     {
         Output:int array
