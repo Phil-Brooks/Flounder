@@ -53,7 +53,7 @@ module NNUE =
     let Feature() =
         ResetAccumulator()
         RefreshAccumulator(board.Map)
-        let farln = NNUE.FeatureWeight.Length
-        let ffarln = NNUE.FlippedFeatureWeight.Length
+        let farln = NNUEin.FeatureWeight.Length
+        let ffarln = NNUEin.FlippedFeatureWeight.Length
         farln|>should equal ffarln
         
