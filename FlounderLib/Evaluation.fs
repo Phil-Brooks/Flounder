@@ -2,7 +2,7 @@
 
 module Evaluation =
     let NNUE(board:Board) =
-        NNUE.Evaluate(board.ColorToMove)
+        Evaluate(board.ColorToMove)
     let Relative(board) =
         NNUE(board)
 

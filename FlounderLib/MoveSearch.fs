@@ -412,7 +412,7 @@ type MoveSearch =
             getbm -100000000 1                    
         with
             | :? OperationCanceledException -> ()
-        NNUE.ResetAccumulator()
+        ResetAccumulator()
         bestMove
     member this.DoTest(selectedDepth:int, bm:string) =
         let mutable bestMove = OrderedMoveEntry.Default
@@ -433,7 +433,7 @@ type MoveSearch =
             getbm -100000000 1                    
         with
             | :? OperationCanceledException -> ()
-        NNUE.ResetAccumulator()
+        ResetAccumulator()
         bestMove
     [<MethodImpl(MethodImplOptions.AggressiveInlining)>]
     member this.HandleEvaluationQ(evaluation:int, bestEvaluation:byref<int>, alpha:byref<int>, beta:int) =

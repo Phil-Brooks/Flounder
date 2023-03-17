@@ -37,13 +37,13 @@ type Board =
             // Thus, we need to set it in revert move to ensure we can properly revert it.
             rv.CapturedPiece <- pieceT
             rv.CapturedColor <- colorT
-            NNUE.EfficientlyUpdateAccumulator(false, pieceT, colorT, mto)
+            EfficientlyUpdateAccumulator(false, pieceT, colorT, mto)
         if (this.EnPassantTarget = mto && pieceF = Piece.Pawn) then
             // If the attack is an EP attack, we must empty the piece affected by EP.
             let epPieceSq = if colorF = PieceColor.White then Square.FromInt(int(this.EnPassantTarget) - 8) else Square.FromInt(int(this.EnPassantTarget) + 8)
             let oppositeColor = PieceColor.OppositeColor(colorF)
             this.Map.Empty(Piece.Pawn, oppositeColor, epPieceSq)
-            NNUE.EfficientlyUpdateAccumulator(false, Piece.Pawn, oppositeColor, epPieceSq)
+            EfficientlyUpdateAccumulator(false, Piece.Pawn, oppositeColor, epPieceSq)
             // Set it in revert move.
             rv.EnPassant <- true
             // We only need to reference the color.
@@ -58,13 +58,13 @@ type Board =
         else this.Map.EnPassantTarget <- Square.Na
         // Make the move.
         this.Map.Move(pieceF, colorF, pieceT, colorT, from, mto)
-        NNUE.EfficientlyUpdateAccumulator(pieceF, colorF, from, mto)
+        EfficientlyUpdateAccumulatorPc(pieceF, colorF, from, mto)
         if (promotion <> Promotion.None) then
             this.Map.Empty(pieceF, colorF, mto)
             this.Map.InsertPiece(Piece.FromInt(int(promotion)), colorF, mto)
             rv.Promotion <- true
-            NNUE.EfficientlyUpdateAccumulator(false, pieceF, colorF, mto)
-            NNUE.EfficientlyUpdateAccumulator(true, Piece.FromInt(int(promotion)), colorF, mto)
+            EfficientlyUpdateAccumulator(false, pieceF, colorF, mto)
+            EfficientlyUpdateAccumulator(true, Piece.FromInt(int(promotion)), colorF, mto)
         // Update revert move.
         rv.From <- from
         rv.To <- mto
@@ -109,7 +109,7 @@ type Board =
                     Piece.Rook, colorF, Piece.Empty, PieceColor.None, 
                     rv.SecondaryFrom, rv.SecondaryTo
                 )
-                NNUE.EfficientlyUpdateAccumulator(Piece.Rook, colorF, rv.SecondaryFrom, rv.SecondaryTo)
+                EfficientlyUpdateAccumulatorPc(Piece.Rook, colorF, rv.SecondaryFrom, rv.SecondaryTo)
         // If our rook was captured, we must also update castling rights so we don't castle with enemy piece.
         if pieceT = Piece.Rook then
             if colorT = PieceColor.White then
