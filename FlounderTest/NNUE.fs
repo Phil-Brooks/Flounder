@@ -18,42 +18,42 @@ module NNUE =
 
     [<Test>]
     let RefreshBasicAccumulator() =
-        let ans = RefreshAccumulator(board.Map)
+        let ans = NNUE.RefreshAccumulator(board.Map)
         ans |> should equal ()
 
     [<Test>]
     let Eua() =
-        let ans1 = EfficientlyUpdateAccumulator(false, Piece.Pawn, PieceColor.White, Square.E2)
+        let ans1 = NNUE.EfficientlyUpdateAccumulator(false, Piece.Pawn, PieceColor.White, Square.E2)
         ans1 |> should equal ()
-        let ans2 = EfficientlyUpdateAccumulator(true, Piece.Pawn, PieceColor.White, Square.E2)
+        let ans2 = NNUE.EfficientlyUpdateAccumulator(true, Piece.Pawn, PieceColor.White, Square.E2)
         ans2 |> should equal ()
 
     [<Test>]
     let EvaluateBasic() =
-        RefreshAccumulator(board.Map)
-        let ans = Evaluate(board.ColorToMove)
+        NNUE.RefreshAccumulator(board.Map)
+        let ans = NNUE.Evaluate(board.ColorToMove)
         ans |> should equal 68
 
     [<Test>]
     let EvaluateEP() =
-        RefreshAccumulator(epboard.Map)
-        let ans = Evaluate(epboard.ColorToMove)
+        NNUE.RefreshAccumulator(epboard.Map)
+        let ans = NNUE.Evaluate(epboard.ColorToMove)
         ans |> should equal -21
 
     [<Test>]
     let EvaluateUpdate() =
-        ResetAccumulator()
-        RefreshAccumulator(board.Map)
-        EfficientlyUpdateAccumulator(false, Piece.Pawn, PieceColor.White, Square.E2)
-        EfficientlyUpdateAccumulator(true, Piece.Pawn, PieceColor.White, Square.E4)
-        let ans = Evaluate(PieceColor.OppositeColor(board.ColorToMove))
+        NNUE.ResetAccumulator()
+        NNUE.RefreshAccumulator(board.Map)
+        NNUE.EfficientlyUpdateAccumulator(false, Piece.Pawn, PieceColor.White, Square.E2)
+        NNUE.EfficientlyUpdateAccumulator(true, Piece.Pawn, PieceColor.White, Square.E4)
+        let ans = NNUE.Evaluate(PieceColor.OppositeColor(board.ColorToMove))
         ans |> should equal -44
 
     [<Test>]
     let Feature() =
-        ResetAccumulator()
-        RefreshAccumulator(board.Map)
-        let farln = NNUEin.FeatureWeight.Length
-        let ffarln = NNUEin.FlippedFeatureWeight.Length
+        NNUE.ResetAccumulator()
+        NNUE.RefreshAccumulator(board.Map)
+        let farln = NNUE.NNUEin.FeatureWeight.Length
+        let ffarln = NNUE.NNUEin.FlippedFeatureWeight.Length
         farln|>should equal ffarln
         

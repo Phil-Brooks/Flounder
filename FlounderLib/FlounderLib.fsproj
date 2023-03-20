@@ -31,11 +31,10 @@
     <Compile Include="Zobrist.fs" />
     <Compile Include="BitBoardMap.fs" />
     <Compile Include="NN.fs" />
-    <Compile Include="BasicNNUE.fs" />
-    <Compile Include="NNUE_Load.fs" />
+    <Compile Include="NNUEb.fs" />
+    <Compile Include="NNUE.fs" />
     <Compile Include="RevertMove.fs" />
     <Compile Include="Board.fs" />
-    <Compile Include="Evaluation.fs" />
     <Compile Include="InvalidMoveLookupException.fs" />
     <Compile Include="OrderedMoveEntry.fs" />
     <Compile Include="MoveTranspositionTableEntry.fs" />
@@ -58,7 +57,5 @@
     <Compile Include="MoveSearch.fs" />
     <Compile Include="Perft.fs" />
   </ItemGroup>
-
-  <ItemGroup />
 
 </Project>

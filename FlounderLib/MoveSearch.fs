@@ -109,7 +109,7 @@ type MoveSearch =
         if ans.IsSome then 
             ans.Value
         else
-            let mutable earlyEval = Evaluation.Relative(board.Brd)
+            let mutable earlyEval = NNUE.Evaluate(board.Brd.ColorToMove)
             // In the rare case our evaluation is already too good, we don't need to further evaluate captures any further,
             // as this position is overwhelmingly winning.
             if earlyEval >= beta then ans <- beta|>Some
@@ -248,7 +248,7 @@ type MoveSearch =
                 let mutable improving = false
                 // We should use the evaluation from our transposition table if we had a hit.
                 // As that evaluation isn't truly static and may have been from a previous deep search.
-                let positionalEvaluation = if transpositionHit then transpositionMove.Score else Evaluation.Relative(board.Brd)
+                let positionalEvaluation = if transpositionHit then transpositionMove.Score else NNUE.Evaluate(board.Brd.ColorToMove)
                 // Also store the evaluation to later check if it improved.
                 this.MvSrchStck.[plyFromRoot].PositionalEvaluation <- positionalEvaluation
         
@@ -412,7 +412,7 @@ type MoveSearch =
             getbm -100000000 1                    
         with
             | :? OperationCanceledException -> ()
-        ResetAccumulator()
+        NNUE.ResetAccumulator()
         bestMove
     member this.DoTest(selectedDepth:int, bm:string) =
         let mutable bestMove = OrderedMoveEntry.Default
@@ -433,7 +433,7 @@ type MoveSearch =
             getbm -100000000 1                    
         with
             | :? OperationCanceledException -> ()
-        ResetAccumulator()
+        NNUE.ResetAccumulator()
         bestMove
     [<MethodImpl(MethodImplOptions.AggressiveInlining)>]
     member this.HandleEvaluationQ(evaluation:int, bestEvaluation:byref<int>, alpha:byref<int>, beta:int) =

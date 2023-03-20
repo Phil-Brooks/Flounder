@@ -16,6 +16,6 @@ type Overall() =
     [<Benchmark>]
     member _.Overall() = 
         FlounderLib.Perft.MoveGeneration(Default, 4)|>ignore
-        RefreshAccumulator(Default.Map)
-        Evaluate(Default.ColorToMove)|>ignore
+        NNUE.RefreshAccumulator(Default.Map)
+        NNUE.Evaluate(Default.ColorToMove)|>ignore
 

@@ -8,7 +8,7 @@ type EngineBoard =
         {
             Brd = Board(boardData, turnData, castlingData, enPassantTargetData)
             RepHist = RepetitionHistory.Default()
-        } then ResetAccumulator();RefreshAccumulator(this.Brd.Map)
+        } then NNUE.ResetAccumulator();NNUE.RefreshAccumulator(this.Brd.Map)
     new(board:EngineBoard) = 
         {
             Brd = Board(board.Brd.Map)
@@ -40,13 +40,13 @@ type EngineBoard =
         Zobrist.FlipTurnInHash(&this.Brd.Map.ZobristHash)
     member this.Move(move:byref<OrderedMoveEntry>) =
         let rv:RevertMove =
-            PushAccumulator()
+            NNUE.PushAccumulator()
             this.Brd.Move(move.From, move.To, move.Promotion)
         this.RepHist.Append(this.Brd.ZobristHash)
         rv
     member this.UndoMove(rv:byref<RevertMove>) =
         this.Brd.UndoMove(&rv)
-        PullAccumulator()
+        NNUE.PullAccumulator()
         this.RepHist.RemoveLast()
 module EngineBoard =
     let FromFen(fen:string) = 
