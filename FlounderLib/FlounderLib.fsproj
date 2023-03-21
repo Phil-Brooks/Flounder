@@ -9,6 +9,9 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <EmbeddedResource Include="berserk-e3f526b26f50.nn">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </EmbeddedResource>
     <EmbeddedResource Include="BasicNNUEf-0334adf934-OutWeight.txt">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
@@ -57,5 +60,7 @@
     <Compile Include="MoveSearch.fs" />
     <Compile Include="Perft.fs" />
   </ItemGroup>
+
+  <ItemGroup />
 
 </Project>

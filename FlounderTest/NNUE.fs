@@ -2,8 +2,6 @@ namespace FlounderTest
 open NUnit.Framework
 open FsUnit
 open FlounderLib
-open System
-open System.IO
 
 module NNUE =
     let board = Board.Default()

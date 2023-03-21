@@ -6,52 +6,84 @@ open System.Runtime.CompilerServices
 
 type NNUEinB =
     {
-        InputWeight:int16 array
+        InputWeights:int16 array
+        InputBiases:int16 array
+        OutputWeights:int16 array
+        OutputBias:int
     }
-//type NNUEoutB =
-//    {
-//        Output:int array
-//        mutable CurrentAccumulator:int
-//        WhitePOV:int16 array
-//        BlackPOV:int16 array
-//        AccumulatorA:int16 array array
-//        AccumulatorB:int16 array array
-//        Flatten:int16 array
-//    }
+type Accumulator =
+    {
+        AccValues:int16 array array
+    }
+type AccumulatorKingState =
+    {
+        AccKsValues:int16 array
+        Pcs:BitBoard array
+    }
 module NNUEb =
     let NNUEin = 
-        //let NNUE_FILE = "FlounderLib.BasicNNUEf"
-        //let HASH = "0334adf934"
-        //let loadtxt str =
-        //    let pref = NNUE_FILE + "-" + HASH + "-"
-        //    let resource = pref + str //e.g "FeatureBias.txt" 
-        //    use stream = Assembly.GetExecutingAssembly().GetManifestResourceStream(resource)
-        //    use reader = new StreamReader(stream)
-        //    let nl = Environment.NewLine
-        //    reader.ReadToEnd().Split(nl.ToString(), StringSplitOptions.RemoveEmptyEntries)
-        //    |>Array.map(fun s -> int16(s))
-        let iw = [||]//loadtxt "FeatureBias.txt" 
+        let NNUE_FILE = "FlounderLib.berserk"
+        let HASH = "e3f526b26f50"
+        let resource = NNUE_FILE + "-" + HASH + ".nn"
+        use stream = Assembly.GetExecutingAssembly().GetManifestResourceStream(resource)
+        use reader = new BinaryReader(stream)
+        let iwlen = 9437184
+        let iw = Array.zeroCreate iwlen
+        for i = 0 to iwlen-1 do
+            iw.[i] <- reader.ReadInt16()
+        let iblen = 768
+        let ib = Array.zeroCreate iblen
+        for i = 0 to iblen-1 do
+            ib.[i] <- reader.ReadInt16()
+        let owlen = 1536
+        let ow = Array.zeroCreate owlen
+        for i = 0 to owlen-1 do
+            ow.[i] <- reader.ReadInt16()
+        let ob = reader.ReadInt32()
         let nnue =
             {
-                InputWeight = iw
+                InputWeights = iw
+                InputBiases = ib
+                OutputWeights = ow
+                OutputBias = ob
             }
         nnue
-    //let NNUEout = 
-    //    let acca = 
-    //        let ans = Array.zeroCreate 128
-    //        ans|>Array.map (fun a -> Array.zeroCreate 256)
-    //    let accb = 
-    //        let ans = Array.zeroCreate 128
-    //        ans|>Array.map (fun a -> Array.zeroCreate 256)
-    //    {
-    //        Output = Array.zeroCreate 1
-    //        CurrentAccumulator = 0
-    //        WhitePOV = Array.zeroCreate 768 
-    //        BlackPOV = Array.zeroCreate 768
-    //        AccumulatorA = acca
-    //        AccumulatorB = accb
-    //        Flatten = Array.zeroCreate 512
-    //    }
+    let Accumulators:Accumulator array =
+        let ans = Array.zeroCreate 252
+        for i = 0 to 251 do
+            let accs = 
+                let ans = Array.zeroCreate 2
+                ans|>Array.map (fun a -> Array.zeroCreate 768)
+            let acci =
+                {
+                    AccValues = accs
+                }
+            ans.[i] <- acci
+        ans
+    let RefreshTable:AccumulatorKingState array =
+        let ans = Array.zeroCreate 64
+        for i = 0 to 63 do
+            let acci =
+                {
+                    AccKsValues = Array.zeroCreate 768
+                    Pcs = Array.zeroCreate 12
+                }
+            ans.[i] <- acci
+        ans
+    let ResetRefreshTable() =
+        for i = 0 to 63 do
+            let acci =
+                {
+                    AccKsValues = Array.copy NNUEin.InputBiases
+                    Pcs = Array.zeroCreate 12
+                }
+            RefreshTable.[i] <- acci
+    let ResetAccumulator(map:BitBoardMap,perspective:PieceColor) =
+        let adds = Array.create 32 0
+        let kingSq = map.[Piece.King, perspective]
+        ()
+
+
     //let ResetAccumulator() = NNUEout.CurrentAccumulator <- 0
     //let PushAccumulator() =
     //    let A = NNUEout.AccumulatorA.[NNUEout.CurrentAccumulator]
