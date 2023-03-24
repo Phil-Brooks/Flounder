@@ -25,10 +25,10 @@ module MoveList =
         moveList.Count |> should equal 2
         let mutable moves = moveList.Moves.GetEnumerator()
         let mutable move = moves.Current
-        move|> should equal Square.A3
+        move|> should equal Square.A4
         moves.MoveNext()|>ignore
         move <- moves.Current
-        move|> should equal Square.A4
+        move|> should equal Square.A3
 
     [<Test>]
     let CountKnightMovesAtA3() =
@@ -38,7 +38,7 @@ module MoveList =
         moveList.Count |> should equal 3
         let mutable moves = moveList.Moves.GetEnumerator()
         let mutable move = moves.Current
-        move|> should equal Square.B1
+        move|> should equal Square.B5
         moves.MoveNext()|>ignore
         move <- moves.Current
         move|> should equal Square.C4
@@ -51,10 +51,10 @@ module MoveList =
         moveList.Count |> should equal 11
         let mutable moves = moveList.Moves.GetEnumerator()
         let mutable move = moves.Current
-        move|> should equal Square.B3
+        move|> should equal Square.A7
         moves.MoveNext()|>ignore
         move <- moves.Current
-        move|> should equal Square.C3
+        move|> should equal Square.A6
 
     [<Test>]
     let CountRookMovesAtA1() =
@@ -69,10 +69,10 @@ module MoveList =
         moveList.Count |> should equal 6
         let mutable moves = moveList.Moves.GetEnumerator()
         let mutable move = moves.Current
-        move|> should equal Square.B4
+        move|> should equal Square.G7
         moves.MoveNext()|>ignore
         move <- moves.Current
-        move|> should equal Square.D4
+        move|> should equal Square.F6
 
     [<Test>]
     let CountQueenMovesAtC3() =
@@ -82,10 +82,10 @@ module MoveList =
         moveList.Count |> should equal 17
         let mutable moves = moveList.Moves.GetEnumerator()
         let mutable move = moves.Current
-        move|> should equal Square.A3
+        move|> should equal Square.C7
         moves.MoveNext()|>ignore
         move <- moves.Current
-        move|> should equal Square.B3
+        move|> should equal Square.G7
 
     [<Test>]
     let CountKingMovesAtC3() =
@@ -95,10 +95,10 @@ module MoveList =
         moveList.Count |> should equal 5
         let mutable moves = moveList.Moves.GetEnumerator()
         let mutable move = moves.Current
-        move|> should equal Square.B3
+        move|> should equal Square.B4
         moves.MoveNext()|>ignore
         move <- moves.Current
-        move|> should equal Square.D3
+        move|> should equal Square.C4
 
     [<Test>]
     let CountKingMovesAtE1a() =

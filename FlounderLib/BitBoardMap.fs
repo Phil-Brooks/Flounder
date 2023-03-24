@@ -39,7 +39,7 @@ type BitBoardMap =
             let piecesAndColors:int array = Array.zeroCreate 64
             for i = 0 to 63 do
                 piecesAndColors[i] <- 0x26
-            let expandedBoardData = boardFen.Split(FEN_SPR)|>Array.rev
+            let expandedBoardData = boardFen.Split(FEN_SPR)
             if expandedBoardData.Length <> 8 then 
                 raise (InvalidDataException("Wrong board data provided: " + boardFen))
             for v = 0 to 7 do
@@ -53,14 +53,14 @@ type BitBoardMap =
                             if p = 'P' then
                                 bb.[int(PieceColor.White)].[int(Piece.Pawn)].[v * 8 + h] <- true
                                 piecesAndColors.[v * 8 + h] <- 0x0
-                            elif p = 'R' then
-                                bb.[int(PieceColor.White)].[int(Piece.Rook)].[v * 8 + h] <- true
-                                piecesAndColors.[v * 8 + h] <- 0x1
                             elif p = 'N' then
                                 bb.[int(PieceColor.White)].[int(Piece.Knight)].[v * 8 + h] <- true
-                                piecesAndColors.[v * 8 + h] <- 0x2
+                                piecesAndColors.[v * 8 + h] <- 0x1
                             elif p = 'B' then
                                 bb.[int(PieceColor.White)].[int(Piece.Bishop)].[v * 8 + h] <- true
+                                piecesAndColors.[v * 8 + h] <- 0x2
+                            elif p = 'R' then
+                                bb.[int(PieceColor.White)].[int(Piece.Rook)].[v * 8 + h] <- true
                                 piecesAndColors.[v * 8 + h] <- 0x3
                             elif p = 'Q' then
                                 bb.[int(PieceColor.White)].[int(Piece.Queen)].[v * 8 + h] <- true
@@ -72,14 +72,14 @@ type BitBoardMap =
                             if p = 'p' then
                                 bb.[int(PieceColor.Black)].[int(Piece.Pawn)].[v * 8 + h] <- true
                                 piecesAndColors.[v * 8 + h] <- 0x10
-                            elif p = 'r' then
-                                bb.[int(PieceColor.Black)].[int(Piece.Rook)].[v * 8 + h] <- true
-                                piecesAndColors.[v * 8 + h] <- 0x11
                             elif p = 'n' then
                                 bb.[int(PieceColor.Black)].[int(Piece.Knight)].[v * 8 + h] <- true
-                                piecesAndColors.[v * 8 + h] <- 0x12
+                                piecesAndColors.[v * 8 + h] <- 0x11
                             elif p = 'b' then
                                 bb.[int(PieceColor.Black)].[int(Piece.Bishop)].[v * 8 + h] <- true
+                                piecesAndColors.[v * 8 + h] <- 0x12
+                            elif p = 'r' then
+                                bb.[int(PieceColor.Black)].[int(Piece.Rook)].[v * 8 + h] <- true
                                 piecesAndColors.[v * 8 + h] <- 0x13
                             elif p = 'q' then
                                 bb.[int(PieceColor.Black)].[int(Piece.Queen)].[v * 8 + h] <- true
@@ -104,7 +104,7 @@ type BitBoardMap =
                 enPassantTarget <- System.Enum.Parse<Square>(enPassantTargetData, true)
             let gethash() =
                 let mutable zobristHash = 0UL
-                for piece in [Piece.Pawn;Piece.Rook;Piece.Knight;Piece.Bishop;Piece.Queen;Piece.King] do
+                for piece in Pcs do
                     let psbb = bb.[int(colorToMove)].[int(piece)]
                     let mutable pieceSquareIterator = psbb.GetEnumerator()  
                     let mutable sq:Square = pieceSquareIterator.Current
@@ -236,7 +236,7 @@ type BitBoardMap =
                         h <- h + 1
                 expandedBoardData.[v] <- rankData
             let FEN_SPR = "/"
-            String.Join(FEN_SPR, expandedBoardData|>Array.rev)
+            String.Join(FEN_SPR, expandedBoardData)
     end
 
 module BitBoardMap =

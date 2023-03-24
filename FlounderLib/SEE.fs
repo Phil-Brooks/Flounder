@@ -1,7 +1,7 @@
 ﻿namespace FlounderLib
 
 module SEE =
-    let Internal = [| 82;477;337;365;1025;0;0 |]
+    let Internal = [| 82;337;365;477;1025;0;0 |]
     let inline Approximate(board:EngineBoard, move:OrderedMoveEntry) =
         let from = board.PieceOnly(move.From)
         let mutable mto = board.PieceOnly(move.To)

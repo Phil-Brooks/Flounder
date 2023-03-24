@@ -98,7 +98,7 @@ type BitBoard =
         member this.GetEnumerator() = BitBoardIterator(this.Internal, this.Count)
         override this.ToString() =
             let mutable final = ""
-            for v = 7 downto 0 do
+            for v = 0 to 7 do
                 let mutable bitString = ""
                 for h = 0 to 7 do
                     bitString <- bitString + (if this.[v * 8 + h] then "1" else "*") + " "

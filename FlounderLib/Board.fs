@@ -40,7 +40,7 @@ type Board =
             NNUE.EfficientlyUpdateAccumulator(false, pieceT, colorT, mto)
         if (this.EnPassantTarget = mto && pieceF = Piece.Pawn) then
             // If the attack is an EP attack, we must empty the piece affected by EP.
-            let epPieceSq = if colorF = PieceColor.White then Square.FromInt(int(this.EnPassantTarget) - 8) else Square.FromInt(int(this.EnPassantTarget) + 8)
+            let epPieceSq = if colorF = PieceColor.White then Square.FromInt(int(this.EnPassantTarget) + 8) else Square.FromInt(int(this.EnPassantTarget) - 8)
             let oppositeColor = PieceColor.OppositeColor(colorF)
             this.Map.Empty(Piece.Pawn, oppositeColor, epPieceSq)
             NNUE.EfficientlyUpdateAccumulator(false, Piece.Pawn, oppositeColor, epPieceSq)
@@ -52,7 +52,7 @@ type Board =
         if (this.EnPassantTarget<> Square.Na) then Zobrist.HashEp(&this.Map.ZobristHash, this.Map.EnPassantTarget)
         if (pieceF = Piece.Pawn && Math.Abs(int(mto) - int(from)) = 16) then
             // If the pawn push is a 2-push, the square behind it will be EP target.
-            this.Map.EnPassantTarget <- if colorF = PieceColor.White then Square.FromInt(int(from) + 8) else Square.FromInt(int(from) - 8)
+            this.Map.EnPassantTarget <- if colorF = PieceColor.White then Square.FromInt(int(from) - 8) else Square.FromInt(int(from) + 8)
             // Update Zobrist.
             Zobrist.HashEp(&this.Map.ZobristHash, this.Map.EnPassantTarget)
         else this.Map.EnPassantTarget <- Square.Na
@@ -170,7 +170,7 @@ type Board =
         this.Map.Move(pF, cF, pT, cT, rv.To, rv.From)
         if (rv.EnPassant) then
             // If it was an EP attack, we must insert a pawn at the affected square.
-            let insertion = if rv.CapturedColor = PieceColor.White then Square.FromInt(int(rv.To) + 8) else Square.FromInt(int(rv.To) - 8)
+            let insertion = if rv.CapturedColor = PieceColor.White then Square.FromInt(int(rv.To) - 8) else Square.FromInt(int(rv.To) + 8)
             this.Map.InsertPiece(Piece.Pawn, rv.CapturedColor, insertion)
         elif (rv.CapturedPiece <> Piece.Empty) then
             // If a capture happened, we must insert the piece at the relevant square.

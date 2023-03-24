@@ -3,7 +3,7 @@
 module AttackTable =
     // Attack tables & BM bitboards for fast move-generation.
     // Square BitBoards (size 64)
-    let WhitePawnAttacks:BitBoard array = 
+    let BlackPawnAttacks:BitBoard array = 
         [|
             0x0000000000000200uL; 0x0000000000000500uL; 0x0000000000000a00uL; 0x0000000000001400uL; 
             0x0000000000002800uL; 0x0000000000005000uL; 0x000000000000a000uL; 0x0000000000004000uL; 
@@ -23,7 +23,7 @@ module AttackTable =
             0x0000000000000000uL; 0x0000000000000000uL; 0x0000000000000000uL; 0x0000000000000000uL
         |]
         |> Array.map(fun u -> BitBoard(u))
-    let BlackPawnAttacks:BitBoard array = 
+    let WhitePawnAttacks:BitBoard array = 
         [|
             0x0000000000000000uL; 0x0000000000000000uL; 0x0000000000000000uL; 0x0000000000000000uL; 
             0x0000000000000000uL; 0x0000000000000000uL; 0x0000000000000000uL; 0x0000000000000000uL;

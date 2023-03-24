@@ -2,10 +2,10 @@
 open System.Runtime.CompilerServices
 
 module MoveList =
-    let WHITE_KING_CASTLE = 0x60uL
-    let BLACK_KING_CASTLE = WHITE_KING_CASTLE <<< 56
-    let WHITE_QUEEN_CASTLE = 0xEuL
-    let BLACK_QUEEN_CASTLE = WHITE_QUEEN_CASTLE <<< 56
+    let BLACK_KING_CASTLE = 0x60uL
+    let WHITE_KING_CASTLE = BLACK_KING_CASTLE <<< 56
+    let BLACK_QUEEN_CASTLE = 0xEuL
+    let WHITE_QUEEN_CASTLE = BLACK_QUEEN_CASTLE <<< 56
     let UnderAttack(board:Board, sq:Square, by:PieceColor) =
         let s = int(sq)
         // First, we check if the square is being attacked by pawns.
@@ -132,14 +132,14 @@ module MoveList =
             // It is important to set it earlier rather than later, because if there is a diagonal pin capture
             // leading to a promotion, we must make sure to record that as 4 moves.
             // FEN: 2q5/1Pp5/K2p4/7r/6Pk/8/8/1R6 w - -
-            let promotion = color = PieceColor.White && from > Square.H6 &&  from < Square.A8 || 
-                            color = PieceColor.Black && from > Square.H1 && from < Square.A3
+            let promotion = color = PieceColor.White && from < Square.A6 &&  from > Square.H8 || 
+                            color = PieceColor.Black && from < Square.A1 && from > Square.H3
             // Attack moves
             // En Passant.
             if (board.EnPassantTarget <> Square.Na) then
                 // If EP exists, then we need to check if a piece exists on square that's under attack from Ep, not
                 // where we move to.
-                epPieceSq <- if color = PieceColor.White then Square.FromInt(int(board.EnPassantTarget) - 8) else Square.FromInt(int(board.EnPassantTarget) + 8)
+                epPieceSq <- if color = PieceColor.White then Square.FromInt(int(board.EnPassantTarget) + 8) else Square.FromInt(int(board.EnPassantTarget) - 8)
                 let epTargetPieceExists = board.All(Piece.Pawn, oppositeColor).[epPieceSq]
                 // We need to check if a piece of ours exists to actually execute the EP.
                 // We do this by running a reverse pawn mask, to determine whether a piece of ours is on the corner.
@@ -189,14 +189,14 @@ module MoveList =
         // It is important to set it earlier rather than later, because if there is a diagonal pin capture
         // leading to a promotion, we must make sure to record that as 4 moves.
         // FEN: 2q5/1Pp5/K2p4/7r/6Pk/8/8/1R6 w - -
-        let promotion = color = PieceColor.White && from > Square.H6 &&  from < Square.A8 || 
-                        color = PieceColor.Black && from > Square.H1 && from < Square.A3
+        let promotion = color = PieceColor.White && from < Square.A6 &&  from > Square.H8 || 
+                        color = PieceColor.Black && from < Square.A1 && from > Square.H3
         // Attack moves
         // En Passant.
         if (board.EnPassantTarget <> Square.Na) then
             // If EP exists, then we need to check if a piece exists on square that's under attack from Ep, not
             // where we move to.
-            epPieceSq <- if color = PieceColor.White then Square.FromInt(int(board.EnPassantTarget) - 8) else Square.FromInt(int(board.EnPassantTarget) + 8)
+            epPieceSq <- if color = PieceColor.White then Square.FromInt(int(board.EnPassantTarget) + 8) else Square.FromInt(int(board.EnPassantTarget) - 8)
             let epTargetPieceExists = board.All(Piece.Pawn, oppositeColor).[epPieceSq]
             // We need to check if a piece of ours exists to actually execute the EP.
             // We do this by running a reverse pawn mask, to determine whether a piece of ours is on the corner.
@@ -217,11 +217,11 @@ module MoveList =
             //Normal moves
             let mutable pushes = BitBoard.Default
             // Push pawn once.
-            pushes <- pushes ||| (if color = PieceColor.White then BitBoard.FromSq(from) <<< 8 else BitBoard.FromSq(from) >>> 8) &&& board.All(PieceColor.None)
-            if ((from > Square.H1 && from < Square.A3 || from > Square.H6 && from < Square.A8) && pushes.ToBool()) then
+            pushes <- pushes ||| (if color = PieceColor.White then BitBoard.FromSq(from) >>> 8 else BitBoard.FromSq(from) <<< 8) &&& board.All(PieceColor.None)
+            if ((from < Square.A1 && from > Square.H3 || from < Square.A6 && from > Square.H8) && pushes.ToBool()) then
                 // If we are on the starting pawn position & the first pawn push was successful.
                 // Push once more.
-                pushes <- pushes ||| if color = PieceColor.White then BitBoard.FromSq(from) <<< 16 else BitBoard.FromSq(from) >>> 16
+                pushes <- pushes ||| if color = PieceColor.White then BitBoard.FromSq(from) >>> 16 else BitBoard.FromSq(from) <<< 16
             // Make sure our pushes are not stepping on to enemy pieces.
             // These are normal moves, not attack moves so we can't capture.
             pushes <- pushes &&& ~~~(opposite) &&& ~~~(board.All(color))

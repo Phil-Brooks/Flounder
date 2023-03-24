@@ -94,21 +94,16 @@ module NNUE =
                 let mutable piece = ipiece
                 let mutable whiteIterator = map.[piece, color].GetEnumerator()
                 let mutable blackIterator = map.[piece, color].GetEnumerator()
-                let originalPiece = piece
-                if (piece = Piece.Rook) then piece <- Piece.Bishop
-                elif (piece = Piece.Knight) then piece <- Piece.Rook
-                elif (piece = Piece.Bishop) then piece <- Piece.Knight
                 let mutable sq = whiteIterator.Current
                 while (whiteIterator.MoveNext()) do
-                    let index = int(color) * colorStride + int(piece) * pieceStride + int(sq)
+                    let index = int(color) * colorStride + int(piece) * pieceStride + Square.OldInt(sq)
                     NNUEout.WhitePOV.[index] <- 1s
                     sq <- whiteIterator.Current
                 sq <- blackIterator.Current
                 while (blackIterator.MoveNext()) do
-                    let index = int(PieceColor.OppositeColor(color)) * colorStride + int(piece) * pieceStride + (int(sq) ^^^ 56)
+                    let index = int(PieceColor.OppositeColor(color)) * colorStride + int(piece) * pieceStride + (Square.OldInt(sq) ^^^ 56)
                     NNUEout.BlackPOV.[index] <- 1s
                     sq <- blackIterator.Current
-                piece <- originalPiece
         let accumulatorA = NNUEout.AccumulatorA.[NNUEout.CurrentAccumulator]
         let accumulatorB = NNUEout.AccumulatorB.[NNUEout.CurrentAccumulator]
         NN.Forward(NNUEout.WhitePOV, NNUEin.FeatureWeight, accumulatorA)
@@ -117,12 +112,11 @@ module NNUE =
         let HIDDEN = 256
         let colorStride = 64 * 6
         let pieceStride = 64
-        let nnPiece = NN.PieceToNN(piece)
-        let opPieceStride = int(nnPiece) * pieceStride
-        let whiteIndexFrom = int(color) * colorStride + opPieceStride + int(from)
-        let blackIndexFrom = int(PieceColor.OppositeColor(color)) * colorStride + opPieceStride + (int(from) ^^^ 56)
-        let whiteIndexTo = int(color) * colorStride + opPieceStride + int(mto)
-        let blackIndexTo = int(PieceColor.OppositeColor(color)) * colorStride + opPieceStride + (int(mto) ^^^ 56)
+        let opPieceStride = int(piece) * pieceStride
+        let whiteIndexFrom = int(color) * colorStride + opPieceStride + Square.OldInt(from)
+        let blackIndexFrom = int(PieceColor.OppositeColor(color)) * colorStride + opPieceStride + (Square.OldInt(from) ^^^ 56)
+        let whiteIndexTo = int(color) * colorStride + opPieceStride + Square.OldInt(mto)
+        let blackIndexTo = int(PieceColor.OppositeColor(color)) * colorStride + opPieceStride + (Square.OldInt(mto) ^^^ 56)
         let accumulatorA = NNUEout.AccumulatorA.[NNUEout.CurrentAccumulator]
         let accumulatorB = NNUEout.AccumulatorB.[NNUEout.CurrentAccumulator]
         NNUEout.WhitePOV.[whiteIndexFrom] <- 0s
@@ -135,10 +129,9 @@ module NNUE =
         let HIDDEN = 256
         let colorStride = 64 * 6
         let pieceStride = 64
-        let nnPiece = NN.PieceToNN(piece)
-        let opPieceStride = int(nnPiece) * pieceStride
-        let whiteIndex = int(color) * colorStride + opPieceStride + int(sq)
-        let blackIndex = int(PieceColor.OppositeColor(color)) * colorStride + opPieceStride + (int(sq) ^^^ 56)
+        let opPieceStride = int(piece) * pieceStride
+        let whiteIndex = int(color) * colorStride + opPieceStride + Square.OldInt(sq)
+        let blackIndex = int(PieceColor.OppositeColor(color)) * colorStride + opPieceStride + (Square.OldInt(sq) ^^^ 56)
         let accumulatorA = NNUEout.AccumulatorA.[NNUEout.CurrentAccumulator]
         let accumulatorB = NNUEout.AccumulatorB.[NNUEout.CurrentAccumulator]
         if isActivate then

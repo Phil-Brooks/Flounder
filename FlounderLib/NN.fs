@@ -40,11 +40,6 @@ module NN =
     let LoadVector(values:int16 array, index:int) =
         Unsafe.ReadUnaligned<Vector<int16>>(&Unsafe.As<int16, byte>(&values.[index]))
     let UNROLL = 4
-    let PieceToNN(piece:Piece) =
-       if piece = Piece.Rook then Piece.Bishop
-       elif piece = Piece.Knight then Piece.Rook
-       elif piece = Piece.Bishop then Piece.Knight
-       else piece
     let Forward(input:int16 array, weight:int16 array, output:int16 array) =
         let offset = 0
         let inputSize = input.Length
