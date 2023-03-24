@@ -2,7 +2,7 @@
 
 [<AutoOpen>]
 module Types =
-    let VersionNo = "0.4.0.6"
+    let VersionNo = "0.4.0.7"
 
     type ColPiece =
         // The type of piece.
@@ -18,6 +18,7 @@ module Types =
         |BlackQueen = 9
         |WhiteKing = 10
         |BlackKing = 11
+        |Empty = 12
     let ColPcs = 
         [|
             ColPiece.WhitePawn;ColPiece.BlackPawn;
@@ -74,6 +75,20 @@ module Types =
         | AlphaUnchanged = 2
         | Invalid = 3
 
+    let KING_BUCKETS = 
+        [|
+            15; 15; 14; 14; 14; 14; 15; 15; 
+            15; 15; 14; 14; 14; 14; 15; 15; 
+            13; 13; 12; 12; 12; 12; 13; 13; 
+            13; 13; 12; 12; 12; 12; 13; 13; 
+            11; 10; 9;  8;  8;  9;  10; 11; 
+            11; 10; 9;  8;  8;  9;  10; 11; 
+            7;  6;  5;  4;  4;  5;  6;  7;  
+            3;  2;  1;  0;  0;  1;  2;  3 
+        |]
+
+
+
 module Piece =
     let FromInt(i:int) =
         let pc:Piece = LanguagePrimitives.EnumOfValue(i)
@@ -85,6 +100,18 @@ module PieceColor =
     let FromInt(i:int) =
         let cl:PieceColor = LanguagePrimitives.EnumOfValue(i)
         cl
+
+module ColPiece =
+    let FromInt(i:int) =
+        let colpc:ColPiece = LanguagePrimitives.EnumOfValue(i)
+        colpc
+    let ToPcCol(colpc:ColPiece) =
+        let i = int(colpc)
+        let pc = Piece.FromInt(i/2)
+        let col = if pc=Piece.Empty then PieceColor.None else PieceColor.FromInt(i%2)
+        pc,col
+    let FromPcCol(piece:Piece,color:PieceColor) =
+        FromInt(int(piece)*2 + int(color))
 
 module Square =
     let FromInt(i:int) =

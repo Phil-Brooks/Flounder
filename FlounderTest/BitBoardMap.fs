@@ -94,9 +94,9 @@ module BitBoardMap =
         Map.Bb.[1].[0].Count |> should equal 8
 
         Map.PiecesAndColors.Length |> should equal 64
-        Map.PiecesAndColors.[0] |> should equal 19
-        Map.PiecesAndColors.[63] |> should equal 3
-        Map.PiecesAndColors.[8] |> should equal 16
+        Map.PiecesAndColors.[0] |> should equal ColPiece.BlackRook
+        Map.PiecesAndColors.[63] |> should equal ColPiece.WhiteRook
+        Map.PiecesAndColors.[8] |> should equal ColPiece.BlackPawn
 
         Map.White.Count |> should equal 16
         Map.Black.Count |> should equal 16

@@ -60,6 +60,11 @@ module NNUEb =
                 }
             ans.[i] <- acci
         ans
+    let FeatureIdx(colpc:ColPiece, sq:Square, kingsq:Square, view:PieceColor) =
+        let oP = 6 * ((int(colpc) ^^^ int(view)) &&& 0x1) + int(colpc)/2
+        let oK = (7 * ~~~(int(kingsq) &&& 4)) ^^^ (56 * int(view)) ^^^ int(kingsq)
+        let oSq = (7 * ~~~(int(kingsq) &&& 4)) ^^^ (56 * int(view)) ^^^ int(sq)
+        KING_BUCKETS.[oK] * 12 * 64 + oP * 64 + oSq
     let RefreshTable:AccumulatorKingState array =
         let ans = Array.zeroCreate 64
         for i = 0 to 63 do
@@ -80,7 +85,16 @@ module NNUEb =
             RefreshTable.[i] <- acci
     let ResetAccumulator(map:BitBoardMap,perspective:PieceColor) =
         let adds = Array.create 32 0
-        let kingSq = map.[Piece.King, perspective]
+        let kingSq = map.[Piece.King, perspective].ToSq()
+        let occupied = ~~~(map.[PieceColor.None])
+        let mutable sqIterator = occupied.GetEnumerator()
+        let mutable sq = sqIterator.Current
+        let mutable i = 0
+        while (sqIterator.MoveNext()) do
+            let colpc = map.PiecesAndColors.[int(sq)]
+            adds.[i] <- FeatureIdx(colpc,sq,kingSq,perspective)
+            sq <- sqIterator.Current
+            i <- i + 1
         ()
 
 

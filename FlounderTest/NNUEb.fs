@@ -64,6 +64,7 @@ module NNUEb =
         last |> should equal 767
         let mLast = NNUEb.RefreshTable.[0].AccKsValues.[last]
         mLast |> should equal -477s
+    
     [<Test>]
     let ResetAccumulator() =
         NNUEb.ResetAccumulator(board.Map,PieceColor.White)

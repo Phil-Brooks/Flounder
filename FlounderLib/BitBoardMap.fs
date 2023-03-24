@@ -5,7 +5,7 @@ open System
 type BitBoardMap =
     struct
         val Bb:BitBoard array array
-        val PiecesAndColors:int array
+        val PiecesAndColors:ColPiece array
         val mutable White:BitBoard
         val mutable Black:BitBoard
         val mutable ColorToMove:PieceColor
@@ -36,9 +36,9 @@ type BitBoardMap =
                     [|BitBoard.Default;BitBoard.Default;BitBoard.Default;BitBoard.Default;BitBoard.Default;BitBoard.Default|]
                     [|BitBoard.Default;BitBoard.Default;BitBoard.Default;BitBoard.Default;BitBoard.Default;BitBoard.Default|]
                 |]
-            let piecesAndColors:int array = Array.zeroCreate 64
+            let piecesAndColors:ColPiece array = Array.zeroCreate 64
             for i = 0 to 63 do
-                piecesAndColors[i] <- 0x26
+                piecesAndColors[i] <- ColPiece.Empty
             let expandedBoardData = boardFen.Split(FEN_SPR)
             if expandedBoardData.Length <> 8 then 
                 raise (InvalidDataException("Wrong board data provided: " + boardFen))
@@ -52,41 +52,41 @@ type BitBoardMap =
                         if (Char.IsUpper(p)) then
                             if p = 'P' then
                                 bb.[int(PieceColor.White)].[int(Piece.Pawn)].[v * 8 + h] <- true
-                                piecesAndColors.[v * 8 + h] <- 0x0
+                                piecesAndColors.[v * 8 + h] <- ColPiece.WhitePawn
                             elif p = 'N' then
                                 bb.[int(PieceColor.White)].[int(Piece.Knight)].[v * 8 + h] <- true
-                                piecesAndColors.[v * 8 + h] <- 0x1
+                                piecesAndColors.[v * 8 + h] <- ColPiece.WhiteKnight
                             elif p = 'B' then
                                 bb.[int(PieceColor.White)].[int(Piece.Bishop)].[v * 8 + h] <- true
-                                piecesAndColors.[v * 8 + h] <- 0x2
+                                piecesAndColors.[v * 8 + h] <- ColPiece.WhiteBishop
                             elif p = 'R' then
                                 bb.[int(PieceColor.White)].[int(Piece.Rook)].[v * 8 + h] <- true
-                                piecesAndColors.[v * 8 + h] <- 0x3
+                                piecesAndColors.[v * 8 + h] <- ColPiece.WhiteRook
                             elif p = 'Q' then
                                 bb.[int(PieceColor.White)].[int(Piece.Queen)].[v * 8 + h] <- true
-                                piecesAndColors.[v * 8 + h] <- 0x4
+                                piecesAndColors.[v * 8 + h] <- ColPiece.WhiteQueen
                             elif p = 'K' then
                                 bb.[int(PieceColor.White)].[int(Piece.King)].[v * 8 + h] <- true
-                                piecesAndColors.[v * 8 + h] <- 0x5
+                                piecesAndColors.[v * 8 + h] <- ColPiece.WhiteKing
                         else
                             if p = 'p' then
                                 bb.[int(PieceColor.Black)].[int(Piece.Pawn)].[v * 8 + h] <- true
-                                piecesAndColors.[v * 8 + h] <- 0x10
+                                piecesAndColors.[v * 8 + h] <- ColPiece.BlackPawn
                             elif p = 'n' then
                                 bb.[int(PieceColor.Black)].[int(Piece.Knight)].[v * 8 + h] <- true
-                                piecesAndColors.[v * 8 + h] <- 0x11
+                                piecesAndColors.[v * 8 + h] <- ColPiece.BlackKnight
                             elif p = 'b' then
                                 bb.[int(PieceColor.Black)].[int(Piece.Bishop)].[v * 8 + h] <- true
-                                piecesAndColors.[v * 8 + h] <- 0x12
+                                piecesAndColors.[v * 8 + h] <- ColPiece.BlackBishop
                             elif p = 'r' then
                                 bb.[int(PieceColor.Black)].[int(Piece.Rook)].[v * 8 + h] <- true
-                                piecesAndColors.[v * 8 + h] <- 0x13
+                                piecesAndColors.[v * 8 + h] <- ColPiece.BlackRook
                             elif p = 'q' then
                                 bb.[int(PieceColor.Black)].[int(Piece.Queen)].[v * 8 + h] <- true
-                                piecesAndColors.[v * 8 + h] <- 0x14
+                                piecesAndColors.[v * 8 + h] <- ColPiece.BlackQueen
                             elif p = 'k' then
                                 bb.[int(PieceColor.Black)].[int(Piece.King)].[v * 8 + h] <- true
-                                piecesAndColors.[v * 8 + h] <- 0x15
+                                piecesAndColors.[v * 8 + h] <- ColPiece.BlackKing
                         h <- h + 1
             let white = bb.[int(PieceColor.White)].[int(Piece.Pawn)] ||| bb.[int(PieceColor.White)].[int(Piece.Rook)] ||| 
                         bb.[int(PieceColor.White)].[int(Piece.Knight)] ||| bb.[int(PieceColor.White)].[int(Piece.Bishop)] |||
@@ -117,7 +117,7 @@ type BitBoardMap =
                 zobristHash
             let zobristHash = gethash()
             BitBoardMap(bb,piecesAndColors,white,black,colorToMove,whiteKCastle,whiteQCastle,blackKCastle,blackQCastle,enPassantTarget,zobristHash)
-        new(map:BitBoardMap, bb:BitBoard array array, piecesAndColors:int array) =
+        new(map:BitBoardMap, bb:BitBoard array array, piecesAndColors:ColPiece array) =
             let White = map.White
             let Black = map.Black
             let WhiteKCastle = map.WhiteKCastle
@@ -136,8 +136,8 @@ type BitBoardMap =
             BitBoardMap(Bb,PiecesAndColors,White,Black,ColorToMove,WhiteKCastle,WhiteQCastle,BlackKCastle,BlackQCastle,EnPassantTarget,ZobristHash)
         member this.Item 
             with get(sq:Square):(Piece*PieceColor) = 
-                let r = this.PiecesAndColors.[int(sq)]
-                Piece.FromInt(r &&& 0xF), PieceColor.FromInt(r >>> 4)
+                let colpc = this.PiecesAndColors.[int(sq)]
+                ColPiece.ToPcCol(colpc)
         member this.Item 
             with get(color:PieceColor) = 
                 if color = PieceColor.White then this.White
@@ -146,8 +146,8 @@ type BitBoardMap =
                 else raise (InvalidOperationException("Must provide a valid PieceColor."))
         member this.Item 
             with get(piece:Piece, color:PieceColor) = this.Bb.[int(color)].[int(piece)]
-        member this.PieceOnly(sq:Square):Piece = Piece.FromInt(this.PiecesAndColors.[int(sq)] &&& 0xF)
-        member this.ColorOnly(sq:Square):PieceColor = PieceColor.FromInt(this.PiecesAndColors.[int(sq)] >>> 4)
+        member this.PieceOnly(sq:Square):Piece = Piece.FromInt(int(this.PiecesAndColors.[int(sq)])/2)
+        member this.ColorOnly(sq:Square):PieceColor = PieceColor.FromInt(int(this.PiecesAndColors.[int(sq)])%2)
         member this.Move(pF:Piece, cF:PieceColor, pT:Piece, cT:PieceColor, from:Square, mto:Square) =
             if (pT <> Piece.Empty) then
                 // If moving to piece isn't empty, then we capture.
@@ -165,7 +165,7 @@ type BitBoardMap =
             this.Bb.[int(cF)].[int(pF)].[mto] <- true
             // Make sure to update the pieces and colors.
             this.PiecesAndColors.[int(mto)] <- this.PiecesAndColors.[int(from)]
-            this.PiecesAndColors.[int(from)] <- 0x26
+            this.PiecesAndColors.[int(from)] <- ColPiece.Empty
             // Update color bitboards.
             if (cF = PieceColor.White) then
                 this.White.[from] <- false
@@ -184,7 +184,7 @@ type BitBoardMap =
             // Remove from square.
             this.Bb.[int(color)].[int(piece)].[sq] <- false
             // Set empty in pieces and colors.
-            this.PiecesAndColors.[int(sq)] <- 0x26
+            this.PiecesAndColors.[int(sq)] <- ColPiece.Empty
             // Remove from color bitboards.
             if (color = PieceColor.White) then
                 this.White.[sq] <- false
@@ -204,8 +204,7 @@ type BitBoardMap =
             else 
                 this.Black.[sq] <- true
             // Set piece in pieces and colors.
-            let offset = if color = PieceColor.White then 0x0 else 0x10
-            this.PiecesAndColors.[int(sq)] <- (int(piece) ||| offset)
+            this.PiecesAndColors.[int(sq)] <- ColPiece.FromPcCol(piece,color)
             // Update Zobrist.
             Zobrist.HashPiece(&this.ZobristHash, piece, color, sq)
         member this.Copy() = BitBoardMap(this, this.Bb, this.PiecesAndColors)
