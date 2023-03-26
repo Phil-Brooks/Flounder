@@ -87,11 +87,10 @@ module BitBoardMap =
 
     [<Test>]
     let Elements() =
-        Map.Bb.Length|> should equal 2
-        Map.Bb.[0].Length |> should equal 6
-        Map.Bb.[0].[5].Count |> should equal 1
-        Map.Bb.[1].[3].Count |> should equal 2
-        Map.Bb.[1].[0].Count |> should equal 8
+        Map.Pieces.Length|> should equal 12
+        Map.Pieces.[10].Count |> should equal 1
+        Map.Pieces.[7].Count |> should equal 2
+        Map.Pieces.[1].Count |> should equal 8
 
         Map.PiecesAndColors.Length |> should equal 64
         Map.PiecesAndColors.[0] |> should equal ColPiece.BlackRook

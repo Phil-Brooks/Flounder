@@ -60,11 +60,26 @@ module NNUEb =
                 }
             ans.[i] <- acci
         ans
+    let mutable AccIndex = 0
+
     let FeatureIdx(colpc:ColPiece, sq:Square, kingsq:Square, view:PieceColor) =
         let oP = 6 * ((int(colpc) ^^^ int(view)) &&& 0x1) + int(colpc)/2
-        let oK = (7 * ~~~(int(kingsq) &&& 4)) ^^^ (56 * int(view)) ^^^ int(kingsq)
-        let oSq = (7 * ~~~(int(kingsq) &&& 4)) ^^^ (56 * int(view)) ^^^ int(sq)
+        let oK = (7 * if (int(kingsq) &&& 4) = 0 then 1 else 0) ^^^ (56 * int(view)) ^^^ int(kingsq)
+        let oSq = (7 * if (int(kingsq) &&& 4) = 0 then 1 else 0) ^^^ (56 * int(view)) ^^^ int(sq)
         KING_BUCKETS.[oK] * 12 * 64 + oP * 64 + oSq
+    let ApplyAdds(src:int16 array, adds:int array, perspective) =
+        let regs:int16 array = Array.zeroCreate 16
+        for c = 0 to 768/16-1 do
+            let unrollOffset = c * 16
+            for i = 0 to 15 do
+                regs.[i] <- src.[i+unrollOffset]
+            for a = 0 to adds.Length-1 do
+                let offset = adds.[a] * 768 + unrollOffset
+                for i = 0 to 15 do
+                    regs.[i] <- regs.[i] + NNUEin.InputWeights.[offset + i]
+            for i = 0 to 15 do
+                Accumulators.[AccIndex].AccValues.[int(perspective)].[unrollOffset+i] <- regs.[i]
+    
     let RefreshTable:AccumulatorKingState array =
         let ans = Array.zeroCreate 64
         for i = 0 to 63 do
@@ -95,8 +110,19 @@ module NNUEb =
             adds.[i] <- FeatureIdx(colpc,sq,kingSq,perspective)
             sq <- sqIterator.Current
             i <- i + 1
-        ()
+        let src = Array.copy NNUEin.InputBiases
+        ApplyAdds(src,adds,perspective)
 
+    let RefreshAccumulator(map:BitBoardMap,perspective:PieceColor) =
+        let adds = Array.create 32 0
+        let kingSq = map.[Piece.King, perspective].ToSq()
+        let pBucket = if perspective = PieceColor.White then 0 else 32
+        let kingBucket = KING_BUCKETS.[int(kingSq) ^^^ (56 * int(perspective))] + 16 * (Square.ToFile(kingSq) >>> 3)
+        let state = RefreshTable.[pBucket + kingBucket]
+        for pc in ColPcs do
+            let curr = map.Pieces.[int(pc)]
+            ()
+        ()
 
     //let ResetAccumulator() = NNUEout.CurrentAccumulator <- 0
     //let PushAccumulator() =

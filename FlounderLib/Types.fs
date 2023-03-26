@@ -2,7 +2,7 @@
 
 [<AutoOpen>]
 module Types =
-    let VersionNo = "0.4.0.7"
+    let VersionNo = "0.4.0.8"
 
     type ColPiece =
         // The type of piece.
@@ -117,6 +117,7 @@ module Square =
     let FromInt(i:int) =
         let sq:Square = LanguagePrimitives.EnumOfValue(i)
         sq
+    let ToFile(sq:Square) = int(sq)%8
     let OldInt(sq:Square) =
         let i = int(sq)
         let r = i/8

@@ -3,7 +3,7 @@ open System
 
 type Board =
     val mutable Map:BitBoardMap 
-    new(boardData, turnData, castlingData, enPassantTargetData) = 
+    new(boardData:string, turnData, castlingData, enPassantTargetData) = 
         let map = new BitBoardMap(boardData, turnData, castlingData, enPassantTargetData)
         Board(map)
     new(map:BitBoardMap) = 

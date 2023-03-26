@@ -66,5 +66,51 @@ module NNUEb =
         mLast |> should equal -477s
     
     [<Test>]
-    let ResetAccumulator() =
+    let ResetAccumulatorWhite() =
         NNUEb.ResetAccumulator(board.Map,PieceColor.White)
+        let m0 = NNUEb.Accumulators.[NNUEb.AccIndex].AccValues.[0].[0]
+        m0 |> should equal -110s
+        let m100 = NNUEb.Accumulators.[NNUEb.AccIndex].AccValues.[0].[100]
+        m100 |> should equal -1031s
+        let last = NNUEb.Accumulators.[NNUEb.AccIndex].AccValues.[0].Length - 1
+        last |> should equal 767
+        let mLast = NNUEb.Accumulators.[NNUEb.AccIndex].AccValues.[0].[last]
+        mLast |> should equal 16s
+
+    [<Test>]
+    let ResetAccumulatorBlack() =
+        NNUEb.ResetAccumulator(board.Map,PieceColor.Black)
+        let m0 = NNUEb.Accumulators.[NNUEb.AccIndex].AccValues.[1].[0]
+        m0 |> should equal -110s
+        let m100 = NNUEb.Accumulators.[NNUEb.AccIndex].AccValues.[1].[100]
+        m100 |> should equal -1031s
+        let last = NNUEb.Accumulators.[NNUEb.AccIndex].AccValues.[1].Length - 1
+        last |> should equal 767
+        let mLast = NNUEb.Accumulators.[NNUEb.AccIndex].AccValues.[1].[last]
+        mLast |> should equal 16s
+
+    [<Test>]
+    let RefreshAccumulator() =
+        let fen = "r1bqkbnr/pppp1ppp/2n5/4p3/Q1P5/8/PP1PPPPP/RNB1KBNR w KQkq - 0 3"
+        let board = Board.FromFen(fen)
+        NNUEb.ResetAccumulator(board.Map,PieceColor.White)
+        NNUEb.ResetAccumulator(board.Map,PieceColor.Black)
+        let m0 = NNUEb.Accumulators.[NNUEb.AccIndex].AccValues.[0].[0]
+        m0 |> should equal -495s
+        let m0 = NNUEb.Accumulators.[NNUEb.AccIndex].AccValues.[1].[0]
+        m0 |> should equal -165s
+        let m100 = NNUEb.Accumulators.[NNUEb.AccIndex].AccValues.[0].[100]
+        m100 |> should equal -767s
+        let m100 = NNUEb.Accumulators.[NNUEb.AccIndex].AccValues.[1].[100]
+        m100 |> should equal -978s
+        let last = NNUEb.Accumulators.[NNUEb.AccIndex].AccValues.[1].Length - 1
+        last |> should equal 767
+        let mLast = NNUEb.Accumulators.[NNUEb.AccIndex].AccValues.[0].[last]
+        mLast |> should equal -41s
+        let mLast = NNUEb.Accumulators.[NNUEb.AccIndex].AccValues.[1].[last]
+        mLast |> should equal 39s
+        let rv = board.Move(Square.E1,Square.D1)
+        NNUEb.AccIndex<-NNUEb.AccIndex+1
+        NNUEb.RefreshAccumulator(board.Map,PieceColor.White)
+        let x0 = NNUEb.Accumulators.[NNUEb.AccIndex].AccValues.[0].[0]
+        m0 |> should equal -165s
