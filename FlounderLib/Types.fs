@@ -87,7 +87,13 @@ module Types =
             3;  2;  1;  0;  0;  1;  2;  3 
         |]
 
-
+type Delta =
+    {   
+        mutable r:int
+        mutable a:int
+        rem:int array
+        add:int array
+    }
 
 module Piece =
     let FromInt(i:int) =
@@ -111,7 +117,8 @@ module ColPiece =
         let col = if pc=Piece.Empty then PieceColor.None else PieceColor.FromInt(i%2)
         pc,col
     let FromPcCol(piece:Piece,color:PieceColor) =
-        FromInt(int(piece)*2 + int(color))
+        if color = PieceColor.None||piece=Piece.Empty then ColPiece.Empty
+        else FromInt(int(piece)*2 + int(color))
 
 module Square =
     let FromInt(i:int) =
@@ -137,4 +144,13 @@ module Promotion =
         elif ch = 'b' then Promotion.Bishop
         elif ch = 'q' then Promotion.Queen
         else Promotion.None
+
+module Delta =
+    let Default() =
+        {   
+            r = 0
+            a = 0
+            rem = Array.zeroCreate 32
+            add = Array.zeroCreate 32
+        }
 

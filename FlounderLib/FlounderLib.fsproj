@@ -34,9 +34,9 @@
     <Compile Include="Zobrist.fs" />
     <Compile Include="BitBoardMap.fs" />
     <Compile Include="NN.fs" />
-    <Compile Include="NNUEb.fs" />
     <Compile Include="NNUE.fs" />
     <Compile Include="RevertMove.fs" />
+    <Compile Include="NNUEb.fs" />
     <Compile Include="Board.fs" />
     <Compile Include="InvalidMoveLookupException.fs" />
     <Compile Include="OrderedMoveEntry.fs" />

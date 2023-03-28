@@ -61,25 +61,6 @@ module NNUEb =
             ans.[i] <- acci
         ans
     let mutable AccIndex = 0
-
-    let FeatureIdx(colpc:ColPiece, sq:Square, kingsq:Square, view:PieceColor) =
-        let oP = 6 * ((int(colpc) ^^^ int(view)) &&& 0x1) + int(colpc)/2
-        let oK = (7 * if (int(kingsq) &&& 4) = 0 then 1 else 0) ^^^ (56 * int(view)) ^^^ int(kingsq)
-        let oSq = (7 * if (int(kingsq) &&& 4) = 0 then 1 else 0) ^^^ (56 * int(view)) ^^^ int(sq)
-        KING_BUCKETS.[oK] * 12 * 64 + oP * 64 + oSq
-    let ApplyAdds(src:int16 array, adds:int array, perspective) =
-        let regs:int16 array = Array.zeroCreate 16
-        for c = 0 to 768/16-1 do
-            let unrollOffset = c * 16
-            for i = 0 to 15 do
-                regs.[i] <- src.[i+unrollOffset]
-            for a = 0 to adds.Length-1 do
-                let offset = adds.[a] * 768 + unrollOffset
-                for i = 0 to 15 do
-                    regs.[i] <- regs.[i] + NNUEin.InputWeights.[offset + i]
-            for i = 0 to 15 do
-                Accumulators.[AccIndex].AccValues.[int(perspective)].[unrollOffset+i] <- regs.[i]
-    
     let RefreshTable:AccumulatorKingState array =
         let ans = Array.zeroCreate 64
         for i = 0 to 63 do
@@ -98,31 +79,130 @@ module NNUEb =
                     Pcs = Array.zeroCreate 12
                 }
             RefreshTable.[i] <- acci
+
+    //NB need to change the from and mto if Black
+    let MoveRequiresRefresh(piece:ColPiece, from:int, mto:int) =
+        let pc,_ = ColPiece.ToPcCol(piece)
+        if pc<>Piece.King then false
+        elif (from &&& 4) <> (mto &&& 4) then true
+        else KING_BUCKETS.[from]<>KING_BUCKETS.[mto]
+    let FeatureIdx(colpc:ColPiece, sq:Square, kingsq:Square, view:PieceColor) =
+        let oP = 6 * ((int(colpc) ^^^ int(view)) &&& 0x1) + int(colpc)/2
+        let oK = (7 * if (int(kingsq) &&& 4) = 0 then 1 else 0) ^^^ (56 * int(view)) ^^^ int(kingsq)
+        let oSq = (7 * if (int(kingsq) &&& 4) = 0 then 1 else 0) ^^^ (56 * int(view)) ^^^ int(sq)
+        KING_BUCKETS.[oK] * 12 * 64 + oP * 64 + oSq
+    let ApplySubSubAdd(src:int16 array, f1:int, f2:int, f3:int, view:PieceColor) =
+        let regs:int16 array = Array.zeroCreate 16
+        for c = 0 to 768/16-1 do
+            let unrollOffset = c * 16
+            for i = 0 to 15 do
+                regs.[i] <- src.[i+unrollOffset]
+            let o1 = f1 * 768 + unrollOffset
+            for i = 0 to 15 do
+                regs.[i] <- regs.[i] - NNUEin.InputWeights.[o1 + i]
+            let o2 = f2 * 768 + unrollOffset
+            for i = 0 to 15 do
+                regs.[i] <- regs.[i] - NNUEin.InputWeights.[o2 + i]
+            let o3 = f3 * 768 + unrollOffset
+            for i = 0 to 15 do
+                regs.[i] <- regs.[i] + NNUEin.InputWeights.[o3 + i]
+            for i = 0 to 15 do
+                Accumulators.[AccIndex].AccValues.[int(view)].[unrollOffset+i] <- regs.[i]
+    let ApplySubAdd(src:int16 array, f1:int, f2:int, view:PieceColor) =
+        let regs:int16 array = Array.zeroCreate 16
+        for c = 0 to 768/16-1 do
+            let unrollOffset = c * 16
+            for i = 0 to 15 do
+                regs.[i] <- src.[i+unrollOffset]
+            let o1 = f1 * 768 + unrollOffset
+            for i = 0 to 15 do
+                regs.[i] <- regs.[i] - NNUEin.InputWeights.[o1 + i]
+            let o2 = f2 * 768 + unrollOffset
+            for i = 0 to 15 do
+                regs.[i] <- regs.[i] + NNUEin.InputWeights.[o2 + i]
+            for i = 0 to 15 do
+                Accumulators.[AccIndex].AccValues.[int(view)].[unrollOffset+i] <- regs.[i]
+    let ApplyUpdates(map:BitBoardMap, move:RevertMove, view:PieceColor) =
+        let captured = ColPiece.FromPcCol(move.CapturedPiece,move.CapturedColor)
+        let prev = Accumulators.[AccIndex-1].AccValues.[int(view)]
+        let king = map.[Piece.King, view].ToSq()
+        let movingSide = move.ColorToMove
+        let colpcto = ColPiece.FromPcCol(map.[move.To])
+        let colpcfrom =
+            if move.Promotion then ColPiece.FromPcCol(Piece.Pawn,movingSide)
+            else colpcto
+        let from = FeatureIdx(colpcfrom, move.From, king, view)
+        let mto = FeatureIdx(colpcto, move.To, king, view)
+        //IsCas
+        if move.SecondaryFrom<>Square.Na then
+            let colpcrook =  ColPiece.FromPcCol(Piece.Rook,movingSide)
+            let rookFrom = FeatureIdx(colpcrook, move.SecondaryFrom, king, view)
+            let rookTo = FeatureIdx(colpcrook, move.SecondaryTo, king, view)
+            //ApplySubSubAddAdd(output, prev, from, rookFrom, to, rookTo)
+            ()
+        //IsCap
+        elif move.CapturedPiece<>Piece.Empty then
+            let capSq = if move.EnPassant then move.EnPassantTarget else move.To
+            let capturedTo = FeatureIdx(captured, capSq, king, view)
+            ApplySubSubAdd(prev, from, capturedTo, mto, view)
+            ()
+        else
+            ApplySubAdd(prev, from, mto, view)    
+
+    let ApplyDelta(src:int16 array, delta:Delta, perspective) =
+        let regs:int16 array = Array.zeroCreate 16
+        for c = 0 to 768/16-1 do
+            let unrollOffset = c * 16
+            for i = 0 to 15 do
+                regs.[i] <- src.[i+unrollOffset]
+            for r = 0 to delta.r-1 do
+                let offset = delta.rem.[r] * 768 + unrollOffset
+                for i = 0 to 15 do
+                    regs.[i] <- regs.[i] - NNUEin.InputWeights.[offset + i]
+            for a = 0 to delta.a-1 do
+                let offset = delta.add.[a] * 768 + unrollOffset
+                for i = 0 to 15 do
+                    regs.[i] <- regs.[i] + NNUEin.InputWeights.[offset + i]
+            for i = 0 to 15 do
+                Accumulators.[AccIndex].AccValues.[int(perspective)].[unrollOffset+i] <- regs.[i]
     let ResetAccumulator(map:BitBoardMap,perspective:PieceColor) =
-        let adds = Array.create 32 0
+        let delta= Delta.Default()
         let kingSq = map.[Piece.King, perspective].ToSq()
         let occupied = ~~~(map.[PieceColor.None])
         let mutable sqIterator = occupied.GetEnumerator()
         let mutable sq = sqIterator.Current
-        let mutable i = 0
         while (sqIterator.MoveNext()) do
             let colpc = map.PiecesAndColors.[int(sq)]
-            adds.[i] <- FeatureIdx(colpc,sq,kingSq,perspective)
+            delta.add.[delta.a] <- FeatureIdx(colpc,sq,kingSq,perspective)
             sq <- sqIterator.Current
-            i <- i + 1
+            delta.a <- delta.a + 1
         let src = Array.copy NNUEin.InputBiases
-        ApplyAdds(src,adds,perspective)
-
+        ApplyDelta(src,delta,perspective)
     let RefreshAccumulator(map:BitBoardMap,perspective:PieceColor) =
-        let adds = Array.create 32 0
+        let delta = Delta.Default()
         let kingSq = map.[Piece.King, perspective].ToSq()
         let pBucket = if perspective = PieceColor.White then 0 else 32
         let kingBucket = KING_BUCKETS.[int(kingSq) ^^^ (56 * int(perspective))] + 16 * (Square.ToFile(kingSq) >>> 3)
         let state = RefreshTable.[pBucket + kingBucket]
         for pc in ColPcs do
             let curr = map.Pieces.[int(pc)]
-            ()
-        ()
+            let prev = state.Pcs.[int(pc)] 
+            let rem = prev &&& ~~~curr
+            let add = curr &&& ~~~prev
+            let mutable remIterator = rem.GetEnumerator()
+            let mutable sq = remIterator.Current
+            while (remIterator.MoveNext()) do
+                delta.rem.[delta.r] <- FeatureIdx(pc,sq,kingSq,perspective)
+                sq <- remIterator.Current
+                delta.r <- delta.r + 1
+            let mutable addIterator = add.GetEnumerator()
+            let mutable sq = addIterator.Current
+            while (addIterator.MoveNext()) do
+                delta.add.[delta.a] <- FeatureIdx(pc,sq,kingSq,perspective)
+                sq <- addIterator.Current
+                delta.a <- delta.a + 1
+            state.Pcs.[int(pc)] <- curr
+        ApplyDelta(state.AccKsValues, delta, perspective)
 
     //let ResetAccumulator() = NNUEout.CurrentAccumulator <- 0
     //let PushAccumulator() =
