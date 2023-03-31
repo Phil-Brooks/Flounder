@@ -30,7 +30,6 @@ type EngineBoard =
         let rv = this.Brd.Map.EnPassantTarget
         if (this.Brd.Map.EnPassantTarget <> Square.Na) then Zobrist.HashEp(&this.Brd.Map.ZobristHash, this.Brd.Map.EnPassantTarget)
         this.Brd.Map.EnPassantTarget <- Square.Na
-        this.Brd.Map.ColorToMove <- PieceColor.OppositeColor(this.Brd.Map.ColorToMove)
         this.Brd.Map.stm <- this.Brd.Map.stm ^^^ 1
         Zobrist.FlipTurnInHash(&this.Brd.Map.ZobristHash)
         rv
@@ -38,7 +37,6 @@ type EngineBoard =
         if (rv <> Square.Na) then
             this.Brd.Map.EnPassantTarget <- rv
             Zobrist.HashEp(&this.Brd.Map.ZobristHash, rv)
-        this.Brd.Map.ColorToMove <- PieceColor.OppositeColor(this.Brd.Map.ColorToMove)
         this.Brd.Map.stm <- this.Brd.Map.stm ^^^ 1
         Zobrist.FlipTurnInHash(&this.Brd.Map.ZobristHash)
     member this.Move(move:byref<OrderedMoveEntry>) =

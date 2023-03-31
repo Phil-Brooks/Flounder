@@ -141,12 +141,13 @@ module NNUEb =
                 regs.[i] <- regs.[i] + NNUEin.InputWeights.[o2 + i]
             for i = 0 to 15 do
                 Accumulators.[AccIndex].AccValues.[int(view)].[unrollOffset+i] <- regs.[i]
-    let ApplyUpdates(map:BitBoardMap, move:RevertMove, view:PieceColor) =
+    let ApplyUpdates(map:BitBoardMap, move:RevertMove, iview:int) =
+        let view = PieceColor.FromInt(iview)
         let captured = 
-            if move.EnPassant then (if move.ColorToMove=PieceColor.White then ColPiece.BlackPawn else ColPiece.WhitePawn)
+            if move.EnPassant then (if map.stm=1 then ColPiece.BlackPawn else ColPiece.WhitePawn)
             else ColPiece.FromPcCol(move.CapturedPiece,move.CapturedColor)
         let prev = Accumulators.[AccIndex-1].AccValues.[int(view)]
-        let king = map.[Piece.King, view].ToSq()
+        let king = map.[Piece.King, iview].ToSq()
         let movingSide = move.ColorToMove
         let colpcto = ColPiece.FromPcCol(map.[move.To])
         let colpcfrom =
@@ -187,9 +188,10 @@ module NNUEb =
             for i = 0 to 15 do
                 Accumulators.[AccIndex].AccValues.[int(perspective)].[unrollOffset+i] <- regs.[i]
     let ResetAccumulator(map:BitBoardMap,perspective:PieceColor) =
+        let iperspective = int(perspective)
         let delta= Delta.Default()
-        let kingSq = map.[Piece.King, perspective].ToSq()
-        let occupied = ~~~(map.[PieceColor.None])
+        let kingSq = map.[Piece.King, iperspective].ToSq()
+        let occupied = ~~~(map.[2])
         let mutable sqIterator = occupied.GetEnumerator()
         let mutable sq = sqIterator.Current
         while (sqIterator.MoveNext()) do
@@ -200,8 +202,9 @@ module NNUEb =
         let src = Array.copy NNUEin.InputBiases
         ApplyDelta(src,delta,perspective)
     let RefreshAccumulator(map:BitBoardMap,perspective:PieceColor) =
+        let iperspective = int(perspective)
         let delta = Delta.Default()
-        let kingSq = map.[Piece.King, perspective].ToSq()
+        let kingSq = map.[Piece.King, iperspective].ToSq()
         let pBucket = if perspective = PieceColor.White then 0 else 32
         let kingBucket = KING_BUCKETS.[int(kingSq) ^^^ (56 * int(perspective))] + (if Square.ToFile(kingSq) > 3 then 16 else 0)
         let state = RefreshTable.[pBucket + kingBucket]
@@ -227,27 +230,27 @@ module NNUEb =
         RefreshTable.[pBucket + kingBucket] <- {state with AccKsValues = Array.copy Accumulators.[AccIndex].AccValues.[int(perspective)]}
     let DoUpdate(map:BitBoardMap, move:RevertMove) =
         let from = 
-            if map.ColorToMove=PieceColor.Black then int(move.From)
+            if map.stm=1 then int(move.From)
             else int(move.From)^^^56
         let mto = 
-            if map.ColorToMove=PieceColor.Black then int(move.To)
+            if map.stm=1 then int(move.To)
             else int(move.To)^^^56
-        let othercolor = if map.ColorToMove = PieceColor.White then PieceColor.Black else PieceColor.White
+        let othercolor = if map.stm = 0 then PieceColor.Black else PieceColor.White
         let colpcto = ColPiece.FromPcCol(map.[move.To])
         let colpcfrom =
             if move.Promotion then ColPiece.FromPcCol(Piece.Pawn,othercolor)
             else colpcto
         if MoveRequiresRefresh(colpcfrom, from, mto) then
             RefreshAccumulator(map, othercolor)
-            ApplyUpdates(map, move, map.ColorToMove)
+            ApplyUpdates(map, move, map.stm)
         else
-            ApplyUpdates(map, move, PieceColor.White)
-            ApplyUpdates(map, move, PieceColor.Black)
-    let OutputLayer(stm:PieceColor) =
+            ApplyUpdates(map, move, 0)
+            ApplyUpdates(map, move, 1)
+    let OutputLayer(stm:int) =
         let mutable result = NNUEin.OutputBias
         for c = 0 to 767 do
-           result <- result + Math.Max(int(Accumulators.[AccIndex].AccValues.[int(stm)].[c]), 0) * int(NNUEin.OutputWeights.[c])
-        let ixstm = if stm=PieceColor.White then 1 else 0
+           result <- result + Math.Max(int(Accumulators.[AccIndex].AccValues.[stm].[c]), 0) * int(NNUEin.OutputWeights.[c])
+        let xstm = stm^^^1
         for c = 0 to 767 do
-           result <- result + Math.Max(int(Accumulators.[AccIndex].AccValues.[ixstm].[c]), 0) * int(NNUEin.OutputWeights.[c + 768])
+           result <- result + Math.Max(int(Accumulators.[AccIndex].AccValues.[xstm].[c]), 0) * int(NNUEin.OutputWeights.[c + 768])
         result/8192

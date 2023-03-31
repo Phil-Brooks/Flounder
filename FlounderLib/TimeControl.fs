@@ -25,7 +25,8 @@ type TimeControl =
             source.CancelAfter(itime)
             token <- source.Token
             TimeControl(source,token,startTime,itime)
-        new(movesToGo:int, timeForColor:ReadOnlySpan<int>, timeIncForColor:ReadOnlySpan<int>, colorToMove:PieceColor, moveCount:int) =
+        new(movesToGo:int, timeForColor:ReadOnlySpan<int>, timeIncForColor:ReadOnlySpan<int>, icolorToMove:int, moveCount:int) =
+            let colorToMove = PieceColor.FromInt(icolorToMove)
             let BASE_DIV = 20
             let INCREMENT_MOVE_BOUND = 10
             let INCREMENT_DIV = 2

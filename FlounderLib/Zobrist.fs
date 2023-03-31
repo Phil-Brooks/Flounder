@@ -20,7 +20,7 @@ module Zobrist =
             EnPassantKeys.[i] <- BitConverter.ToUInt64(buffer)
         Random.NextBytes(buffer)
         TurnKey <- BitConverter.ToUInt64(buffer)
-    let HashPiece(zobristHash:byref<uint64>, piece:Piece, color:PieceColor, sq:Square) = 
+    let HashPiece(zobristHash:byref<uint64>, piece:Piece, color:int, sq:Square) = 
         zobristHash <- zobristHash ^^^ PieceKeys.[piece, color, sq]
     let HashCastlingRights(zobristHash:byref<uint64>, wk:int, wq:int, bk:int, bq:int) = 
         zobristHash <- zobristHash ^^^ CastlingKeys.[wk ||| wq ||| bk ||| bq]

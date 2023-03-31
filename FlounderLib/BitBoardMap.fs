@@ -4,26 +4,26 @@ open System
 
 type BitBoardMap =
     struct
-        val mutable stm:int// side to move
+        val mutable stm:int // side to move
+        val mutable xstm:int // not side to move
         val Pieces:BitBoard array
         val PiecesAndColors:ColPiece array
         val mutable White:BitBoard
         val mutable Black:BitBoard
-        val mutable ColorToMove:PieceColor
         val mutable WhiteKCastle:int
         val mutable WhiteQCastle:int
         val mutable BlackKCastle:int
         val mutable BlackQCastle:int
         val mutable EnPassantTarget:Square
         val mutable ZobristHash:uint64
-        new(stm,pieces,piecesAndColors,white,black,colorToMove,whiteKCastle,whiteQCastle,blackKCastle,blackQCastle,enPassantTarget,zobristHash) =
+        new(stm,xstm,pieces,piecesAndColors,white,black,whiteKCastle,whiteQCastle,blackKCastle,blackQCastle,enPassantTarget,zobristHash) =
             {
                 stm = stm
+                xstm = xstm
                 Pieces = pieces
                 PiecesAndColors = piecesAndColors
                 White = white
                 Black = black
-                ColorToMove = colorToMove
                 WhiteKCastle = whiteKCastle
                 WhiteQCastle = whiteQCastle 
                 BlackKCastle = blackKCastle
@@ -96,8 +96,8 @@ type BitBoardMap =
             let black = pieces.[int(ColPiece.BlackPawn)] ||| pieces.[int(ColPiece.BlackKnight)] ||| 
                         pieces.[int(ColPiece.BlackBishop)] ||| pieces.[int(ColPiece.BlackRook)] ||| 
                         pieces.[int(ColPiece.BlackQueen)] ||| pieces.[int(ColPiece.BlackKing)] 
-            let colorToMove = if turnData.[0] = 'w' then PieceColor.White else PieceColor.Black
             let stm = if turnData.[0] = 'w' then 0 else 1
+            let xstm = stm^^^1
             let whiteKCastle = if castlingData.Contains('K') then 0x1 else 0x0
             let whiteQCastle = if castlingData.Contains('Q') then 0x2 else 0x0
             let blackKCastle = if castlingData.Contains('k') then 0x4 else 0x0
@@ -108,50 +108,54 @@ type BitBoardMap =
             let gethash() =
                 let mutable zobristHash = 0UL
                 for piece in Pcs do
-                    let cpc = ColPiece.FromPcCol(piece,colorToMove)
+                    let cpc = ColPiece.FromPcCol(piece,PieceColor.FromInt(stm))
                     let psbb = pieces.[int(cpc)]
                     let mutable pieceSquareIterator = psbb.GetEnumerator()  
                     let mutable sq:Square = pieceSquareIterator.Current
                     while (pieceSquareIterator.MoveNext()) do
-                        zobristHash <- zobristHash ^^^ Zobrist.PieceKeys.[piece, colorToMove, sq]
+                        zobristHash <- zobristHash ^^^ Zobrist.PieceKeys.[piece, stm, sq]
                         sq <- pieceSquareIterator.Current
-                if (colorToMove = PieceColor.White) then zobristHash <- zobristHash ^^^ Zobrist.TurnKey
+                if stm=0 then zobristHash <- zobristHash ^^^ Zobrist.TurnKey
                 if (enPassantTarget <> Square.Na) then zobristHash <- zobristHash ^^^ Zobrist.EnPassantKeys.[int(enPassantTarget)]
                 zobristHash <- zobristHash ^^^ Zobrist.CastlingKeys.[int(whiteKCastle) ||| int(whiteQCastle) ||| int(blackKCastle) ||| int(blackQCastle)]
                 zobristHash
             let zobristHash = gethash()
-            BitBoardMap(stm,pieces,piecesAndColors,white,black,colorToMove,whiteKCastle,whiteQCastle,blackKCastle,blackQCastle,enPassantTarget,zobristHash)
+            BitBoardMap(stm,xstm,pieces,piecesAndColors,white,black,whiteKCastle,whiteQCastle,blackKCastle,blackQCastle,enPassantTarget,zobristHash)
         new(map:BitBoardMap, pieces:BitBoard array, piecesAndColors:ColPiece array) =
             let stm = map.stm
+            let xstm = map.xstm
             let White = map.White
             let Black = map.Black
             let WhiteKCastle = map.WhiteKCastle
             let WhiteQCastle = map.WhiteQCastle
             let BlackKCastle = map.BlackKCastle
             let BlackQCastle = map.BlackQCastle
-            let ColorToMove = map.ColorToMove
             let EnPassantTarget = map.EnPassantTarget
             let Pieces = Array.copy pieces
             let PiecesAndColors = Array.copy piecesAndColors
             let ZobristHash = map.ZobristHash
-            BitBoardMap(stm,Pieces,PiecesAndColors,White,Black,ColorToMove,WhiteKCastle,WhiteQCastle,BlackKCastle,BlackQCastle,EnPassantTarget,ZobristHash)
+            BitBoardMap(stm,xstm,Pieces,PiecesAndColors,White,Black,WhiteKCastle,WhiteQCastle,BlackKCastle,BlackQCastle,EnPassantTarget,ZobristHash)
         member this.Item 
             with get(sq:Square):(Piece*PieceColor) = 
                 let colpc = this.PiecesAndColors.[int(sq)]
                 ColPiece.ToPcCol(colpc)
         member this.Item 
-            with get(color:PieceColor) = 
-                if color = PieceColor.White then this.White
-                elif color = PieceColor.Black then this.Black
-                elif color = PieceColor.None then ~~~(this.White ||| this.Black)
+            with get(color:int) = 
+                if color = 0 then this.White
+                elif color = 1 then this.Black
+                elif color = 2 then ~~~(this.White ||| this.Black)
                 else raise (InvalidOperationException("Must provide a valid PieceColor."))
         member this.Item 
-            with get(piece:Piece, color:PieceColor) = 
-                let cpc = ColPiece.FromPcCol(piece,color)
-                this.Pieces.[int(cpc)]
+            with get(piece:Piece, color:int) = 
+                let icpc = 
+                    if color = 2||piece=Piece.Empty then 12
+                    else (int(piece)*2 + color)
+                this.Pieces.[icpc]
         member this.PieceOnly(sq:Square):Piece = Piece.FromInt(int(this.PiecesAndColors.[int(sq)])/2)
         member this.ColorOnly(sq:Square):PieceColor = PieceColor.FromInt(int(this.PiecesAndColors.[int(sq)])%2)
         member this.Move(pF:Piece, cF:PieceColor, pT:Piece, cT:PieceColor, from:Square, mto:Square) =
+            let icT = int(cT)
+            let icF = int(cF)
             let cpcT = ColPiece.FromPcCol(pT,cT)
             let cpcF = ColPiece.FromPcCol(pF,cF)
             if (pT <> Piece.Empty) then
@@ -163,7 +167,7 @@ type BitBoardMap =
                 else
                     this.Black.[mto] <- false
                 // Update Zobrist.
-                Zobrist.HashPiece(&this.ZobristHash, pT, cT, mto)
+                Zobrist.HashPiece(&this.ZobristHash, pT, icT, mto)
             // We remove from original square.
             this.Pieces.[int(cpcF)].[from] <- false
             // Set at next square.
@@ -179,13 +183,14 @@ type BitBoardMap =
                 this.Black.[from] <- false
                 this.Black.[mto] <- true
             // Update Zobrist.
-            Zobrist.HashPiece(&this.ZobristHash, pF, cF, from)
-            Zobrist.HashPiece(&this.ZobristHash, pF, cF, mto)
+            Zobrist.HashPiece(&this.ZobristHash, pF, icF, from)
+            Zobrist.HashPiece(&this.ZobristHash, pF, icF, mto)
         member this.Move(from:Square, mto:Square) =
             let pF,cF = this.[from]
             let pT,cT = this.[mto]
             this.Move(pF, cF, pT, cT, from, mto)
         member this.Empty(piece:Piece, color:PieceColor, sq:Square) =
+            let icolor = int(color)
             let cpc = ColPiece.FromPcCol(piece,color)
             // Remove from square.
             this.Pieces.[int(cpc)].[sq] <- false
@@ -197,11 +202,12 @@ type BitBoardMap =
             else 
                 this.Black.[sq] <- false
             // Update Zobrist.
-            Zobrist.HashPiece(&this.ZobristHash, piece, color, sq)
+            Zobrist.HashPiece(&this.ZobristHash, piece, icolor, sq)
         member this.Empty(sq:Square) =
             let (piece, color) = this.[sq]
             this.Empty(piece, color, sq)
         member this.InsertPiece(piece:Piece, color:PieceColor, sq:Square) =
+            let icolor = int(color)
             let cpc = ColPiece.FromPcCol(piece,color)
             // Insert the piece at square.
             this.Pieces.[int(cpc)].[sq] <- true
@@ -213,7 +219,7 @@ type BitBoardMap =
             // Set piece in pieces and colors.
             this.PiecesAndColors.[int(sq)] <- cpc
             // Update Zobrist.
-            Zobrist.HashPiece(&this.ZobristHash, piece, color, sq)
+            Zobrist.HashPiece(&this.ZobristHash, piece, icolor, sq)
         member this.Copy() = BitBoardMap(this, this.Pieces, this.PiecesAndColors)
         member this.GenerateBoardFen() =
             let expandedBoardData:string array = Array.zeroCreate 8
@@ -249,13 +255,13 @@ module BitBoardMap =
     let Hash(map:BitBoardMap) =
         let mutable zobristHash = 0UL
         for piece in Pcs do
-            let psbb:BitBoard = map.[piece,map.ColorToMove]
+            let psbb:BitBoard = map.[piece,map.stm]
             let mutable pieceSquareIterator:BitBoardIterator = psbb.GetEnumerator()  
             let mutable sq:Square = pieceSquareIterator.Current
             while (pieceSquareIterator.MoveNext()) do
-                zobristHash <- zobristHash ^^^ Zobrist.PieceKeys.[piece, map.ColorToMove, sq]
+                zobristHash <- zobristHash ^^^ Zobrist.PieceKeys.[piece, map.stm, sq]
                 sq <- pieceSquareIterator.Current
-        if (map.ColorToMove = PieceColor.White) then zobristHash <- zobristHash ^^^ Zobrist.TurnKey
+        if (map.stm = 0) then zobristHash <- zobristHash ^^^ Zobrist.TurnKey
         if (map.EnPassantTarget <> Square.Na) then zobristHash <- zobristHash ^^^ Zobrist.EnPassantKeys.[int(map.EnPassantTarget)]
         zobristHash <- zobristHash ^^^ Zobrist.CastlingKeys.[map.WhiteKCastle ||| map.WhiteQCastle ||| map.BlackKCastle ||| map.BlackQCastle]
         zobristHash

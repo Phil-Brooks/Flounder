@@ -131,7 +131,7 @@ module UniversalChessInterface =
                                 getargs (argPosition+1)
                     getargs 1
                     if (time = maxTime || timeSpecified) then TmCntrl <- TimeControl(time)
-                    else TmCntrl <- TimeControl(movesToGo, timeForColor, timeIncForColor, EngBrd.Brd.Map.ColorToMove, MvCount)
+                    else TmCntrl <- TimeControl(movesToGo, timeForColor, timeIncForColor, EngBrd.Brd.Map.stm, MvCount)
                 let factory = TaskFactory()
                 let doSearch() =
                     Search.Value.Reset(EngBrd.Clone(), TmCntrl)

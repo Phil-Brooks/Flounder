@@ -58,7 +58,7 @@ module BitBoardMap =
         let useMap = Map.Copy()
         useMap.Move(Square.A2, Square.A7)
         (Piece.Pawn, PieceColor.White) |> should equal useMap.[Square.A7]
-        useMap.[Piece.Pawn, PieceColor.Black].Count |> should equal 7
+        useMap.[Piece.Pawn, 1].Count |> should equal 7
 
     [<Test>]
     let RemoveWhitePawn() =
@@ -87,6 +87,7 @@ module BitBoardMap =
 
     [<Test>]
     let Elements() =
+        Map.stm|>should equal 0
         Map.Pieces.Length|> should equal 12
         Map.Pieces.[10].Count |> should equal 1
         Map.Pieces.[7].Count |> should equal 2
@@ -99,7 +100,6 @@ module BitBoardMap =
 
         Map.White.Count |> should equal 16
         Map.Black.Count |> should equal 16
-        Map.ColorToMove |> should equal PieceColor.White
         Map.BlackKCastle |> should equal 0x4
         Map.BlackQCastle |> should equal 0x8
         Map.WhiteKCastle |> should equal 0x1
@@ -115,12 +115,12 @@ module BitBoardMap =
 
     [<Test>]
     let ItemW() =
-        let ans = Map.[PieceColor.White].Count
+        let ans = Map.[0].Count
         ans |> should equal 16
 
     [<Test>]
     let ItemWP() =
-        let ans = Map.[Piece.Pawn, PieceColor.White].Count
+        let ans = Map.[Piece.Pawn, 0].Count
         ans |> should equal 8
 
     [<Test>]

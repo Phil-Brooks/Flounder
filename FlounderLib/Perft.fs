@@ -11,12 +11,13 @@ module Perft =
     let Board = Board.Default()
     let rec MoveGeneration(iboard:Board, depth) =
         // Figure out color and opposite color from the one set in the board.
-        let oppositeColor = PieceColor.OppositeColor(iboard.Map.ColorToMove)
+        let ioppositeColor = iboard.Map.stm^^^1
+        let oppositeColor = PieceColor.FromInt(ioppositeColor)
         // Get all squares occupied by our color.
-        let colored = iboard.All(iboard.Map.ColorToMove)
+        let colored = iboard.All(iboard.Map.stm)
         // Generate pins and check bitboards.
-        let kingSq = iboard.KingLoc(iboard.Map.ColorToMove).ToSq()
-        let (hv, d) = MoveList.PinBitBoards(iboard, kingSq, iboard.Map.ColorToMove, oppositeColor)
+        let kingSq = iboard.KingLoc(iboard.Map.stm).ToSq()
+        let (hv, d) = MoveList.PinBitBoards(iboard, kingSq, iboard.Map.stm, ioppositeColor)
         let (checks, doubleChecked) = MoveList.CheckBitBoard(iboard, kingSq, oppositeColor)
         // Generate all pseudo-legal moves for our square iteration.
         if (depth = 1) then

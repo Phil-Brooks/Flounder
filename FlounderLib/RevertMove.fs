@@ -23,7 +23,7 @@ type RevertMove =
                 BlackKCastle = map.BlackKCastle
                 BlackQCastle = map.BlackQCastle
                 EnPassantTarget = map.EnPassantTarget
-                ColorToMove = map.ColorToMove
+                ColorToMove = if map.stm = 0 then PieceColor.White else PieceColor.Black
                 Promotion = false
                 EnPassant = false
                 From = Square.Na

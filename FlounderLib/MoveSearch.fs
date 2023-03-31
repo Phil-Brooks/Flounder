@@ -109,7 +109,7 @@ type MoveSearch =
         if ans.IsSome then 
             ans.Value
         else
-            let earlyEval = NNUEb.OutputLayer(board.Brd.Map.ColorToMove)
+            let earlyEval = NNUEb.OutputLayer(board.Brd.Map.stm)
 
             // In the rare case our evaluation is already too good, we don't need to further evaluate captures any further,
             // as this position is overwhelmingly winning.
@@ -181,11 +181,11 @@ type MoveSearch =
                     // If only the kings are left, it's a draw.
                     if allPiecesCount = 2 then ans <- 0|>Some
                     else
-                        let knightLeft = board.Brd.All(Piece.Knight, PieceColor.White).ToBool() || board.Brd.All(Piece.Knight, PieceColor.Black).ToBool()
+                        let knightLeft = board.Brd.All(Piece.Knight, 0).ToBool() || board.Brd.All(Piece.Knight, 1).ToBool()
                         // If only the kings and one knight is left, it's a draw.
                         if (allPiecesCount = 3 && knightLeft) then ans <- 0|>Some
                         else
-                            let bishopLeft = board.Brd.All(Piece.Bishop, PieceColor.White).ToBool() || board.Brd.All(Piece.Bishop, PieceColor.Black).ToBool()
+                            let bishopLeft = board.Brd.All(Piece.Bishop, 0).ToBool() || board.Brd.All(Piece.Bishop, 1).ToBool()
                             // If only the kings and one bishop is left, it's a draw.
                             if allPiecesCount = 3 && bishopLeft then ans <- 0|>Some
                             else
@@ -243,13 +243,15 @@ type MoveSearch =
                 // Calculate deeper ply.
                 let nextPlyFromRoot = plyFromRoot + 1
                 // Determine whether we should prune moves.
-                let oppositeColor = PieceColor.OppositeColor(board.Brd.Map.ColorToMove)
-                let kingSq = board.Brd.KingLoc(board.Brd.Map.ColorToMove).ToSq()
+                let icolor = board.Brd.Map.stm
+                let ioppositeColor = icolor^^^1
+                let oppositeColor = PieceColor.FromInt(ioppositeColor)
+                let kingSq = board.Brd.KingLoc(board.Brd.Map.stm).ToSq()
                 let mutable inCheck = MoveList.UnderAttack(board.Brd, kingSq, oppositeColor)
                 let mutable improving = false
                 // We should use the evaluation from our transposition table if we had a hit.
                 // As that evaluation isn't truly static and may have been from a previous deep search.
-                let positionalEvaluation = if transpositionHit then transpositionMove.Score else NNUEb.OutputLayer(board.Brd.Map.ColorToMove)
+                let positionalEvaluation = if transpositionHit then transpositionMove.Score else NNUEb.OutputLayer(board.Brd.Map.stm)
                 // Also store the evaluation to later check if it improved.
                 this.MvSrchStck.[plyFromRoot].PositionalEvaluation <- positionalEvaluation
         
@@ -315,7 +317,7 @@ type MoveSearch =
                             moveList.SortNext(i, moveCount)
                             let previousNodeCount = this.TotalNodeSearchCount
                             let mutable move = moveList.[i]
-                            let quietMove = not (board.Brd.All(oppositeColor).[move.To])
+                            let quietMove = not (board.Brd.All(ioppositeColor).[move.To])
                             if quietMove then quietMoveCounter <- quietMoveCounter + 1
                             //Late Move Pruning
                                 // If we are past a certain threshold and we have searched the required quiet moves for this depth for
@@ -518,8 +520,8 @@ type MoveSearch =
             this.KillerMvTbl.ReOrder(plyFromRoot)
             this.KillerMvTbl.[0, plyFromRoot] <- move
         // Increment the move that caused a beta cutoff to get a historical heuristic of best quiet moves.
-        this.HistTbl.[board.PieceOnly(move.From), board.Brd.Map.ColorToMove, move.To] <- this.HistTbl.[board.PieceOnly(move.From), board.Brd.Map.ColorToMove, move.To] + historyBonus
+        this.HistTbl.[board.PieceOnly(move.From), board.Brd.Map.stm, move.To] <- this.HistTbl.[board.PieceOnly(move.From), board.Brd.Map.stm, move.To] + historyBonus
         // Decrement all other quiet moves to ensure a branch local history heuristic.
         for j = 1 to quietMoveCounter-1 do
             let otherMove = moveList.[i - j]
-            this.HistTbl.[board.PieceOnly(otherMove.From), board.Brd.Map.ColorToMove, otherMove.To] <- this.HistTbl.[board.PieceOnly(otherMove.From), board.Brd.Map.ColorToMove, otherMove.To] - historyBonus
+            this.HistTbl.[board.PieceOnly(otherMove.From), board.Brd.Map.stm, otherMove.To] <- this.HistTbl.[board.PieceOnly(otherMove.From), board.Brd.Map.stm, otherMove.To] - historyBonus

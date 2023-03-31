@@ -138,10 +138,11 @@ module MoveList =
     let CountPawnCapturesAtAB6() =
         let usebd = board.Clone()
         let res = usebd.Move(Square.B2, Square.B6)
-        let oppositeColor = PieceColor.OppositeColor(board.Map.ColorToMove)
+        let ioppositeColor = board.Map.stm^^^1
+        let oppositeColor = PieceColor.FromInt(ioppositeColor)
         // Generate pins and check bitboards.
-        let kingSq = board.KingLoc(board.Map.ColorToMove).ToSq()
-        let (hv, d) = MoveList.PinBitBoards(board, kingSq, board.Map.ColorToMove, oppositeColor)
+        let kingSq = board.KingLoc(board.Map.stm).ToSq()
+        let (hv, d) = MoveList.PinBitBoards(board, kingSq, board.Map.stm, ioppositeColor)
         let (checks, doubleChecked) = MoveList.CheckBitBoard(board, kingSq, oppositeColor)
         let moveList = MoveList(board, Square.B6, hv, d, checks)
         moveList.Count |> should equal 2

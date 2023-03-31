@@ -17,10 +17,10 @@ type Board =
     member this.CastlingRight(color) = 
         if color = PieceColor.White then (this.Map.WhiteQCastle, this.Map.WhiteKCastle) else (this.Map.BlackQCastle, this.Map.BlackKCastle)
     member this.At(sq:Square) = this.Map.[sq]
-    member this.All() = this.Map.[PieceColor.White] ||| this.Map.[PieceColor.Black]
-    member this.All(color:PieceColor) = this.Map.[color]
+    member this.All() = this.Map.[0] ||| this.Map.[1]
+    member this.All(color:int) = this.Map.[color]
     member this.All(piece, color) = this.Map.[piece, color]
-    member this.KingLoc(color:PieceColor) = this.Map.[Piece.King, color]
+    member this.KingLoc(color:int) = this.Map.[Piece.King, color]
     member this.EnptyAt(sq:Square) = 
         let (pc,_) = this.Map.[sq]
         pc = Piece.Empty
@@ -120,7 +120,6 @@ type Board =
             this.Map.BlackKCastle, this.Map.BlackQCastle
         )
         // Flip the turn.
-        this.Map.ColorToMove <- PieceColor.OppositeColor(this.Map.ColorToMove)
         this.Map.stm <- this.Map.stm ^^^ 1  
         // Update Zobrist.
         Zobrist.FlipTurnInHash(&this.Map.ZobristHash)
@@ -152,7 +151,6 @@ type Board =
             // If we don't have an empty EP, we should hash it in.
             Zobrist.HashEp(&this.Map.ZobristHash, this.Map.EnPassantTarget)
         // Revert to previous turn.
-        this.Map.ColorToMove <- rv.ColorToMove
         this.Map.stm <- this.Map.stm ^^^ 1
         Zobrist.FlipTurnInHash(&this.Map.ZobristHash)
         if (rv.Promotion) then
@@ -181,7 +179,7 @@ type Board =
         "FEN: " + this.GenerateFen() + "\nHash: " + $"{this.Map.ZobristHash:X}" + "\n"
     member this.GenerateFen() =
         let boardData = this.Map.GenerateBoardFen()
-        let turnData = if this.Map.ColorToMove = PieceColor.White then "w" else "b"
+        let turnData = if this.Map.stm = 0 then "w" else "b"
         let mutable castlingRight = ""
         if (this.Map.WhiteKCastle = 0x0 && this.Map.WhiteQCastle = 0x0 && this.Map.BlackKCastle = 0x0 && this.Map.BlackQCastle = 0x0) then
             castlingRight <- "-"

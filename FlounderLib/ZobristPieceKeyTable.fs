@@ -18,6 +18,6 @@ type ZobristPieceKeyTable(random:Random) =
             i <- i + 1
 
     member _.Item 
-        with get(piece:Piece, color:PieceColor, sq:Square) = 
-            Internal.[int(color) * 384 + int(piece) * 64 + int(sq)]
+        with get(piece:Piece, color:int, sq:Square) = 
+            Internal.[color * 384 + int(piece) * 64 + int(sq)]
  
