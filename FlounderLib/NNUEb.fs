@@ -91,6 +91,26 @@ module NNUEb =
         let oK = (7 * if (int(kingsq) &&& 4) = 0 then 1 else 0) ^^^ (56 * int(view)) ^^^ int(kingsq)
         let oSq = (7 * if (int(kingsq) &&& 4) = 0 then 1 else 0) ^^^ (56 * int(view)) ^^^ int(sq)
         KING_BUCKETS.[oK] * 12 * 64 + oP * 64 + oSq
+    let ApplySubSubAddAdd(src:int16 array, f1:int, f2:int, f3:int, f4:int, view:PieceColor) =
+        let regs:int16 array = Array.zeroCreate 16
+        for c = 0 to 768/16-1 do
+            let unrollOffset = c * 16
+            for i = 0 to 15 do
+                regs.[i] <- src.[i+unrollOffset]
+            let o1 = f1 * 768 + unrollOffset
+            for i = 0 to 15 do
+                regs.[i] <- regs.[i] - NNUEin.InputWeights.[o1 + i]
+            let o2 = f2 * 768 + unrollOffset
+            for i = 0 to 15 do
+                regs.[i] <- regs.[i] - NNUEin.InputWeights.[o2 + i]
+            let o3 = f3 * 768 + unrollOffset
+            for i = 0 to 15 do
+                regs.[i] <- regs.[i] + NNUEin.InputWeights.[o3 + i]
+            let o4 = f4 * 768 + unrollOffset
+            for i = 0 to 15 do
+                regs.[i] <- regs.[i] + NNUEin.InputWeights.[o4 + i]
+            for i = 0 to 15 do
+                Accumulators.[AccIndex].AccValues.[int(view)].[unrollOffset+i] <- regs.[i]
     let ApplySubSubAdd(src:int16 array, f1:int, f2:int, f3:int, view:PieceColor) =
         let regs:int16 array = Array.zeroCreate 16
         for c = 0 to 768/16-1 do
@@ -123,7 +143,9 @@ module NNUEb =
             for i = 0 to 15 do
                 Accumulators.[AccIndex].AccValues.[int(view)].[unrollOffset+i] <- regs.[i]
     let ApplyUpdates(map:BitBoardMap, move:RevertMove, view:PieceColor) =
-        let captured = ColPiece.FromPcCol(move.CapturedPiece,move.CapturedColor)
+        let captured = 
+            if move.EnPassant then (if move.ColorToMove=PieceColor.White then ColPiece.BlackPawn else ColPiece.WhitePawn)
+            else ColPiece.FromPcCol(move.CapturedPiece,move.CapturedColor)
         let prev = Accumulators.[AccIndex-1].AccValues.[int(view)]
         let king = map.[Piece.King, view].ToSq()
         let movingSide = move.ColorToMove
@@ -138,17 +160,17 @@ module NNUEb =
             let colpcrook =  ColPiece.FromPcCol(Piece.Rook,movingSide)
             let rookFrom = FeatureIdx(colpcrook, move.SecondaryFrom, king, view)
             let rookTo = FeatureIdx(colpcrook, move.SecondaryTo, king, view)
-            //ApplySubSubAddAdd(output, prev, from, rookFrom, to, rookTo)
-            ()
+            ApplySubSubAddAdd(prev, from, rookFrom, mto, rookTo, view)
         //IsCap
-        elif move.CapturedPiece<>Piece.Empty then
-            let capSq = if move.EnPassant then move.EnPassantTarget else move.To
+        elif captured<>ColPiece.Empty then
+            let capSq = 
+                if move.EnPassant && movingSide=PieceColor.White then Square.FromInt(int(move.To) + 8)
+                elif move.EnPassant then Square.FromInt(int(move.To) - 8)
+                else move.To
             let capturedTo = FeatureIdx(captured, capSq, king, view)
             ApplySubSubAdd(prev, from, capturedTo, mto, view)
-            ()
         else
             ApplySubAdd(prev, from, mto, view)    
-
     let ApplyDelta(src:int16 array, delta:Delta, perspective) =
         let regs:int16 array = Array.zeroCreate 16
         for c = 0 to 768/16-1 do
@@ -182,7 +204,7 @@ module NNUEb =
         let delta = Delta.Default()
         let kingSq = map.[Piece.King, perspective].ToSq()
         let pBucket = if perspective = PieceColor.White then 0 else 32
-        let kingBucket = KING_BUCKETS.[int(kingSq) ^^^ (56 * int(perspective))] + 16 * (Square.ToFile(kingSq) >>> 3)
+        let kingBucket = KING_BUCKETS.[int(kingSq) ^^^ (56 * int(perspective))] + (if Square.ToFile(kingSq) > 3 then 16 else 0)
         let state = RefreshTable.[pBucket + kingBucket]
         for pc in ColPcs do
             let curr = map.Pieces.[int(pc)]
@@ -203,107 +225,30 @@ module NNUEb =
                 delta.a <- delta.a + 1
             state.Pcs.[int(pc)] <- curr
         ApplyDelta(state.AccKsValues, delta, perspective)
-
-    //let ResetAccumulator() = NNUEout.CurrentAccumulator <- 0
-    //let PushAccumulator() =
-    //    let A = NNUEout.AccumulatorA.[NNUEout.CurrentAccumulator]
-    //    let targetA = NNUEout.AccumulatorA.[NNUEout.CurrentAccumulator+1]
-    //    let B = NNUEout.AccumulatorB.[NNUEout.CurrentAccumulator]
-    //    let targetB = NNUEout.AccumulatorB.[NNUEout.CurrentAccumulator+1]
-    //    let HIDDEN = 256
-    //    let size = uint(HIDDEN * Unsafe.SizeOf<int16>())
-    //    Unsafe.CopyBlockUnaligned(
-    //        &Unsafe.As<int16, byte>(&targetA.[0]), 
-    //        &Unsafe.As<int16, byte>(&A.[0]), 
-    //        size
-    //    )
-    //    Unsafe.CopyBlockUnaligned(
-    //        &Unsafe.As<int16, byte>(&targetB.[0]), 
-    //        &Unsafe.As<int16, byte>(&B.[0]), 
-    //        size
-    //    )
-    //    NNUEout.CurrentAccumulator <- NNUEout.CurrentAccumulator + 1
-    //let PullAccumulator() = NNUEout.CurrentAccumulator <- NNUEout.CurrentAccumulator - 1
-    //let RefreshAccumulator(map:BitBoardMap) =
-    //    let colorStride = 64 * 6
-    //    let pieceStride = 64
-    //    Array.Clear(NNUEout.WhitePOV)
-    //    Array.Clear(NNUEout.BlackPOV)
-    //    for color in Cols do
-    //        for ipiece in Pcs do
-    //            let mutable piece = ipiece
-    //            let mutable whiteIterator = map.[piece, color].GetEnumerator()
-    //            let mutable blackIterator = map.[piece, color].GetEnumerator()
-    //            let originalPiece = piece
-    //            if (piece = Piece.Rook) then piece <- Piece.Bishop
-    //            elif (piece = Piece.Knight) then piece <- Piece.Rook
-    //            elif (piece = Piece.Bishop) then piece <- Piece.Knight
-    //            let mutable sq = whiteIterator.Current
-    //            while (whiteIterator.MoveNext()) do
-    //                let index = int(color) * colorStride + int(piece) * pieceStride + int(sq)
-    //                NNUEout.WhitePOV.[index] <- 1s
-    //                sq <- whiteIterator.Current
-    //            sq <- blackIterator.Current
-    //            while (blackIterator.MoveNext()) do
-    //                let index = int(PieceColor.OppositeColor(color)) * colorStride + int(piece) * pieceStride + (int(sq) ^^^ 56)
-    //                NNUEout.BlackPOV.[index] <- 1s
-    //                sq <- blackIterator.Current
-    //            piece <- originalPiece
-    //    let accumulatorA = NNUEout.AccumulatorA.[NNUEout.CurrentAccumulator]
-    //    let accumulatorB = NNUEout.AccumulatorB.[NNUEout.CurrentAccumulator]
-    //    NN.Forward(NNUEout.WhitePOV, NNUEin.FeatureWeight, accumulatorA)
-    //    NN.Forward(NNUEout.BlackPOV, NNUEin.FeatureWeight, accumulatorB)
-    //let EfficientlyUpdateAccumulatorPc(piece:Piece, color:PieceColor, from:Square, mto:Square) =
-    //    let HIDDEN = 256
-    //    let colorStride = 64 * 6
-    //    let pieceStride = 64
-    //    let nnPiece = NN.PieceToNN(piece)
-    //    let opPieceStride = int(nnPiece) * pieceStride
-    //    let whiteIndexFrom = int(color) * colorStride + opPieceStride + int(from)
-    //    let blackIndexFrom = int(PieceColor.OppositeColor(color)) * colorStride + opPieceStride + (int(from) ^^^ 56)
-    //    let whiteIndexTo = int(color) * colorStride + opPieceStride + int(mto)
-    //    let blackIndexTo = int(PieceColor.OppositeColor(color)) * colorStride + opPieceStride + (int(mto) ^^^ 56)
-    //    let accumulatorA = NNUEout.AccumulatorA.[NNUEout.CurrentAccumulator]
-    //    let accumulatorB = NNUEout.AccumulatorB.[NNUEout.CurrentAccumulator]
-    //    NNUEout.WhitePOV.[whiteIndexFrom] <- 0s
-    //    NNUEout.BlackPOV.[blackIndexFrom] <- 0s
-    //    NNUEout.WhitePOV.[whiteIndexTo] <- 1s
-    //    NNUEout.BlackPOV.[blackIndexTo] <- 1s
-    //    NN.SubtractAndAddToAll(accumulatorA, NNUEin.FlippedFeatureWeight, whiteIndexFrom * HIDDEN, whiteIndexTo * HIDDEN)
-    //    NN.SubtractAndAddToAll(accumulatorB, NNUEin.FlippedFeatureWeight, blackIndexFrom * HIDDEN, blackIndexTo * HIDDEN)
-    //let EfficientlyUpdateAccumulator(isActivate:bool, piece:Piece, color:PieceColor, sq:Square) =
-    //    let HIDDEN = 256
-    //    let colorStride = 64 * 6
-    //    let pieceStride = 64
-    //    let nnPiece = NN.PieceToNN(piece)
-    //    let opPieceStride = int(nnPiece) * pieceStride
-    //    let whiteIndex = int(color) * colorStride + opPieceStride + int(sq)
-    //    let blackIndex = int(PieceColor.OppositeColor(color)) * colorStride + opPieceStride + (int(sq) ^^^ 56)
-    //    let accumulatorA = NNUEout.AccumulatorA.[NNUEout.CurrentAccumulator]
-    //    let accumulatorB = NNUEout.AccumulatorB.[NNUEout.CurrentAccumulator]
-    //    if isActivate then
-    //        NNUEout.WhitePOV.[whiteIndex] <- 1s
-    //        NNUEout.BlackPOV.[blackIndex] <- 1s
-    //        NN.AddToAll(accumulatorA, accumulatorB, NNUEin.FlippedFeatureWeight, whiteIndex * HIDDEN, blackIndex * HIDDEN)
-    //    else 
-    //        NNUEout.WhitePOV.[whiteIndex] <- 0s
-    //        NNUEout.BlackPOV.[blackIndex] <- 0s
-    //        NN.SubtractFromAll(accumulatorA, accumulatorB, NNUEin.FlippedFeatureWeight, whiteIndex * HIDDEN, blackIndex * HIDDEN)
-    //let Evaluate(colorToMove:PieceColor) =
-    //    let HIDDEN = 256
-    //    let QA = 255
-    //    let QB = 64
-    //    let QAB = QA * QB
-    //    let CR_MIN = 0s
-    //    let CR_MAX = int16(1 * QA)
-    //    let SCALE = 400
-    //    let accumulatorA = NNUEout.AccumulatorA.[NNUEout.CurrentAccumulator]
-    //    let accumulatorB = NNUEout.AccumulatorB.[NNUEout.CurrentAccumulator]
-    //    if (colorToMove = PieceColor.White) then
-    //        NN.ClippedReLUFlattenAndForward(accumulatorA, accumulatorB, NNUEin.FeatureBias, NNUEin.OutWeight, NNUEout.Output, CR_MIN, CR_MAX, HIDDEN)
-    //    else
-    //        NN.ClippedReLUFlattenAndForward(accumulatorB, accumulatorA, NNUEin.FeatureBias, NNUEin.OutWeight, NNUEout.Output, CR_MIN, CR_MAX, HIDDEN)
-    //    (NNUEout.Output.[0] + int(NNUEin.OutBias.[0])) * SCALE / QAB
-    
-    
-    
+        RefreshTable.[pBucket + kingBucket] <- {state with AccKsValues = Array.copy Accumulators.[AccIndex].AccValues.[int(perspective)]}
+    let DoUpdate(map:BitBoardMap, move:RevertMove) =
+        let from = 
+            if map.ColorToMove=PieceColor.Black then int(move.From)
+            else int(move.From)^^^56
+        let mto = 
+            if map.ColorToMove=PieceColor.Black then int(move.To)
+            else int(move.To)^^^56
+        let othercolor = if map.ColorToMove = PieceColor.White then PieceColor.Black else PieceColor.White
+        let colpcto = ColPiece.FromPcCol(map.[move.To])
+        let colpcfrom =
+            if move.Promotion then ColPiece.FromPcCol(Piece.Pawn,othercolor)
+            else colpcto
+        if MoveRequiresRefresh(colpcfrom, from, mto) then
+            RefreshAccumulator(map, othercolor)
+            ApplyUpdates(map, move, map.ColorToMove)
+        else
+            ApplyUpdates(map, move, PieceColor.White)
+            ApplyUpdates(map, move, PieceColor.Black)
+    let OutputLayer(stm:PieceColor) =
+        let mutable result = NNUEin.OutputBias
+        for c = 0 to 767 do
+           result <- result + Math.Max(int(Accumulators.[AccIndex].AccValues.[int(stm)].[c]), 0) * int(NNUEin.OutputWeights.[c])
+        let ixstm = if stm=PieceColor.White then 1 else 0
+        for c = 0 to 767 do
+           result <- result + Math.Max(int(Accumulators.[AccIndex].AccValues.[ixstm].[c]), 0) * int(NNUEin.OutputWeights.[c + 768])
+        result/8192

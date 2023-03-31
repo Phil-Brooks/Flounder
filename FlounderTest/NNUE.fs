@@ -72,3 +72,10 @@ module NNUE =
         let ans = NNUE.Evaluate(bugboard.ColorToMove)
         ans |> should equal 9
 
+    [<Test>]
+    let EvaluateDiff() =
+        let fen = "rnbqkbnr/ppp1pppp/8/3p4/4P3/8/PPPPKPPP/RNBQ1BNR b kq -"
+        let board = Board.FromFen(fen)
+        NNUE.RefreshAccumulator(board.Map)
+        let ans = NNUE.Evaluate(board.ColorToMove)
+        ans |> should equal 303
