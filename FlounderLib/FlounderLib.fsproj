@@ -12,29 +12,12 @@
     <EmbeddedResource Include="berserk-e3f526b26f50.nn">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
-    <EmbeddedResource Include="BasicNNUEf-0334adf934-OutWeight.txt">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </EmbeddedResource>
-    <EmbeddedResource Include="BasicNNUEf-0334adf934-FeatureBias.txt">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </EmbeddedResource>
-    <EmbeddedResource Include="BasicNNUEf-0334adf934-FeatureWeight.txt">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </EmbeddedResource>
-    <EmbeddedResource Include="BasicNNUEf-0334adf934-FlippedFeatureWeight.txt">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </EmbeddedResource>
-    <EmbeddedResource Include="BasicNNUEf-0334adf934-OutBias.txt">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </EmbeddedResource>
     <Compile Include="Types.fs" />
     <Compile Include="BitBoardIterator.fs" />
     <Compile Include="BitBoard.fs" />
     <Compile Include="ZobristPieceKeyTable.fs" />
     <Compile Include="Zobrist.fs" />
     <Compile Include="BitBoardMap.fs" />
-    <Compile Include="NN.fs" />
-    <Compile Include="NNUE.fs" />
     <Compile Include="RevertMove.fs" />
     <Compile Include="NNUEb.fs" />
     <Compile Include="Board.fs" />

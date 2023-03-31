@@ -109,8 +109,7 @@ type MoveSearch =
         if ans.IsSome then 
             ans.Value
         else
-            let earlyEval = NNUE.Evaluate(board.Brd.ColorToMove)
-            let earlyEvalb = NNUEb.OutputLayer(board.Brd.ColorToMove)
+            let earlyEval = NNUEb.OutputLayer(board.Brd.Map.ColorToMove)
 
             // In the rare case our evaluation is already too good, we don't need to further evaluate captures any further,
             // as this position is overwhelmingly winning.
@@ -244,14 +243,13 @@ type MoveSearch =
                 // Calculate deeper ply.
                 let nextPlyFromRoot = plyFromRoot + 1
                 // Determine whether we should prune moves.
-                let oppositeColor = PieceColor.OppositeColor(board.Brd.ColorToMove)
-                let kingSq = board.Brd.KingLoc(board.Brd.ColorToMove).ToSq()
+                let oppositeColor = PieceColor.OppositeColor(board.Brd.Map.ColorToMove)
+                let kingSq = board.Brd.KingLoc(board.Brd.Map.ColorToMove).ToSq()
                 let mutable inCheck = MoveList.UnderAttack(board.Brd, kingSq, oppositeColor)
                 let mutable improving = false
                 // We should use the evaluation from our transposition table if we had a hit.
                 // As that evaluation isn't truly static and may have been from a previous deep search.
-                let positionalEvaluation = if transpositionHit then transpositionMove.Score else NNUE.Evaluate(board.Brd.ColorToMove)
-                let positionalEvaluationb = if transpositionHit then transpositionMove.Score else NNUEb.OutputLayer(board.Brd.ColorToMove)
+                let positionalEvaluation = if transpositionHit then transpositionMove.Score else NNUEb.OutputLayer(board.Brd.Map.ColorToMove)
                 // Also store the evaluation to later check if it improved.
                 this.MvSrchStck.[plyFromRoot].PositionalEvaluation <- positionalEvaluation
         
@@ -415,7 +413,6 @@ type MoveSearch =
             getbm -100000000 1                    
         with
             | :? OperationCanceledException -> ()
-        NNUE.ResetAccumulator()
         NNUEb.AccIndex<-0
         bestMove
     member this.DoTest(selectedDepth:int, bm:string) =
@@ -437,7 +434,6 @@ type MoveSearch =
             getbm -100000000 1                    
         with
             | :? OperationCanceledException -> ()
-        NNUE.ResetAccumulator()
         NNUEb.AccIndex<-0
         bestMove
     [<MethodImpl(MethodImplOptions.AggressiveInlining)>]
@@ -522,8 +518,8 @@ type MoveSearch =
             this.KillerMvTbl.ReOrder(plyFromRoot)
             this.KillerMvTbl.[0, plyFromRoot] <- move
         // Increment the move that caused a beta cutoff to get a historical heuristic of best quiet moves.
-        this.HistTbl.[board.PieceOnly(move.From), board.Brd.ColorToMove, move.To] <- this.HistTbl.[board.PieceOnly(move.From), board.Brd.ColorToMove, move.To] + historyBonus
+        this.HistTbl.[board.PieceOnly(move.From), board.Brd.Map.ColorToMove, move.To] <- this.HistTbl.[board.PieceOnly(move.From), board.Brd.Map.ColorToMove, move.To] + historyBonus
         // Decrement all other quiet moves to ensure a branch local history heuristic.
         for j = 1 to quietMoveCounter-1 do
             let otherMove = moveList.[i - j]
-            this.HistTbl.[board.PieceOnly(otherMove.From), board.Brd.ColorToMove, otherMove.To] <- this.HistTbl.[board.PieceOnly(otherMove.From), board.Brd.ColorToMove, otherMove.To] - historyBonus
+            this.HistTbl.[board.PieceOnly(otherMove.From), board.Brd.Map.ColorToMove, otherMove.To] <- this.HistTbl.[board.PieceOnly(otherMove.From), board.Brd.Map.ColorToMove, otherMove.To] - historyBonus

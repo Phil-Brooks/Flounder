@@ -30,8 +30,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tester", "Tester", "{BB717A
 		docs\Tester\wacnew.epd = docs\Tester\wacnew.epd
 	EndProjectSection
 EndProject
-Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "NNUE_Reader", "NNUE_Reader\NNUE_Reader.fsproj", "{EE78E802-9039-4E4A-B975-A7806D5F5778}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -54,10 +52,6 @@ Global
 		{0D347039-ED17-4159-988F-1E7F12716762}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{0D347039-ED17-4159-988F-1E7F12716762}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{0D347039-ED17-4159-988F-1E7F12716762}.Release|Any CPU.Build.0 = Release|Any CPU
-		{EE78E802-9039-4E4A-B975-A7806D5F5778}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{EE78E802-9039-4E4A-B975-A7806D5F5778}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{EE78E802-9039-4E4A-B975-A7806D5F5778}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{EE78E802-9039-4E4A-B975-A7806D5F5778}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -191,7 +191,7 @@ module NNUEb =
         NNUEb.ResetRefreshTable()
         let m0 = NNUEb.Accumulators.[NNUEb.AccIndex].AccValues.[0].[0]
         m0 |> should equal -110s
-        let ans = NNUEb.OutputLayer(board.ColorToMove)
+        let ans = NNUEb.OutputLayer(board.Map.ColorToMove)
         ans|>should equal 101        
  
     [<Test>]
@@ -217,7 +217,7 @@ module NNUEb =
         let board = Board.FromFen(fen)
         NNUEb.ResetAccumulator(board.Map,PieceColor.White)
         NNUEb.ResetAccumulator(board.Map,PieceColor.Black)
-        let ans = NNUEb.OutputLayer(board.ColorToMove)
+        let ans = NNUEb.OutputLayer(board.Map.ColorToMove)
         ans |> should equal 208
 
     [<Test>]
@@ -230,5 +230,5 @@ module NNUEb =
         NNUEb.ResetRefreshTable()
         let mutable mv = OrderedMoveEntry(Square.E4, Square.D3, Promotion.None)
         let mutable rv = engbrd.Move(&mv)
-        let ans = NNUEb.OutputLayer(engbrd.Brd.ColorToMove)
+        let ans = NNUEb.OutputLayer(engbrd.Brd.Map.ColorToMove)
         ans|>should equal -45

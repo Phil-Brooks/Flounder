@@ -405,7 +405,7 @@ type MoveList =
             new MoveList(board, from, horizontalVertical, diagonal, checks, moves, promotion)
         new(board:Board, from:Square, horizontalVertical:BitBoard, diagonal:BitBoard, checks:BitBoard) =
             //this can only be used when processing pawn captiures
-            let moves,promotion = MoveList.LegalPawnMoveCaptures(board.ColorToMove,board,from,horizontalVertical,diagonal,checks)
+            let moves,promotion = MoveList.LegalPawnMoveCaptures(board.Map.ColorToMove,board,from,horizontalVertical,diagonal,checks)
             new MoveList(board, from, horizontalVertical, diagonal, checks, moves, promotion)
   
     end

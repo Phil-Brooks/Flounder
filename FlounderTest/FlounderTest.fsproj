@@ -17,7 +17,6 @@
     <Compile Include="OrderedMoveList.fs" />
     <Compile Include="Version.fs" />
     <Compile Include="Perft.fs" />
-    <Compile Include="NNUE.fs" />
     <Compile Include="MoveList.fs" />
     <Compile Include="BitBoardMap.fs" />
     <Compile Include="BitBoard.fs" />

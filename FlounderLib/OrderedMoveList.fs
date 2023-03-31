@@ -64,12 +64,12 @@ type OrderedMoveList =
                 // Check if move is a rank 2 killer move (less local, might've been updated long time ago).
                 elif move.From = this.KillerMoveTwo.From && move.To = this.KillerMoveTwo.To && move.Promotion = this.KillerMoveTwo.Promotion then 800000
                 // Return the updated history score for the move.
-                else this.HistTbl.[pieceToMove, board.ColorToMove, move.To]
+                else this.HistTbl.[pieceToMove, board.Map.ColorToMove, move.To]
         member this.NormalMoveGeneration(board:Board, transpositionMove:OrderedMoveEntry) =
-            let oppositeColor = PieceColor.OppositeColor(board.ColorToMove)
+            let oppositeColor = PieceColor.OppositeColor(board.Map.ColorToMove)
             // Generate pins and check bitboards.
-            let kingSq = board.KingLoc(board.ColorToMove).ToSq()
-            let (hv, d) = MoveList.PinBitBoards(board, kingSq, board.ColorToMove, oppositeColor)
+            let kingSq = board.KingLoc(board.Map.ColorToMove).ToSq()
+            let (hv, d) = MoveList.PinBitBoards(board, kingSq, board.Map.ColorToMove, oppositeColor)
             let checks, doubleChecked = MoveList.CheckBitBoard(board, kingSq, oppositeColor)
             // Define the list.
             let mutable i = 0
@@ -79,10 +79,10 @@ type OrderedMoveList =
                 // We can only do this if we're not double checked.
                 // In case of double-checked (discovered + normal), only the king can move so we should skip this.
                 // Generate all pawn moves.
-                let mutable fromIterator = board.All(Piece.Pawn, board.ColorToMove).GetEnumerator()
+                let mutable fromIterator = board.All(Piece.Pawn, board.Map.ColorToMove).GetEnumerator()
                 let mutable from = fromIterator.Current
                 while (fromIterator.MoveNext()) do
-                    let moveList = MoveList(board, from, Piece.Pawn, board.ColorToMove,hv, d, checks)
+                    let moveList = MoveList(board, from, Piece.Pawn, board.Map.ColorToMove,hv, d, checks)
                     let mutable moves = moveList.Moves.GetEnumerator()
                     let mutable move = moves.Current
                     while (moves.MoveNext()) do
@@ -99,10 +99,10 @@ type OrderedMoveList =
                     from <- fromIterator.Current
                 // Generate moves for rook, knight, bishop, and queen.
                 for piece in [Piece.Rook;Piece.Knight;Piece.Bishop;Piece.Queen] do
-                    fromIterator <- board.All(piece, board.ColorToMove).GetEnumerator()
+                    fromIterator <- board.All(piece, board.Map.ColorToMove).GetEnumerator()
                     from <- fromIterator.Current
                     while (fromIterator.MoveNext()) do
-                        let moveList = MoveList(board, from, piece, board.ColorToMove, hv, d, checks)
+                        let moveList = MoveList(board, from, piece, board.Map.ColorToMove, hv, d, checks)
                         let mutable moves = moveList.Moves.GetEnumerator()
                         let mutable move = moves.Current
                         while (moves.MoveNext()) do
@@ -112,10 +112,10 @@ type OrderedMoveList =
                             move <- moves.Current
                         from <- fromIterator.Current
             // Generate all king moves.
-            let mutable fromIterator = board.All(Piece.King, board.ColorToMove).GetEnumerator()
+            let mutable fromIterator = board.All(Piece.King, board.Map.ColorToMove).GetEnumerator()
             let mutable from = fromIterator.Current
             while (fromIterator.MoveNext()) do
-                let moveList = MoveList(board, from, Piece.King, board.ColorToMove, hv, d, checks)
+                let moveList = MoveList(board, from, Piece.King, board.Map.ColorToMove, hv, d, checks)
                 let mutable moves = moveList.Moves.GetEnumerator()
                 let mutable move = moves.Current
                 while (moves.MoveNext()) do
@@ -126,12 +126,12 @@ type OrderedMoveList =
                 from <- fromIterator.Current
             i
         member this.QSearchMoveGeneration(board:Board, transpositionMove:OrderedMoveEntry) =
-            let oppositeColor = PieceColor.OppositeColor(board.ColorToMove)
+            let oppositeColor = PieceColor.OppositeColor(board.Map.ColorToMove)
             // If we only want capture moves, we should also define our opposite board.
             let opposite = board.All(oppositeColor)
             // Generate pins and check bitboards.
-            let kingSq = board.KingLoc(board.ColorToMove).ToSq()
-            let (hv, d) = MoveList.PinBitBoards(board, kingSq, board.ColorToMove, oppositeColor)
+            let kingSq = board.KingLoc(board.Map.ColorToMove).ToSq()
+            let (hv, d) = MoveList.PinBitBoards(board, kingSq, board.Map.ColorToMove, oppositeColor)
             let (checks, doubleChecked) = MoveList.CheckBitBoard(board, kingSq, oppositeColor)
             // Define the list.
             let mutable i = 0
@@ -139,7 +139,7 @@ type OrderedMoveList =
                 // We can only do this if we're not double checked.
                 // In case of double-checked (discovered + normal), only the king can move so we should skip this.
                 // Generate all pawn moves.
-                let mutable fromIterator = board.All(Piece.Pawn, board.ColorToMove).GetEnumerator()
+                let mutable fromIterator = board.All(Piece.Pawn, board.Map.ColorToMove).GetEnumerator()
                 let mutable from = fromIterator.Current
                 while (fromIterator.MoveNext()) do
                     let moveList = MoveList(board, from, hv, d, checks)
@@ -159,10 +159,10 @@ type OrderedMoveList =
                     from <- fromIterator.Current
                 // Generate moves for rook, knight, bishop, and queen.
                 for piece in [Piece.Rook;Piece.Knight;Piece.Bishop;Piece.Queen] do
-                    let mutable fromIterator = board.All(piece, board.ColorToMove).GetEnumerator()
+                    let mutable fromIterator = board.All(piece, board.Map.ColorToMove).GetEnumerator()
                     let mutable from = fromIterator.Current
                     while (fromIterator.MoveNext()) do
-                        let moveList = MoveList(board, from, piece, board.ColorToMove, hv, d, checks)
+                        let moveList = MoveList(board, from, piece, board.Map.ColorToMove, hv, d, checks)
                         let mutable moves = (moveList.Moves &&& opposite).GetEnumerator()
                         let mutable move = moves.Current
                         while (moves.MoveNext()) do
@@ -172,10 +172,10 @@ type OrderedMoveList =
                             move <- moves.Current
                         from <- fromIterator.Current
             // Generate all king moves.
-            let mutable fromIterator = board.All(Piece.King, board.ColorToMove).GetEnumerator()
+            let mutable fromIterator = board.All(Piece.King, board.Map.ColorToMove).GetEnumerator()
             let mutable from = fromIterator.Current
             while (fromIterator.MoveNext()) do
-                let moveList = MoveList(board, from, Piece.King, board.ColorToMove, hv, d, checks)
+                let moveList = MoveList(board, from, Piece.King, board.Map.ColorToMove, hv, d, checks)
                 let mutable moves = (moveList.Moves &&& opposite).GetEnumerator()
                 let mutable move = moves.Current
                 while (moves.MoveNext()) do

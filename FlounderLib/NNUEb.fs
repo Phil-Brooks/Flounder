@@ -2,7 +2,6 @@
 open System.Reflection
 open System.IO
 open System
-open System.Runtime.CompilerServices
 
 type NNUEinB =
     {

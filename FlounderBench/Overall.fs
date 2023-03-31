@@ -16,8 +16,7 @@ type Overall() =
     [<Benchmark>]
     member _.Overall() = 
         FlounderLib.Perft.MoveGeneration(Default, 4)|>ignore
-        NNUE.RefreshAccumulator(Default.Map)
         NNUEb.ResetAccumulator(Default.Map,PieceColor.White)
         NNUEb.ResetAccumulator(Default.Map,PieceColor.Black)
-        NNUE.Evaluate(Default.ColorToMove)|>ignore
+        NNUEb.OutputLayer(Default.Map.ColorToMove)|>ignore
 

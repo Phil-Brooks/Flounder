@@ -10,7 +10,6 @@ type Board =
         {
             Map = map
         }
-    member this.ColorToMove = this.Map.ColorToMove
     member this.EnPassantTarget = this.Map.EnPassantTarget
     member this.ZobristHash = this.Map.ZobristHash
     member this.Clone() = Board(this.Map.Copy())
@@ -37,13 +36,11 @@ type Board =
             // Thus, we need to set it in revert move to ensure we can properly revert it.
             rv.CapturedPiece <- pieceT
             rv.CapturedColor <- colorT
-            NNUE.EfficientlyUpdateAccumulator(false, pieceT, colorT, mto)
         if (this.EnPassantTarget = mto && pieceF = Piece.Pawn) then
             // If the attack is an EP attack, we must empty the piece affected by EP.
             let epPieceSq = if colorF = PieceColor.White then Square.FromInt(int(this.EnPassantTarget) + 8) else Square.FromInt(int(this.EnPassantTarget) - 8)
             let oppositeColor = PieceColor.OppositeColor(colorF)
             this.Map.Empty(Piece.Pawn, oppositeColor, epPieceSq)
-            NNUE.EfficientlyUpdateAccumulator(false, Piece.Pawn, oppositeColor, epPieceSq)
             // Set it in revert move.
             rv.EnPassant <- true
             // We only need to reference the color.
@@ -58,13 +55,10 @@ type Board =
         else this.Map.EnPassantTarget <- Square.Na
         // Make the move.
         this.Map.Move(pieceF, colorF, pieceT, colorT, from, mto)
-        NNUE.EfficientlyUpdateAccumulatorPc(pieceF, colorF, from, mto)
         if (promotion <> Promotion.None) then
             this.Map.Empty(pieceF, colorF, mto)
             this.Map.InsertPiece(Piece.FromInt(int(promotion)), colorF, mto)
             rv.Promotion <- true
-            NNUE.EfficientlyUpdateAccumulator(false, pieceF, colorF, mto)
-            NNUE.EfficientlyUpdateAccumulator(true, Piece.FromInt(int(promotion)), colorF, mto)
         // Update revert move.
         rv.From <- from
         rv.To <- mto
@@ -109,7 +103,6 @@ type Board =
                     Piece.Rook, colorF, Piece.Empty, PieceColor.None, 
                     rv.SecondaryFrom, rv.SecondaryTo
                 )
-                NNUE.EfficientlyUpdateAccumulatorPc(Piece.Rook, colorF, rv.SecondaryFrom, rv.SecondaryTo)
         // If our rook was captured, we must also update castling rights so we don't castle with enemy piece.
         if pieceT = Piece.Rook then
             if colorT = PieceColor.White then
@@ -128,6 +121,7 @@ type Board =
         )
         // Flip the turn.
         this.Map.ColorToMove <- PieceColor.OppositeColor(this.Map.ColorToMove)
+        this.Map.stm <- this.Map.stm ^^^ 1  
         // Update Zobrist.
         Zobrist.FlipTurnInHash(&this.Map.ZobristHash)
         rv
@@ -159,6 +153,7 @@ type Board =
             Zobrist.HashEp(&this.Map.ZobristHash, this.Map.EnPassantTarget)
         // Revert to previous turn.
         this.Map.ColorToMove <- rv.ColorToMove
+        this.Map.stm <- this.Map.stm ^^^ 1
         Zobrist.FlipTurnInHash(&this.Map.ZobristHash)
         if (rv.Promotion) then
             let (piece, color) = this.Map.[rv.To]
@@ -186,7 +181,7 @@ type Board =
         "FEN: " + this.GenerateFen() + "\nHash: " + $"{this.Map.ZobristHash:X}" + "\n"
     member this.GenerateFen() =
         let boardData = this.Map.GenerateBoardFen()
-        let turnData = if this.ColorToMove = PieceColor.White then "w" else "b"
+        let turnData = if this.Map.ColorToMove = PieceColor.White then "w" else "b"
         let mutable castlingRight = ""
         if (this.Map.WhiteKCastle = 0x0 && this.Map.WhiteQCastle = 0x0 && this.Map.BlackKCastle = 0x0 && this.Map.BlackQCastle = 0x0) then
             castlingRight <- "-"

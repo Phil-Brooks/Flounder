@@ -8,7 +8,7 @@ type EngineBoard =
         {
             Brd = Board(boardData, turnData, castlingData, enPassantTargetData)
             RepHist = RepetitionHistory.Default()
-        } then NNUE.ResetAccumulator();NNUE.RefreshAccumulator(this.Brd.Map);NNUEb.AccIndex<-0;NNUEb.ResetAccumulator(this.Brd.Map,PieceColor.White);NNUEb.ResetAccumulator(this.Brd.Map,PieceColor.Black)
+        } then NNUEb.AccIndex<-0;NNUEb.ResetAccumulator(this.Brd.Map,PieceColor.White);NNUEb.ResetAccumulator(this.Brd.Map,PieceColor.Black)
         
     new(board:EngineBoard) = 
         {
@@ -31,6 +31,7 @@ type EngineBoard =
         if (this.Brd.Map.EnPassantTarget <> Square.Na) then Zobrist.HashEp(&this.Brd.Map.ZobristHash, this.Brd.Map.EnPassantTarget)
         this.Brd.Map.EnPassantTarget <- Square.Na
         this.Brd.Map.ColorToMove <- PieceColor.OppositeColor(this.Brd.Map.ColorToMove)
+        this.Brd.Map.stm <- this.Brd.Map.stm ^^^ 1
         Zobrist.FlipTurnInHash(&this.Brd.Map.ZobristHash)
         rv
     member this.UndoNullMove(rv:Square) =
@@ -38,10 +39,10 @@ type EngineBoard =
             this.Brd.Map.EnPassantTarget <- rv
             Zobrist.HashEp(&this.Brd.Map.ZobristHash, rv)
         this.Brd.Map.ColorToMove <- PieceColor.OppositeColor(this.Brd.Map.ColorToMove)
+        this.Brd.Map.stm <- this.Brd.Map.stm ^^^ 1
         Zobrist.FlipTurnInHash(&this.Brd.Map.ZobristHash)
     member this.Move(move:byref<OrderedMoveEntry>) =
         let rv:RevertMove =
-            NNUE.PushAccumulator()
             NNUEb.AccIndex<-NNUEb.AccIndex+1
             this.Brd.Move(move.From, move.To, move.Promotion)
         NNUEb.DoUpdate(this.Brd.Map,rv)
@@ -49,7 +50,6 @@ type EngineBoard =
         rv
     member this.UndoMove(rv:byref<RevertMove>) =
         this.Brd.UndoMove(&rv)
-        NNUE.PullAccumulator()
         NNUEb.AccIndex<-NNUEb.AccIndex-1
         this.RepHist.RemoveLast()
 module EngineBoard =

@@ -4,6 +4,7 @@ open System
 
 type BitBoardMap =
     struct
+        val mutable stm:int// side to move
         val Pieces:BitBoard array
         val PiecesAndColors:ColPiece array
         val mutable White:BitBoard
@@ -15,8 +16,9 @@ type BitBoardMap =
         val mutable BlackQCastle:int
         val mutable EnPassantTarget:Square
         val mutable ZobristHash:uint64
-        new(pieces,piecesAndColors,white,black,colorToMove,whiteKCastle,whiteQCastle,blackKCastle,blackQCastle,enPassantTarget,zobristHash) =
+        new(stm,pieces,piecesAndColors,white,black,colorToMove,whiteKCastle,whiteQCastle,blackKCastle,blackQCastle,enPassantTarget,zobristHash) =
             {
+                stm = stm
                 Pieces = pieces
                 PiecesAndColors = piecesAndColors
                 White = white
@@ -95,6 +97,7 @@ type BitBoardMap =
                         pieces.[int(ColPiece.BlackBishop)] ||| pieces.[int(ColPiece.BlackRook)] ||| 
                         pieces.[int(ColPiece.BlackQueen)] ||| pieces.[int(ColPiece.BlackKing)] 
             let colorToMove = if turnData.[0] = 'w' then PieceColor.White else PieceColor.Black
+            let stm = if turnData.[0] = 'w' then 0 else 1
             let whiteKCastle = if castlingData.Contains('K') then 0x1 else 0x0
             let whiteQCastle = if castlingData.Contains('Q') then 0x2 else 0x0
             let blackKCastle = if castlingData.Contains('k') then 0x4 else 0x0
@@ -117,8 +120,9 @@ type BitBoardMap =
                 zobristHash <- zobristHash ^^^ Zobrist.CastlingKeys.[int(whiteKCastle) ||| int(whiteQCastle) ||| int(blackKCastle) ||| int(blackQCastle)]
                 zobristHash
             let zobristHash = gethash()
-            BitBoardMap(pieces,piecesAndColors,white,black,colorToMove,whiteKCastle,whiteQCastle,blackKCastle,blackQCastle,enPassantTarget,zobristHash)
+            BitBoardMap(stm,pieces,piecesAndColors,white,black,colorToMove,whiteKCastle,whiteQCastle,blackKCastle,blackQCastle,enPassantTarget,zobristHash)
         new(map:BitBoardMap, pieces:BitBoard array, piecesAndColors:ColPiece array) =
+            let stm = map.stm
             let White = map.White
             let Black = map.Black
             let WhiteKCastle = map.WhiteKCastle
@@ -130,7 +134,7 @@ type BitBoardMap =
             let Pieces = Array.copy pieces
             let PiecesAndColors = Array.copy piecesAndColors
             let ZobristHash = map.ZobristHash
-            BitBoardMap(Pieces,PiecesAndColors,White,Black,ColorToMove,WhiteKCastle,WhiteQCastle,BlackKCastle,BlackQCastle,EnPassantTarget,ZobristHash)
+            BitBoardMap(stm,Pieces,PiecesAndColors,White,Black,ColorToMove,WhiteKCastle,WhiteQCastle,BlackKCastle,BlackQCastle,EnPassantTarget,ZobristHash)
         member this.Item 
             with get(sq:Square):(Piece*PieceColor) = 
                 let colpc = this.PiecesAndColors.[int(sq)]
