@@ -50,9 +50,9 @@ type OrderedMoveList =
             // The idea behind it is to give highest priority to captures that are capturing most valuable pieces
             // with least valuable pieces.
             else
-                let (pto,_) = board.At(move.To)
+                let pto = board.Map.PieceOnly(move.To)
                 if (pto <> Piece.Empty) then 
-                    let (pfrom,_) = board.At(move.From)
+                    let pfrom = board.Map.PieceOnly(move.From)
                     OrderedMoveList.MvvLva(pfrom, pto) * 10000
                 // If the move is a quiet move (not capture / promotion), then we should check if it is a killer move or history
                 // move.
@@ -66,12 +66,10 @@ type OrderedMoveList =
                 // Return the updated history score for the move.
                 else this.HistTbl.[pieceToMove, board.Map.stm, move.To]
         member this.NormalMoveGeneration(board:Board, transpositionMove:OrderedMoveEntry) =
-            let ioppositeColor = board.Map.stm^^^1
-            let oppositeColor = PieceColor.FromInt(ioppositeColor)
             // Generate pins and check bitboards.
             let kingSq = board.KingLoc(board.Map.stm).ToSq()
-            let (hv, d) = MoveList.PinBitBoards(board, kingSq, board.Map.stm, ioppositeColor)
-            let checks, doubleChecked = MoveList.CheckBitBoard(board, kingSq, oppositeColor)
+            let (hv, d) = MoveList.PinBitBoards(board, kingSq, board.Map.stm, board.Map.xstm)
+            let checks, doubleChecked = MoveList.CheckBitBoard(board, kingSq, board.Map.xstm)
             // Define the list.
             let mutable i = 0
             //BitBoardIterator fromIterator;
@@ -127,14 +125,12 @@ type OrderedMoveList =
                 from <- fromIterator.Current
             i
         member this.QSearchMoveGeneration(board:Board, transpositionMove:OrderedMoveEntry) =
-            let ioppositeColor = board.Map.stm^^^1
-            let oppositeColor = PieceColor.FromInt(ioppositeColor)
             // If we only want capture moves, we should also define our opposite board.
-            let opposite = board.All(ioppositeColor)
+            let opposite = board.All(board.Map.xstm)
             // Generate pins and check bitboards.
             let kingSq = board.KingLoc(board.Map.stm).ToSq()
-            let (hv, d) = MoveList.PinBitBoards(board, kingSq, board.Map.stm, ioppositeColor)
-            let (checks, doubleChecked) = MoveList.CheckBitBoard(board, kingSq, oppositeColor)
+            let (hv, d) = MoveList.PinBitBoards(board, kingSq, board.Map.stm, board.Map.xstm)
+            let (checks, doubleChecked) = MoveList.CheckBitBoard(board, kingSq, board.Map.xstm)
             // Define the list.
             let mutable i = 0
             if not doubleChecked then

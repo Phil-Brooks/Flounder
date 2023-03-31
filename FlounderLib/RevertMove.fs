@@ -7,13 +7,13 @@ type RevertMove =
         val BlackKCastle:int
         val BlackQCastle:int
         val EnPassantTarget:Square
-        val ColorToMove:PieceColor
+        val ColorToMove:int
         val mutable Promotion:bool
         val mutable EnPassant:bool
         val mutable From:Square
         val mutable To:Square
         val mutable CapturedPiece:Piece
-        val mutable CapturedColor:PieceColor
+        val mutable CapturedColor:int
         val mutable SecondaryFrom:Square
         val mutable SecondaryTo:Square
         new(map:BitBoardMap) =
@@ -23,13 +23,13 @@ type RevertMove =
                 BlackKCastle = map.BlackKCastle
                 BlackQCastle = map.BlackQCastle
                 EnPassantTarget = map.EnPassantTarget
-                ColorToMove = if map.stm = 0 then PieceColor.White else PieceColor.Black
+                ColorToMove = map.stm
                 Promotion = false
                 EnPassant = false
                 From = Square.Na
                 To = Square.Na
                 CapturedPiece = Piece.Empty
-                CapturedColor = PieceColor.None
+                CapturedColor = 2
                 SecondaryFrom = Square.Na
                 SecondaryTo = Square.Na
             }

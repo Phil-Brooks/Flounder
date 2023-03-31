@@ -67,7 +67,7 @@ module NNUEb =
     
     [<Test>]
     let ResetAccumulatorWhite() =
-        NNUEb.ResetAccumulator(board.Map,PieceColor.White)
+        NNUEb.ResetAccumulator(board.Map,0)
         let m0 = NNUEb.Accumulators.[NNUEb.AccIndex].AccValues.[0].[0]
         m0 |> should equal -110s
         let m100 = NNUEb.Accumulators.[NNUEb.AccIndex].AccValues.[0].[100]
@@ -79,7 +79,7 @@ module NNUEb =
 
     [<Test>]
     let ResetAccumulatorBlack() =
-        NNUEb.ResetAccumulator(board.Map,PieceColor.Black)
+        NNUEb.ResetAccumulator(board.Map,1)
         let m0 = NNUEb.Accumulators.[NNUEb.AccIndex].AccValues.[1].[0]
         m0 |> should equal -110s
         let m100 = NNUEb.Accumulators.[NNUEb.AccIndex].AccValues.[1].[100]
@@ -93,8 +93,8 @@ module NNUEb =
     let RefreshAccumulator() =
         let fen = "r1bqkbnr/pppp1ppp/2n5/4p3/Q1P5/8/PP1PPPPP/RNB1KBNR w KQkq - 0 3"
         let board = Board.FromFen(fen)
-        NNUEb.ResetAccumulator(board.Map,PieceColor.White)
-        NNUEb.ResetAccumulator(board.Map,PieceColor.Black)
+        NNUEb.ResetAccumulator(board.Map,0)
+        NNUEb.ResetAccumulator(board.Map,1)
         NNUEb.ResetRefreshTable()
         let m0 = NNUEb.Accumulators.[NNUEb.AccIndex].AccValues.[0].[0]
         m0 |> should equal -495s
@@ -112,7 +112,7 @@ module NNUEb =
         mLast |> should equal 39s
         let rv = board.Move(Square.E1,Square.D1)
         NNUEb.AccIndex<-NNUEb.AccIndex+1
-        NNUEb.RefreshAccumulator(board.Map,PieceColor.White)
+        NNUEb.RefreshAccumulator(board.Map,0)
         let m0 = NNUEb.Accumulators.[NNUEb.AccIndex].AccValues.[0].[0]
         m0 |> should equal -443s
         let m100 = NNUEb.Accumulators.[NNUEb.AccIndex].AccValues.[0].[100]
@@ -124,8 +124,8 @@ module NNUEb =
     let MoveRequiresRefresh() =
         let fen = "r1bqkbnr/pppp1ppp/2n5/4p3/Q1P5/8/PP1PPPPP/RNB1KBNR w KQkq - 0 3"
         let board = Board.FromFen(fen)
-        NNUEb.ResetAccumulator(board.Map,PieceColor.White)
-        NNUEb.ResetAccumulator(board.Map,PieceColor.Black)
+        NNUEb.ResetAccumulator(board.Map,0)
+        NNUEb.ResetAccumulator(board.Map,1)
         NNUEb.ResetRefreshTable()
         let ans = NNUEb.MoveRequiresRefresh(ColPiece.WhiteKing,int(Square.E1),int(Square.D1))
         ans|>should equal true
@@ -136,8 +136,8 @@ module NNUEb =
     let ApplyUpdates() =
         let fen = "r1bqkbnr/pppp1ppp/2n5/4p3/Q1P5/8/PP1PPPPP/RNB1KBNR w KQkq - 0 3"
         let board = Board.FromFen(fen)
-        NNUEb.ResetAccumulator(board.Map,PieceColor.White)
-        NNUEb.ResetAccumulator(board.Map,PieceColor.Black)
+        NNUEb.ResetAccumulator(board.Map,0)
+        NNUEb.ResetAccumulator(board.Map,1)
         NNUEb.ResetRefreshTable()
         let rv = board.Move(Square.E1,Square.D1)
         NNUEb.AccIndex<-NNUEb.AccIndex+1
@@ -153,8 +153,8 @@ module NNUEb =
     let ApplyUpdatesCap() =
         let fen = "rnbqkbnr/pppp1ppp/8/4p3/4PP2/8/PPPP2PP/RNBQKBNR b KQkq - 0 2"
         let board = Board.FromFen(fen)
-        NNUEb.ResetAccumulator(board.Map,PieceColor.White)
-        NNUEb.ResetAccumulator(board.Map,PieceColor.Black)
+        NNUEb.ResetAccumulator(board.Map,0)
+        NNUEb.ResetAccumulator(board.Map,1)
         NNUEb.ResetRefreshTable()
         let rv = board.Move(Square.E5,Square.F4)
         NNUEb.AccIndex<-NNUEb.AccIndex+1
@@ -170,8 +170,8 @@ module NNUEb =
     let ApplyUpdatesCas() =
         let fen = "r1bqk1nr/pppp1ppp/2n5/2b1p3/2B1P3/5N2/PPPP1PPP/RNBQK2R w KQkq - 0 4"
         let board = Board.FromFen(fen)
-        NNUEb.ResetAccumulator(board.Map,PieceColor.White)
-        NNUEb.ResetAccumulator(board.Map,PieceColor.Black)
+        NNUEb.ResetAccumulator(board.Map,0)
+        NNUEb.ResetAccumulator(board.Map,1)
         NNUEb.ResetRefreshTable()
         let rv = board.Move(Square.E1,Square.G1)
         NNUEb.AccIndex<-NNUEb.AccIndex+1
@@ -186,8 +186,8 @@ module NNUEb =
     [<Test>]
     let OutputLayer() =
         let board = Board.Default()
-        NNUEb.ResetAccumulator(board.Map,PieceColor.White)
-        NNUEb.ResetAccumulator(board.Map,PieceColor.Black)
+        NNUEb.ResetAccumulator(board.Map,0)
+        NNUEb.ResetAccumulator(board.Map,1)
         NNUEb.ResetRefreshTable()
         let m0 = NNUEb.Accumulators.[NNUEb.AccIndex].AccValues.[0].[0]
         m0 |> should equal -110s
@@ -198,8 +198,8 @@ module NNUEb =
     let DoUpdate() =
         let fen = "r1bqkbnr/pppp1ppp/2n5/4p3/Q1P5/8/PP1PPPPP/RNB1KBNR w KQkq - 0 3"
         let board = Board.FromFen(fen)
-        NNUEb.ResetAccumulator(board.Map,PieceColor.White)
-        NNUEb.ResetAccumulator(board.Map,PieceColor.Black)
+        NNUEb.ResetAccumulator(board.Map,0)
+        NNUEb.ResetAccumulator(board.Map,1)
         NNUEb.ResetRefreshTable()
         let rv = board.Move(Square.E1,Square.D1)
         NNUEb.AccIndex<-NNUEb.AccIndex+1
@@ -215,8 +215,8 @@ module NNUEb =
     let EvaluateDiff() =
         let fen = "rnbqkbnr/ppp1pppp/8/3p4/4P3/8/PPPPKPPP/RNBQ1BNR b kq -"
         let board = Board.FromFen(fen)
-        NNUEb.ResetAccumulator(board.Map,PieceColor.White)
-        NNUEb.ResetAccumulator(board.Map,PieceColor.Black)
+        NNUEb.ResetAccumulator(board.Map,0)
+        NNUEb.ResetAccumulator(board.Map,1)
         let ans = NNUEb.OutputLayer(board.Map.stm)
         ans |> should equal 208
 
@@ -225,8 +225,8 @@ module NNUEb =
     //Issue with King Move
         let fen = "rnb1kbnr/ppp2ppp/8/3qN3/3Pp3/8/PPP2PPP/RNBQKB1R b KQkq d3 0 5"
         let engbrd = EngineBoard.FromFen(fen)
-        NNUEb.ResetAccumulator(engbrd.Brd.Map,PieceColor.White)
-        NNUEb.ResetAccumulator(engbrd.Brd.Map,PieceColor.Black)
+        NNUEb.ResetAccumulator(engbrd.Brd.Map,0)
+        NNUEb.ResetAccumulator(engbrd.Brd.Map,1)
         NNUEb.ResetRefreshTable()
         let mutable mv = OrderedMoveEntry(Square.E4, Square.D3, Promotion.None)
         let mutable rv = engbrd.Move(&mv)

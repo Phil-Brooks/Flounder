@@ -10,22 +10,19 @@ module Perft =
     let D7 = 3195901860uL
     let Board = Board.Default()
     let rec MoveGeneration(iboard:Board, depth) =
-        // Figure out color and opposite color from the one set in the board.
-        let ioppositeColor = iboard.Map.stm^^^1
-        let oppositeColor = PieceColor.FromInt(ioppositeColor)
         // Get all squares occupied by our color.
         let colored = iboard.All(iboard.Map.stm)
         // Generate pins and check bitboards.
         let kingSq = iboard.KingLoc(iboard.Map.stm).ToSq()
-        let (hv, d) = MoveList.PinBitBoards(iboard, kingSq, iboard.Map.stm, ioppositeColor)
-        let (checks, doubleChecked) = MoveList.CheckBitBoard(iboard, kingSq, oppositeColor)
+        let (hv, d) = MoveList.PinBitBoards(iboard, kingSq, iboard.Map.stm, iboard.Map.xstm)
+        let (checks, doubleChecked) = MoveList.CheckBitBoard(iboard, kingSq, iboard.Map.xstm)
         // Generate all pseudo-legal moves for our square iteration.
         if (depth = 1) then
             // If depth is 1, then we don't need to do any further recursion and can just do +1 to the count.
             let sqs = colored.ToSqs()
             let dosq sq =
-                let piece, pieceColor = iboard.At(sq)
-                let moveList = MoveList(iboard, sq, piece, pieceColor, hv, d, checks, doubleChecked)
+                let piece, pieceColor = ColPiece.ToPcCol(iboard.At(sq))
+                let moveList = MoveList(iboard, sq, piece, int(pieceColor), hv, d, checks, doubleChecked)
                 if moveList.Promotion then uint64(moveList.Count * 4) else uint64(moveList.Count)
             sqs|>Array.map dosq|>Array.sum
         else
@@ -36,8 +33,8 @@ module Perft =
             let dosq sq =
                 let board = iboard.Clone()
                 // Generate all pseudo-legal moves for our square iteration.
-                let (piece, pieceColor) = board.At(sq)
-                let moveList = MoveList(board, sq, piece, pieceColor, hv, d, checks, doubleChecked)
+                let (piece, pieceColor) = ColPiece.ToPcCol(board.At(sq))
+                let moveList = MoveList(board, sq, piece, int(pieceColor), hv, d, checks, doubleChecked)
                 let mvs = moveList.Moves.ToSqs()
                 let domv mv =
                    // Make our move iteration for our square iteration. Save the revert move for reverting

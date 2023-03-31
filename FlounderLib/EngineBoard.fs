@@ -8,7 +8,7 @@ type EngineBoard =
         {
             Brd = Board(boardData, turnData, castlingData, enPassantTargetData)
             RepHist = RepetitionHistory.Default()
-        } then NNUEb.AccIndex<-0;NNUEb.ResetAccumulator(this.Brd.Map,PieceColor.White);NNUEb.ResetAccumulator(this.Brd.Map,PieceColor.Black)
+        } then NNUEb.AccIndex<-0;NNUEb.ResetAccumulator(this.Brd.Map,0);NNUEb.ResetAccumulator(this.Brd.Map,1)
         
     new(board:EngineBoard) = 
         {
@@ -31,6 +31,7 @@ type EngineBoard =
         if (this.Brd.Map.EnPassantTarget <> Square.Na) then Zobrist.HashEp(&this.Brd.Map.ZobristHash, this.Brd.Map.EnPassantTarget)
         this.Brd.Map.EnPassantTarget <- Square.Na
         this.Brd.Map.stm <- this.Brd.Map.stm ^^^ 1
+        this.Brd.Map.xstm <- this.Brd.Map.xstm ^^^ 1
         Zobrist.FlipTurnInHash(&this.Brd.Map.ZobristHash)
         rv
     member this.UndoNullMove(rv:Square) =
@@ -38,6 +39,7 @@ type EngineBoard =
             this.Brd.Map.EnPassantTarget <- rv
             Zobrist.HashEp(&this.Brd.Map.ZobristHash, rv)
         this.Brd.Map.stm <- this.Brd.Map.stm ^^^ 1
+        this.Brd.Map.xstm <- this.Brd.Map.xstm ^^^ 1
         Zobrist.FlipTurnInHash(&this.Brd.Map.ZobristHash)
     member this.Move(move:byref<OrderedMoveEntry>) =
         let rv:RevertMove =

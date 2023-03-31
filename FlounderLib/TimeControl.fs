@@ -25,8 +25,7 @@ type TimeControl =
             source.CancelAfter(itime)
             token <- source.Token
             TimeControl(source,token,startTime,itime)
-        new(movesToGo:int, timeForColor:ReadOnlySpan<int>, timeIncForColor:ReadOnlySpan<int>, icolorToMove:int, moveCount:int) =
-            let colorToMove = PieceColor.FromInt(icolorToMove)
+        new(movesToGo:int, timeForColor:ReadOnlySpan<int>, timeIncForColor:ReadOnlySpan<int>, colorToMove:int, moveCount:int) =
             let BASE_DIV = 20
             let INCREMENT_MOVE_BOUND = 10
             let INCREMENT_DIV = 2
@@ -38,7 +37,7 @@ type TimeControl =
                 time <- Math.Max(time, timeForColor[int(colorToMove)] / movesToGo - 100)
             if (moveCount >= INCREMENT_MOVE_BOUND) then time <- time + timeIncForColor[int(colorToMove)] / INCREMENT_DIV
             if (moveCount >= DELTA_MOVE_BOUND) then
-                let dTime = timeForColor[int(colorToMove)] - timeForColor[int(PieceColor.OppositeColor(colorToMove))]
+                let dTime = timeForColor[colorToMove] - timeForColor[colorToMove^^^1]
                 if (dTime >= DELTA_THRESHOLD) then time <- time + dTime / DELTA_DIV
             TimeControl(time)
         member this.Finished() = this.Token.IsCancellationRequested

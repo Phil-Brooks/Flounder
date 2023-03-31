@@ -15,32 +15,35 @@ type Board =
     member this.Clone() = Board(this.Map.Copy())
     // Readonly Properties
     member this.CastlingRight(color) = 
-        if color = PieceColor.White then (this.Map.WhiteQCastle, this.Map.WhiteKCastle) else (this.Map.BlackQCastle, this.Map.BlackKCastle)
+        if color = 0 then (this.Map.WhiteQCastle, this.Map.WhiteKCastle) else (this.Map.BlackQCastle, this.Map.BlackKCastle)
     member this.At(sq:Square) = this.Map.[sq]
     member this.All() = this.Map.[0] ||| this.Map.[1]
     member this.All(color:int) = this.Map.[color]
     member this.All(piece, color) = this.Map.[piece, color]
     member this.KingLoc(color:int) = this.Map.[Piece.King, color]
     member this.EnptyAt(sq:Square) = 
-        let (pc,_) = this.Map.[sq]
-        pc = Piece.Empty
+        let pc = this.Map.[sq]
+        pc = ColPiece.Empty
     // Move
     member this.Move(from:Square, mto:Square, ?promotion0:Promotion) =
         let promotion = defaultArg promotion0 Promotion.None
-        let (pieceF, colorF) = this.Map.[from]
-        let (pieceT, colorT) = this.Map.[mto]
+        let cpcF = this.Map.[from]
+        let cpcT = this.Map.[mto]
+        let pieceF, colorF = ColPiece.ToPcCol(cpcF)
+        let pieceT, colorT = ColPiece.ToPcCol(cpcT)
         // Generate a revert move before the map has been altered.
         let mutable rv = RevertMove.FromBitBoardMap(&this.Map)
         if (pieceT <> Piece.Empty) then
             // If piece we're moving to isn't an empty one, we will be capturing.
             // Thus, we need to set it in revert move to ensure we can properly revert it.
             rv.CapturedPiece <- pieceT
-            rv.CapturedColor <- colorT
+            rv.CapturedColor <- int(colorT)
         if (this.EnPassantTarget = mto && pieceF = Piece.Pawn) then
             // If the attack is an EP attack, we must empty the piece affected by EP.
-            let epPieceSq = if colorF = PieceColor.White then Square.FromInt(int(this.EnPassantTarget) + 8) else Square.FromInt(int(this.EnPassantTarget) - 8)
-            let oppositeColor = PieceColor.OppositeColor(colorF)
-            this.Map.Empty(Piece.Pawn, oppositeColor, epPieceSq)
+            let epPieceSq = if colorF = 0 then Square.FromInt(int(this.EnPassantTarget) + 8) else Square.FromInt(int(this.EnPassantTarget) - 8)
+            let oppositeColor = colorF^^^1
+            let eppc = if colorF=0 then ColPiece.BlackPawn else ColPiece.WhitePawn
+            this.Map.Empty(eppc, epPieceSq)
             // Set it in revert move.
             rv.EnPassant <- true
             // We only need to reference the color.
@@ -49,15 +52,16 @@ type Board =
         if (this.EnPassantTarget<> Square.Na) then Zobrist.HashEp(&this.Map.ZobristHash, this.Map.EnPassantTarget)
         if (pieceF = Piece.Pawn && Math.Abs(int(mto) - int(from)) = 16) then
             // If the pawn push is a 2-push, the square behind it will be EP target.
-            this.Map.EnPassantTarget <- if colorF = PieceColor.White then Square.FromInt(int(from) - 8) else Square.FromInt(int(from) + 8)
+            this.Map.EnPassantTarget <- if colorF = 0 then Square.FromInt(int(from) - 8) else Square.FromInt(int(from) + 8)
             // Update Zobrist.
             Zobrist.HashEp(&this.Map.ZobristHash, this.Map.EnPassantTarget)
         else this.Map.EnPassantTarget <- Square.Na
         // Make the move.
-        this.Map.Move(pieceF, colorF, pieceT, colorT, from, mto)
+        this.Map.Move(cpcF, cpcT, from, mto)
         if (promotion <> Promotion.None) then
-            this.Map.Empty(pieceF, colorF, mto)
-            this.Map.InsertPiece(Piece.FromInt(int(promotion)), colorF, mto)
+            this.Map.Empty(cpcF, mto)
+            let prompc = ColPiece.FromInt(int(promotion)*2 + int(colorF))
+            this.Map.InsertPiece(prompc, mto)
             rv.Promotion <- true
         // Update revert move.
         rv.From <- from
@@ -70,20 +74,20 @@ type Board =
         )
         // If our rook moved, we must update castling rights.
         if pieceF = Piece.Rook then
-            if colorF = PieceColor.White then
+            if colorF = 0 then
                 if int(from) % 8 = 0 then this.Map.WhiteQCastle <- 0x0
                 if int(from) % 8 = 7 then this.Map.WhiteKCastle <- 0x0
-            elif colorF = PieceColor.Black then
+            elif colorF = 1 then
                 if int(from) % 8 = 0 then this.Map.BlackQCastle <- 0x0
                 if int(from) % 8 = 7 then this.Map.BlackKCastle <- 0x0
             else
                 raise (InvalidOperationException("Rook cannot have no color."))
         // If our king moved, we also must update castling rights.
         if pieceF = Piece.King then
-            if colorF = PieceColor.White then
+            if colorF = 0 then
                 this.Map.WhiteQCastle <- 0x0
                 this.Map.WhiteKCastle <- 0x0
-            elif colorF = PieceColor.Black then
+            elif colorF = 1 then
                 this.Map.BlackQCastle <- 0x0
                 this.Map.BlackKCastle <- 0x0
             else
@@ -100,15 +104,14 @@ type Board =
                     rv.SecondaryTo <- Square.FromInt(int(mto) + 1)
                 // Make the secondary move.
                 this.Map.Move(
-                    Piece.Rook, colorF, Piece.Empty, PieceColor.None, 
-                    rv.SecondaryFrom, rv.SecondaryTo
+                    (if colorF=0 then ColPiece.WhiteRook else ColPiece.BlackRook), ColPiece.Empty, rv.SecondaryFrom, rv.SecondaryTo
                 )
         // If our rook was captured, we must also update castling rights so we don't castle with enemy piece.
         if pieceT = Piece.Rook then
-            if colorT = PieceColor.White then
+            if colorT = 0 then
                 if (mto = Square.A1) then this.Map.WhiteQCastle <- 0x0
                 if (mto = Square.H1) then this.Map.WhiteKCastle <- 0x0
-            elif colorT = PieceColor.Black then
+            elif colorT = 1 then
                 if (mto = Square.A8) then this.Map.BlackQCastle <- 0x0
                 if (mto = Square.H8) then this.Map.BlackKCastle <- 0x0
             else
@@ -121,6 +124,7 @@ type Board =
         )
         // Flip the turn.
         this.Map.stm <- this.Map.stm ^^^ 1  
+        this.Map.xstm <- this.Map.xstm ^^^ 1  
         // Update Zobrist.
         Zobrist.FlipTurnInHash(&this.Map.ZobristHash)
         rv
@@ -152,29 +156,30 @@ type Board =
             Zobrist.HashEp(&this.Map.ZobristHash, this.Map.EnPassantTarget)
         // Revert to previous turn.
         this.Map.stm <- this.Map.stm ^^^ 1
+        this.Map.xstm <- this.Map.xstm ^^^ 1
         Zobrist.FlipTurnInHash(&this.Map.ZobristHash)
         if (rv.Promotion) then
-            let (piece, color) = this.Map.[rv.To]
-            this.Map.Empty(piece, color, rv.To)
-            this.Map.InsertPiece(Piece.Pawn, color, rv.To)
-        let (pF, cF) = this.Map.[rv.To]
-        let (pT, cT) = this.Map.[rv.From]
+            let color = this.Map.ColorOnly(rv.To)
+            this.Map.Empty(this.Map.[rv.To], rv.To)
+            this.Map.InsertPiece(ColPiece.FromInt(color), rv.To)
+        let pF = this.Map.[rv.To]
+        let pT = this.Map.[rv.From]
         // Undo the move by moving the piece back.
-        this.Map.Move(pF, cF, pT, cT, rv.To, rv.From)
+        this.Map.Move(pF, pT, rv.To, rv.From)
         if (rv.EnPassant) then
             // If it was an EP attack, we must insert a pawn at the affected square.
-            let insertion = if rv.CapturedColor = PieceColor.White then Square.FromInt(int(rv.To) - 8) else Square.FromInt(int(rv.To) + 8)
-            this.Map.InsertPiece(Piece.Pawn, rv.CapturedColor, insertion)
+            let insertion = if rv.CapturedColor = 0 then Square.FromInt(int(rv.To) - 8) else Square.FromInt(int(rv.To) + 8)
+            this.Map.InsertPiece(ColPiece.FromInt(int(rv.CapturedColor)), insertion)
         elif (rv.CapturedPiece <> Piece.Empty) then
             // If a capture happened, we must insert the piece at the relevant square.
-            this.Map.InsertPiece(rv.CapturedPiece, rv.CapturedColor, rv.To)
+            this.Map.InsertPiece(ColPiece.FromInt(int(rv.CapturedPiece)*2 + int(rv.CapturedColor)), rv.To)
         // If there was a secondary move (castling), revert the secondary move.
         elif (rv.SecondaryFrom <> Square.Na) then this.Map.Move(rv.SecondaryTo, rv.SecondaryFrom)
     // Insert/Remove
-    member this.InsertPiece(piece, color, sq) = 
-        this.Map.InsertPiece(piece, color, sq)
-    member this.RemovePiece(piece, color, sq) =
-        this.Map.Empty(piece, color, sq)
+    member this.InsertPiece(cpc, sq) = 
+        this.Map.InsertPiece(cpc, sq)
+    member this.RemovePiece(cpc, sq) =
+        this.Map.Empty(cpc, sq)
     override this.ToString() =
         "FEN: " + this.GenerateFen() + "\nHash: " + $"{this.Map.ZobristHash:X}" + "\n"
     member this.GenerateFen() =

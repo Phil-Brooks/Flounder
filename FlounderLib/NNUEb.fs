@@ -85,12 +85,12 @@ module NNUEb =
         if pc<>Piece.King then false
         elif (from &&& 4) <> (mto &&& 4) then true
         else KING_BUCKETS.[from]<>KING_BUCKETS.[mto]
-    let FeatureIdx(colpc:ColPiece, sq:Square, kingsq:Square, view:PieceColor) =
-        let oP = 6 * ((int(colpc) ^^^ int(view)) &&& 0x1) + int(colpc)/2
-        let oK = (7 * if (int(kingsq) &&& 4) = 0 then 1 else 0) ^^^ (56 * int(view)) ^^^ int(kingsq)
-        let oSq = (7 * if (int(kingsq) &&& 4) = 0 then 1 else 0) ^^^ (56 * int(view)) ^^^ int(sq)
+    let FeatureIdx(colpc:ColPiece, sq:Square, kingsq:Square, view:int) =
+        let oP = 6 * ((int(colpc) ^^^ view) &&& 0x1) + int(colpc)/2
+        let oK = (7 * if (int(kingsq) &&& 4) = 0 then 1 else 0) ^^^ (56 * view) ^^^ int(kingsq)
+        let oSq = (7 * if (int(kingsq) &&& 4) = 0 then 1 else 0) ^^^ (56 * view) ^^^ int(sq)
         KING_BUCKETS.[oK] * 12 * 64 + oP * 64 + oSq
-    let ApplySubSubAddAdd(src:int16 array, f1:int, f2:int, f3:int, f4:int, view:PieceColor) =
+    let ApplySubSubAddAdd(src:int16 array, f1:int, f2:int, f3:int, f4:int, view:int) =
         let regs:int16 array = Array.zeroCreate 16
         for c = 0 to 768/16-1 do
             let unrollOffset = c * 16
@@ -109,8 +109,8 @@ module NNUEb =
             for i = 0 to 15 do
                 regs.[i] <- regs.[i] + NNUEin.InputWeights.[o4 + i]
             for i = 0 to 15 do
-                Accumulators.[AccIndex].AccValues.[int(view)].[unrollOffset+i] <- regs.[i]
-    let ApplySubSubAdd(src:int16 array, f1:int, f2:int, f3:int, view:PieceColor) =
+                Accumulators.[AccIndex].AccValues.[view].[unrollOffset+i] <- regs.[i]
+    let ApplySubSubAdd(src:int16 array, f1:int, f2:int, f3:int, view:int) =
         let regs:int16 array = Array.zeroCreate 16
         for c = 0 to 768/16-1 do
             let unrollOffset = c * 16
@@ -126,8 +126,8 @@ module NNUEb =
             for i = 0 to 15 do
                 regs.[i] <- regs.[i] + NNUEin.InputWeights.[o3 + i]
             for i = 0 to 15 do
-                Accumulators.[AccIndex].AccValues.[int(view)].[unrollOffset+i] <- regs.[i]
-    let ApplySubAdd(src:int16 array, f1:int, f2:int, view:PieceColor) =
+                Accumulators.[AccIndex].AccValues.[view].[unrollOffset+i] <- regs.[i]
+    let ApplySubAdd(src:int16 array, f1:int, f2:int, view:int) =
         let regs:int16 array = Array.zeroCreate 16
         for c = 0 to 768/16-1 do
             let unrollOffset = c * 16
@@ -140,16 +140,15 @@ module NNUEb =
             for i = 0 to 15 do
                 regs.[i] <- regs.[i] + NNUEin.InputWeights.[o2 + i]
             for i = 0 to 15 do
-                Accumulators.[AccIndex].AccValues.[int(view)].[unrollOffset+i] <- regs.[i]
-    let ApplyUpdates(map:BitBoardMap, move:RevertMove, iview:int) =
-        let view = PieceColor.FromInt(iview)
+                Accumulators.[AccIndex].AccValues.[view].[unrollOffset+i] <- regs.[i]
+    let ApplyUpdates(map:BitBoardMap, move:RevertMove, view:int) =
         let captured = 
             if move.EnPassant then (if map.stm=1 then ColPiece.BlackPawn else ColPiece.WhitePawn)
             else ColPiece.FromPcCol(move.CapturedPiece,move.CapturedColor)
         let prev = Accumulators.[AccIndex-1].AccValues.[int(view)]
-        let king = map.[Piece.King, iview].ToSq()
+        let king = map.[Piece.King, view].ToSq()
         let movingSide = move.ColorToMove
-        let colpcto = ColPiece.FromPcCol(map.[move.To])
+        let colpcto = map.[move.To]
         let colpcfrom =
             if move.Promotion then ColPiece.FromPcCol(Piece.Pawn,movingSide)
             else colpcto
@@ -164,14 +163,14 @@ module NNUEb =
         //IsCap
         elif captured<>ColPiece.Empty then
             let capSq = 
-                if move.EnPassant && movingSide=PieceColor.White then Square.FromInt(int(move.To) + 8)
+                if move.EnPassant && movingSide=0 then Square.FromInt(int(move.To) + 8)
                 elif move.EnPassant then Square.FromInt(int(move.To) - 8)
                 else move.To
             let capturedTo = FeatureIdx(captured, capSq, king, view)
             ApplySubSubAdd(prev, from, capturedTo, mto, view)
         else
             ApplySubAdd(prev, from, mto, view)    
-    let ApplyDelta(src:int16 array, delta:Delta, perspective) =
+    let ApplyDelta(src:int16 array, delta:Delta, perspective:int) =
         let regs:int16 array = Array.zeroCreate 16
         for c = 0 to 768/16-1 do
             let unrollOffset = c * 16
@@ -186,11 +185,10 @@ module NNUEb =
                 for i = 0 to 15 do
                     regs.[i] <- regs.[i] + NNUEin.InputWeights.[offset + i]
             for i = 0 to 15 do
-                Accumulators.[AccIndex].AccValues.[int(perspective)].[unrollOffset+i] <- regs.[i]
-    let ResetAccumulator(map:BitBoardMap,perspective:PieceColor) =
-        let iperspective = int(perspective)
+                Accumulators.[AccIndex].AccValues.[perspective].[unrollOffset+i] <- regs.[i]
+    let ResetAccumulator(map:BitBoardMap,perspective:int) =
         let delta= Delta.Default()
-        let kingSq = map.[Piece.King, iperspective].ToSq()
+        let kingSq = map.[Piece.King, perspective].ToSq()
         let occupied = ~~~(map.[2])
         let mutable sqIterator = occupied.GetEnumerator()
         let mutable sq = sqIterator.Current
@@ -201,12 +199,11 @@ module NNUEb =
             delta.a <- delta.a + 1
         let src = Array.copy NNUEin.InputBiases
         ApplyDelta(src,delta,perspective)
-    let RefreshAccumulator(map:BitBoardMap,perspective:PieceColor) =
-        let iperspective = int(perspective)
+    let RefreshAccumulator(map:BitBoardMap,perspective:int) =
         let delta = Delta.Default()
-        let kingSq = map.[Piece.King, iperspective].ToSq()
-        let pBucket = if perspective = PieceColor.White then 0 else 32
-        let kingBucket = KING_BUCKETS.[int(kingSq) ^^^ (56 * int(perspective))] + (if Square.ToFile(kingSq) > 3 then 16 else 0)
+        let kingSq = map.[Piece.King, perspective].ToSq()
+        let pBucket = if perspective = 0 then 0 else 32
+        let kingBucket = KING_BUCKETS.[int(kingSq) ^^^ (56 * perspective)] + (if Square.ToFile(kingSq) > 3 then 16 else 0)
         let state = RefreshTable.[pBucket + kingBucket]
         for pc in ColPcs do
             let curr = map.Pieces.[int(pc)]
@@ -235,13 +232,12 @@ module NNUEb =
         let mto = 
             if map.stm=1 then int(move.To)
             else int(move.To)^^^56
-        let othercolor = if map.stm = 0 then PieceColor.Black else PieceColor.White
-        let colpcto = ColPiece.FromPcCol(map.[move.To])
+        let colpcto = map.[move.To]
         let colpcfrom =
-            if move.Promotion then ColPiece.FromPcCol(Piece.Pawn,othercolor)
+            if move.Promotion then ColPiece.FromPcCol(Piece.Pawn,map.xstm)
             else colpcto
         if MoveRequiresRefresh(colpcfrom, from, mto) then
-            RefreshAccumulator(map, othercolor)
+            RefreshAccumulator(map, map.xstm)
             ApplyUpdates(map, move, map.stm)
         else
             ApplyUpdates(map, move, 0)

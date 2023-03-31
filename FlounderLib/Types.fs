@@ -2,7 +2,7 @@
 
 [<AutoOpen>]
 module Types =
-    let VersionNo = "0.4.1.1"
+    let VersionNo = "0.4.1.2"
 
     type ColPiece =
         // The type of piece.
@@ -45,7 +45,6 @@ module Types =
         |White = 0
         |Black = 1
         |None = 2
-    let Cols = [|PieceColor.White;PieceColor.Black|]
 
     type Square =
         // Squares on a chess board.
@@ -100,13 +99,6 @@ module Piece =
         let pc:Piece = LanguagePrimitives.EnumOfValue(i)
         pc
 
-module PieceColor =
-    let OppositeColor(color:PieceColor):PieceColor =
-        if color = PieceColor.White then PieceColor.Black else PieceColor.White
-    let FromInt(i:int) =
-        let cl:PieceColor = LanguagePrimitives.EnumOfValue(i)
-        cl
-
 module ColPiece =
     let FromInt(i:int) =
         let colpc:ColPiece = LanguagePrimitives.EnumOfValue(i)
@@ -114,11 +106,11 @@ module ColPiece =
     let ToPcCol(colpc:ColPiece) =
         let i = int(colpc)
         let pc = Piece.FromInt(i/2)
-        let col = if pc=Piece.Empty then PieceColor.None else PieceColor.FromInt(i%2)
+        let col = if pc=Piece.Empty then 2 else i%2
         pc,col
-    let FromPcCol(piece:Piece,color:PieceColor) =
-        if color = PieceColor.None||piece=Piece.Empty then ColPiece.Empty
-        else FromInt(int(piece)*2 + int(color))
+    let FromPcCol(piece:Piece,color:int) =
+        if color = 2||piece=Piece.Empty then ColPiece.Empty
+        else FromInt(int(piece)*2 + color)
 
 module Square =
     let FromInt(i:int) =

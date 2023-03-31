@@ -244,10 +244,9 @@ type MoveSearch =
                 let nextPlyFromRoot = plyFromRoot + 1
                 // Determine whether we should prune moves.
                 let icolor = board.Brd.Map.stm
-                let ioppositeColor = icolor^^^1
-                let oppositeColor = PieceColor.FromInt(ioppositeColor)
+                let ioppositeColor = board.Brd.Map.xstm
                 let kingSq = board.Brd.KingLoc(board.Brd.Map.stm).ToSq()
-                let mutable inCheck = MoveList.UnderAttack(board.Brd, kingSq, oppositeColor)
+                let mutable inCheck = MoveList.UnderAttack(board.Brd, kingSq, ioppositeColor)
                 let mutable improving = false
                 // We should use the evaluation from our transposition table if we had a hit.
                 // As that evaluation isn't truly static and may have been from a previous deep search.

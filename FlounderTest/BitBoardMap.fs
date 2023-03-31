@@ -17,54 +17,54 @@ module BitBoardMap =
 
     [<Test>]
     let GetWhitePawn() =
-        (Piece.Pawn, PieceColor.White) |> should equal Map.[Square.A2]
+        ColPiece.WhitePawn |> should equal Map.[Square.A2]
 
     [<Test>]
     let GetWhiteRook() =
-        (Piece.Rook, PieceColor.White) |> should equal Map.[Square.A1]
+        ColPiece.WhiteRook |> should equal Map.[Square.A1]
 
     [<Test>]
     let GetWhiteQueen() =
-        (Piece.Queen, PieceColor.White) |> should equal Map.[Square.D1]
+        ColPiece.WhiteQueen |> should equal Map.[Square.D1]
 
     [<Test>]
     let GetWhiteKing() =
-        (Piece.King, PieceColor.White) |> should equal Map.[Square.E1]
+        ColPiece.WhiteKing |> should equal Map.[Square.E1]
 
     [<Test>]
     let GetBlackPawn() =
-        (Piece.Pawn, PieceColor.Black) |> should equal Map.[Square.A7]
+        ColPiece.BlackPawn |> should equal Map.[Square.A7]
 
     [<Test>]
     let GetBlackRook() =
-        (Piece.Rook, PieceColor.Black) |> should equal Map.[Square.A8]
+        ColPiece.BlackRook |> should equal Map.[Square.A8]
 
     [<Test>]
     let GetBlackQueen() =
-        (Piece.Queen, PieceColor.Black) |> should equal Map.[Square.D8]
+        ColPiece.BlackQueen |> should equal Map.[Square.D8]
 
     [<Test>]
     let GetBlackKing() =
-        (Piece.King, PieceColor.Black) |> should equal Map.[Square.E8]
+        ColPiece.BlackKing |> should equal Map.[Square.E8]
 
     [<Test>]
     let MoveWhitePawn() =
         let useMap = Map.Copy()
         useMap.Move(Square.A2, Square.A4)
-        (Piece.Pawn, PieceColor.White) |> should equal useMap.[Square.A4]
+        ColPiece.WhitePawn |> should equal useMap.[Square.A4]
 
     [<Test>]
     let MoveWhitePawnInEnemy() =
         let useMap = Map.Copy()
         useMap.Move(Square.A2, Square.A7)
-        (Piece.Pawn, PieceColor.White) |> should equal useMap.[Square.A7]
+        ColPiece.WhitePawn |> should equal useMap.[Square.A7]
         useMap.[Piece.Pawn, 1].Count |> should equal 7
 
     [<Test>]
     let RemoveWhitePawn() =
         let useMap = Map.Copy()
         useMap.Empty(Square.A2)
-        (Piece.Empty, PieceColor.None) |> should equal useMap.[Square.A2]
+        ColPiece.Empty |> should equal useMap.[Square.A2]
         let fen = useMap.GenerateBoardFen()
         fen |> should equal "rnbqkbnr/pppppppp/8/8/8/8/1PPPPPPP/RNBQKBNR"
 
@@ -72,13 +72,13 @@ module BitBoardMap =
     let MoveKnightToA3() =
         let useMap = Map.Copy()
         useMap.Move(Square.B1, Square.A3)
-        (Piece.Knight, PieceColor.White) |> should equal useMap.[Square.A3]
+        ColPiece.WhiteKnight |> should equal useMap.[Square.A3]
 
     [<Test>]
     let AddWhitePawn() =
         let useMap = Map.Copy()
-        useMap.InsertPiece(Piece.Pawn,PieceColor.White,Square.A4)
-        (Piece.Pawn, PieceColor.White) |> should equal useMap.[Square.A4]
+        useMap.InsertPiece(ColPiece.WhitePawn,Square.A4)
+        ColPiece.WhitePawn |> should equal useMap.[Square.A4]
 
     [<Test>]
     let ConfirmBoardState() =
@@ -109,9 +109,8 @@ module BitBoardMap =
 
     [<Test>]
     let ItemE1() =
-        let (pc,col) = Map.[Square.E1]
-        pc |> should equal Piece.King
-        col |> should equal PieceColor.White
+        let pc = Map.[Square.E1]
+        pc |> should equal ColPiece.WhiteKing
 
     [<Test>]
     let ItemW() =
@@ -131,4 +130,4 @@ module BitBoardMap =
     [<Test>]
     let ColorOnlyE1() =
         let ans = Map.ColorOnly(Square.E1)
-        ans |> should equal PieceColor.White
+        ans |> should equal 0
