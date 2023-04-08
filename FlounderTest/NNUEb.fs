@@ -127,9 +127,9 @@ module NNUEb =
         NNUEb.ResetAccumulator(board.Map,0)
         NNUEb.ResetAccumulator(board.Map,1)
         NNUEb.ResetRefreshTable()
-        let ans = NNUEb.MoveRequiresRefresh(ColPiece.WhiteKing,int(Square.E1),int(Square.D1))
+        let ans = NNUEb.MoveRequiresRefresh(WhiteKing,int(Square.E1),int(Square.D1))
         ans|>should equal true
-        let ans = NNUEb.MoveRequiresRefresh(ColPiece.WhitePawn,int(Square.A2),int(Square.A3))
+        let ans = NNUEb.MoveRequiresRefresh(WhitePawn,int(Square.A2),int(Square.A3))
         ans|>should equal false
 
     [<Test>]

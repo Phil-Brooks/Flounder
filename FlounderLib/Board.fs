@@ -23,7 +23,7 @@ type Board =
     member this.KingLoc(color:int) = this.Map.[Piece.King, color]
     member this.EnptyAt(sq:Square) = 
         let pc = this.Map.[sq]
-        pc = ColPiece.Empty
+        pc = EmptyColPc
     // Move
     member this.Move(from:Square, mto:Square, ?promotion0:Promotion) =
         let promotion = defaultArg promotion0 Promotion.None
@@ -42,7 +42,7 @@ type Board =
             // If the attack is an EP attack, we must empty the piece affected by EP.
             let epPieceSq = if colorF = 0 then Square.FromInt(int(this.EnPassantTarget) + 8) else Square.FromInt(int(this.EnPassantTarget) - 8)
             let oppositeColor = colorF^^^1
-            let eppc = if colorF=0 then ColPiece.BlackPawn else ColPiece.WhitePawn
+            let eppc = if colorF=0 then BlackPawn else WhitePawn
             this.Map.Empty(eppc, epPieceSq)
             // Set it in revert move.
             rv.EnPassant <- true
@@ -60,7 +60,7 @@ type Board =
         this.Map.Move(cpcF, cpcT, from, mto)
         if (promotion <> Promotion.None) then
             this.Map.Empty(cpcF, mto)
-            let prompc = ColPiece.FromInt(int(promotion)*2 + int(colorF))
+            let prompc = int(promotion)*2 + int(colorF)
             this.Map.InsertPiece(prompc, mto)
             rv.Promotion <- true
         // Update revert move.
@@ -104,7 +104,7 @@ type Board =
                     rv.SecondaryTo <- Square.FromInt(int(mto) + 1)
                 // Make the secondary move.
                 this.Map.Move(
-                    (if colorF=0 then ColPiece.WhiteRook else ColPiece.BlackRook), ColPiece.Empty, rv.SecondaryFrom, rv.SecondaryTo
+                    (if colorF=0 then WhiteRook else BlackRook), EmptyColPc, rv.SecondaryFrom, rv.SecondaryTo
                 )
         // If our rook was captured, we must also update castling rights so we don't castle with enemy piece.
         if pieceT = Piece.Rook then
@@ -161,7 +161,7 @@ type Board =
         if (rv.Promotion) then
             let color = this.Map.ColorOnly(rv.To)
             this.Map.Empty(this.Map.[rv.To], rv.To)
-            this.Map.InsertPiece(ColPiece.FromInt(color), rv.To)
+            this.Map.InsertPiece(color, rv.To)
         let pF = this.Map.[rv.To]
         let pT = this.Map.[rv.From]
         // Undo the move by moving the piece back.
@@ -169,10 +169,10 @@ type Board =
         if (rv.EnPassant) then
             // If it was an EP attack, we must insert a pawn at the affected square.
             let insertion = if rv.CapturedColor = 0 then Square.FromInt(int(rv.To) - 8) else Square.FromInt(int(rv.To) + 8)
-            this.Map.InsertPiece(ColPiece.FromInt(int(rv.CapturedColor)), insertion)
+            this.Map.InsertPiece(int(rv.CapturedColor), insertion)
         elif (rv.CapturedPiece <> Piece.Empty) then
             // If a capture happened, we must insert the piece at the relevant square.
-            this.Map.InsertPiece(ColPiece.FromInt(int(rv.CapturedPiece)*2 + int(rv.CapturedColor)), rv.To)
+            this.Map.InsertPiece(int(rv.CapturedPiece)*2 + int(rv.CapturedColor), rv.To)
         // If there was a secondary move (castling), revert the secondary move.
         elif (rv.SecondaryFrom <> Square.Na) then this.Map.Move(rv.SecondaryTo, rv.SecondaryFrom)
     // Insert/Remove

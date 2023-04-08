@@ -80,12 +80,12 @@ module NNUEb =
             RefreshTable.[i] <- acci
 
     //NB need to change the from and mto if Black
-    let MoveRequiresRefresh(piece:ColPiece, from:int, mto:int) =
+    let MoveRequiresRefresh(piece:int, from:int, mto:int) =
         let pc,_ = ColPiece.ToPcCol(piece)
         if pc<>Piece.King then false
         elif (from &&& 4) <> (mto &&& 4) then true
         else KING_BUCKETS.[from]<>KING_BUCKETS.[mto]
-    let FeatureIdx(colpc:ColPiece, sq:Square, kingsq:Square, view:int) =
+    let FeatureIdx(colpc:int, sq:Square, kingsq:Square, view:int) =
         let oP = 6 * ((int(colpc) ^^^ view) &&& 0x1) + int(colpc)/2
         let oK = (7 * if (int(kingsq) &&& 4) = 0 then 1 else 0) ^^^ (56 * view) ^^^ int(kingsq)
         let oSq = (7 * if (int(kingsq) &&& 4) = 0 then 1 else 0) ^^^ (56 * view) ^^^ int(sq)
@@ -143,7 +143,7 @@ module NNUEb =
                 Accumulators.[AccIndex].AccValues.[view].[unrollOffset+i] <- regs.[i]
     let ApplyUpdates(map:BitBoardMap, move:RevertMove, view:int) =
         let captured = 
-            if move.EnPassant then (if map.stm=1 then ColPiece.BlackPawn else ColPiece.WhitePawn)
+            if move.EnPassant then (if map.stm=1 then BlackPawn else WhitePawn)
             else ColPiece.FromPcCol(move.CapturedPiece,move.CapturedColor)
         let prev = Accumulators.[AccIndex-1].AccValues.[int(view)]
         let king = map.[Piece.King, view].ToSq()
@@ -161,7 +161,7 @@ module NNUEb =
             let rookTo = FeatureIdx(colpcrook, move.SecondaryTo, king, view)
             ApplySubSubAddAdd(prev, from, rookFrom, mto, rookTo, view)
         //IsCap
-        elif captured<>ColPiece.Empty then
+        elif captured <> EmptyColPc then
             let capSq = 
                 if move.EnPassant && movingSide=0 then Square.FromInt(int(move.To) + 8)
                 elif move.EnPassant then Square.FromInt(int(move.To) - 8)
@@ -205,9 +205,9 @@ module NNUEb =
         let pBucket = if perspective = 0 then 0 else 32
         let kingBucket = KING_BUCKETS.[int(kingSq) ^^^ (56 * perspective)] + (if Square.ToFile(kingSq) > 3 then 16 else 0)
         let state = RefreshTable.[pBucket + kingBucket]
-        for pc in ColPcs do
-            let curr = map.Pieces.[int(pc)]
-            let prev = state.Pcs.[int(pc)] 
+        for pc = WhitePawn to BlackKing do
+            let curr = map.Pieces.[pc]
+            let prev = state.Pcs.[pc] 
             let rem = prev &&& ~~~curr
             let add = curr &&& ~~~prev
             let mutable remIterator = rem.GetEnumerator()

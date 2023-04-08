@@ -7,7 +7,7 @@ type BitBoardMap =
         val mutable stm:int // side to move
         val mutable xstm:int // not side to move
         val Pieces:BitBoard array
-        val PiecesAndColors:ColPiece array
+        val PiecesAndColors:int array
         val mutable White:BitBoard
         val mutable Black:BitBoard
         val mutable WhiteKCastle:int
@@ -38,9 +38,9 @@ type BitBoardMap =
                     BitBoard.Default;BitBoard.Default;BitBoard.Default;BitBoard.Default;BitBoard.Default;BitBoard.Default;
                     BitBoard.Default;BitBoard.Default;BitBoard.Default;BitBoard.Default;BitBoard.Default;BitBoard.Default
                 |]
-            let piecesAndColors:ColPiece array = Array.zeroCreate 64
+            let piecesAndColors:int array = Array.zeroCreate 64
             for i = 0 to 63 do
-                piecesAndColors[i] <- ColPiece.Empty
+                piecesAndColors[i] <- EmptyColPc
             let expandedBoardData = boardFen.Split(FEN_SPR)
             if expandedBoardData.Length <> 8 then 
                 raise (InvalidDataException("Wrong board data provided: " + boardFen))
@@ -53,49 +53,49 @@ type BitBoardMap =
                     else
                         if (Char.IsUpper(p)) then
                             if p = 'P' then
-                                pieces.[int(ColPiece.WhitePawn)].[v * 8 + h] <- true
-                                piecesAndColors.[v * 8 + h] <- ColPiece.WhitePawn
+                                pieces.[WhitePawn].[v * 8 + h] <- true
+                                piecesAndColors.[v * 8 + h] <- WhitePawn
                             elif p = 'N' then
-                                pieces.[int(ColPiece.WhiteKnight)].[v * 8 + h] <- true
-                                piecesAndColors.[v * 8 + h] <- ColPiece.WhiteKnight
+                                pieces.[WhiteKnight].[v * 8 + h] <- true
+                                piecesAndColors.[v * 8 + h] <- WhiteKnight
                             elif p = 'B' then
-                                pieces.[int(ColPiece.WhiteBishop)].[v * 8 + h] <- true
-                                piecesAndColors.[v * 8 + h] <- ColPiece.WhiteBishop
+                                pieces.[WhiteBishop].[v * 8 + h] <- true
+                                piecesAndColors.[v * 8 + h] <- WhiteBishop
                             elif p = 'R' then
-                                pieces.[int(ColPiece.WhiteRook)].[v * 8 + h] <- true
-                                piecesAndColors.[v * 8 + h] <- ColPiece.WhiteRook
+                                pieces.[WhiteRook].[v * 8 + h] <- true
+                                piecesAndColors.[v * 8 + h] <- WhiteRook
                             elif p = 'Q' then
-                                pieces.[int(ColPiece.WhiteQueen)].[v * 8 + h] <- true
-                                piecesAndColors.[v * 8 + h] <- ColPiece.WhiteQueen
+                                pieces.[WhiteQueen].[v * 8 + h] <- true
+                                piecesAndColors.[v * 8 + h] <- WhiteQueen
                             elif p = 'K' then
-                                pieces.[int(ColPiece.WhiteKing)].[v * 8 + h] <- true
-                                piecesAndColors.[v * 8 + h] <- ColPiece.WhiteKing
+                                pieces.[WhiteKing].[v * 8 + h] <- true
+                                piecesAndColors.[v * 8 + h] <- WhiteKing
                         else
                             if p = 'p' then
-                                pieces.[int(ColPiece.BlackPawn)].[v * 8 + h] <- true
-                                piecesAndColors.[v * 8 + h] <- ColPiece.BlackPawn
+                                pieces.[BlackPawn].[v * 8 + h] <- true
+                                piecesAndColors.[v * 8 + h] <- BlackPawn
                             elif p = 'n' then
-                                pieces.[int(ColPiece.BlackKnight)].[v * 8 + h] <- true
-                                piecesAndColors.[v * 8 + h] <- ColPiece.BlackKnight
+                                pieces.[BlackKnight].[v * 8 + h] <- true
+                                piecesAndColors.[v * 8 + h] <- BlackKnight
                             elif p = 'b' then
-                                pieces.[int(ColPiece.BlackBishop)].[v * 8 + h] <- true
-                                piecesAndColors.[v * 8 + h] <- ColPiece.BlackBishop
+                                pieces.[BlackBishop].[v * 8 + h] <- true
+                                piecesAndColors.[v * 8 + h] <- BlackBishop
                             elif p = 'r' then
-                                pieces.[int(ColPiece.BlackRook)].[v * 8 + h] <- true
-                                piecesAndColors.[v * 8 + h] <- ColPiece.BlackRook
+                                pieces.[BlackRook].[v * 8 + h] <- true
+                                piecesAndColors.[v * 8 + h] <- BlackRook
                             elif p = 'q' then
-                                pieces.[int(ColPiece.BlackQueen)].[v * 8 + h] <- true
-                                piecesAndColors.[v * 8 + h] <- ColPiece.BlackQueen
+                                pieces.[BlackQueen].[v * 8 + h] <- true
+                                piecesAndColors.[v * 8 + h] <- BlackQueen
                             elif p = 'k' then
-                                pieces.[int(ColPiece.BlackKing)].[v * 8 + h] <- true
-                                piecesAndColors.[v * 8 + h] <- ColPiece.BlackKing
+                                pieces.[BlackKing].[v * 8 + h] <- true
+                                piecesAndColors.[v * 8 + h] <- BlackKing
                         h <- h + 1
-            let white = pieces.[int(ColPiece.WhitePawn)] ||| pieces.[int(ColPiece.WhiteKnight)] ||| 
-                        pieces.[int(ColPiece.WhiteBishop)] ||| pieces.[int(ColPiece.WhiteRook)] ||| 
-                        pieces.[int(ColPiece.WhiteQueen)] ||| pieces.[int(ColPiece.WhiteKing)] 
-            let black = pieces.[int(ColPiece.BlackPawn)] ||| pieces.[int(ColPiece.BlackKnight)] ||| 
-                        pieces.[int(ColPiece.BlackBishop)] ||| pieces.[int(ColPiece.BlackRook)] ||| 
-                        pieces.[int(ColPiece.BlackQueen)] ||| pieces.[int(ColPiece.BlackKing)] 
+            let white = pieces.[WhitePawn] ||| pieces.[WhiteKnight] ||| 
+                        pieces.[WhiteBishop] ||| pieces.[WhiteRook] ||| 
+                        pieces.[WhiteQueen] ||| pieces.[WhiteKing] 
+            let black = pieces.[BlackPawn] ||| pieces.[BlackKnight] ||| 
+                        pieces.[BlackBishop] ||| pieces.[BlackRook] ||| 
+                        pieces.[BlackQueen] ||| pieces.[BlackKing] 
             let stm = if turnData.[0] = 'w' then 0 else 1
             let xstm = stm^^^1
             let whiteKCastle = if castlingData.Contains('K') then 0x1 else 0x0
@@ -121,7 +121,7 @@ type BitBoardMap =
                 zobristHash
             let zobristHash = gethash()
             BitBoardMap(stm,xstm,pieces,piecesAndColors,white,black,whiteKCastle,whiteQCastle,blackKCastle,blackQCastle,enPassantTarget,zobristHash)
-        new(map:BitBoardMap, pieces:BitBoard array, piecesAndColors:ColPiece array) =
+        new(map:BitBoardMap, pieces:BitBoard array, piecesAndColors:int array) =
             let stm = map.stm
             let xstm = map.xstm
             let White = map.White
@@ -136,7 +136,7 @@ type BitBoardMap =
             let ZobristHash = map.ZobristHash
             BitBoardMap(stm,xstm,Pieces,PiecesAndColors,White,Black,WhiteKCastle,WhiteQCastle,BlackKCastle,BlackQCastle,EnPassantTarget,ZobristHash)
         member this.Item 
-            with get(sq:Square):ColPiece = 
+            with get(sq:Square):int = 
                 this.PiecesAndColors.[int(sq)]
         member this.Item 
             with get(color:int) = 
@@ -152,10 +152,10 @@ type BitBoardMap =
                 this.Pieces.[icpc]
         member this.PieceOnly(sq:Square):Piece = Piece.FromInt(int(this.PiecesAndColors.[int(sq)])/2)
         member this.ColorOnly(sq:Square):int = int(this.PiecesAndColors.[int(sq)])%2
-        member this.Move(pF:ColPiece, pT:ColPiece, from:Square, mto:Square) =
+        member this.Move(pF:int, pT:int, from:Square, mto:Square) =
             let cT = int(pT)%2
             let cF = int(pF)%2
-            if (pT <> ColPiece.Empty) then
+            if (pT <> EmptyColPc) then
                 // If moving to piece isn't empty, then we capture.
                 this.Pieces.[int(pT)].[mto] <- false
                 // Remove from color bitboards.
@@ -171,7 +171,7 @@ type BitBoardMap =
             this.Pieces.[int(pF)].[mto] <- true
             // Make sure to update the pieces and colors.
             this.PiecesAndColors.[int(mto)] <- this.PiecesAndColors.[int(from)]
-            this.PiecesAndColors.[int(from)] <- ColPiece.Empty
+            this.PiecesAndColors.[int(from)] <- EmptyColPc
             // Update color bitboards.
             if (cF = 0) then
                 this.White.[from] <- false
@@ -186,12 +186,12 @@ type BitBoardMap =
             let pF = this.[from]
             let pT = this.[mto]
             this.Move(pF, pT, from, mto)
-        member this.Empty(cpc:ColPiece, sq:Square) =
+        member this.Empty(cpc:int, sq:Square) =
             let piece,color = ColPiece.ToPcCol(cpc)
             // Remove from square.
             this.Pieces.[int(cpc)].[sq] <- false
             // Set empty in pieces and colors.
-            this.PiecesAndColors.[int(sq)] <- ColPiece.Empty
+            this.PiecesAndColors.[int(sq)] <- EmptyColPc
             // Remove from color bitboards.
             if color = 0 then
                 this.White.[sq] <- false
@@ -202,7 +202,7 @@ type BitBoardMap =
         member this.Empty(sq:Square) =
             let cpc = this.[sq]
             this.Empty(cpc, sq)
-        member this.InsertPiece(cpc:ColPiece,sq:Square) =
+        member this.InsertPiece(cpc:int,sq:Square) =
             let piece,color = ColPiece.ToPcCol(cpc)
             // Insert the piece at square.
             this.Pieces.[int(cpc)].[sq] <- true

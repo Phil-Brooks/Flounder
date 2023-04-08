@@ -2,32 +2,22 @@
 
 [<AutoOpen>]
 module Types =
-    let VersionNo = "0.4.1.2"
+    let VersionNo = "0.4.1.3"
 
-    type ColPiece =
-        // The type of piece.
-        |WhitePawn = 0
-        |BlackPawn = 1
-        |WhiteKnight = 2
-        |BlackKnight = 3
-        |WhiteBishop = 4
-        |BlackBishop = 5
-        |WhiteRook = 6
-        |BlackRook = 7
-        |WhiteQueen = 8
-        |BlackQueen = 9
-        |WhiteKing = 10
-        |BlackKing = 11
-        |Empty = 12
-    let ColPcs = 
-        [|
-            ColPiece.WhitePawn;ColPiece.BlackPawn;
-            ColPiece.WhiteKnight;ColPiece.BlackKnight;
-            ColPiece.WhiteBishop;ColPiece.BlackBishop;
-            ColPiece.WhiteRook;ColPiece.BlackRook;
-            ColPiece.WhiteQueen;ColPiece.BlackQueen;
-            ColPiece.WhiteKing;ColPiece.BlackKing;
-        |]
+    // The type of piece.
+    let WhitePawn = 0
+    let BlackPawn = 1
+    let WhiteKnight = 2
+    let BlackKnight = 3
+    let WhiteBishop = 4
+    let BlackBishop = 5
+    let WhiteRook = 6
+    let BlackRook = 7
+    let WhiteQueen = 8
+    let BlackQueen = 9
+    let WhiteKing = 10
+    let BlackKing = 11
+    let EmptyColPc = 12
     
     type Piece =
         // The type of piece.
@@ -100,17 +90,13 @@ module Piece =
         pc
 
 module ColPiece =
-    let FromInt(i:int) =
-        let colpc:ColPiece = LanguagePrimitives.EnumOfValue(i)
-        colpc
-    let ToPcCol(colpc:ColPiece) =
-        let i = int(colpc)
-        let pc = Piece.FromInt(i/2)
-        let col = if pc=Piece.Empty then 2 else i%2
+    let ToPcCol(colpc:int) =
+        let pc = Piece.FromInt(colpc/2)
+        let col = if pc=Piece.Empty then 2 else colpc%2
         pc,col
     let FromPcCol(piece:Piece,color:int) =
-        if color = 2||piece=Piece.Empty then ColPiece.Empty
-        else FromInt(int(piece)*2 + color)
+        if color = 2||piece=Piece.Empty then EmptyColPc
+        else int(piece)*2 + color
 
 module Square =
     let FromInt(i:int) =
