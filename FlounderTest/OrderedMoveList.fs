@@ -21,5 +21,5 @@ module OrderedMoveList =
         let moveCount = moveList.NormalMoveGeneration(board, OrderedMoveEntry.Default)
         moveCount |> should equal 20
         let ans = moveList.[19]
-        ans.From |> should equal Square.G1
+        ans.From |> should equal G1
         ans.Score |> should equal 0

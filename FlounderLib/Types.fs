@@ -2,7 +2,7 @@
 
 [<AutoOpen>]
 module Types =
-    let VersionNo = "0.4.1.3"
+    let VersionNo = "0.4.1.4"
 
     // The type of piece.
     let WhitePawn = 0
@@ -19,36 +19,88 @@ module Types =
     let BlackKing = 11
     let EmptyColPc = 12
     
-    type Piece =
-        // The type of piece.
-        |Pawn = 0
-        |Knight = 1
-        |Bishop = 2
-        |Rook = 3
-        |Queen = 4
-        |King = 5
-        |Empty = 6
-    let Pcs = [|Piece.Pawn;Piece.Knight;Piece.Bishop;Piece.Rook;Piece.Queen;Piece.King|]
+    // The type of piece.
+    let Pawn = 0
+    let Knight = 1
+    let Bishop = 2
+    let Rook = 3
+    let Queen = 4
+    let King = 5
+    let EmptyPc = 6
+    let PcChars = "PNBRQK"
 
-    type PieceColor =
-        // The color of the piece.
-        |White = 0
-        |Black = 1
-        |None = 2
+    // The color of the piece.
+    let White = 0
+    let Black = 1
+    let Both = 2
 
-    type Square =
-        // Squares on a chess board.
-        // Square.Na is if it's no square on the board.
-
-        |A8 = 0 |B8 = 1 |C8 = 2 |D8 = 3 |E8 = 4 |F8 = 5 |G8 = 6 |H8 = 7
-        |A7 = 8 |B7 = 9 |C7 = 10 |D7 = 11 |E7 = 12 |F7 = 13 |G7 = 14 |H7 = 15
-        |A6 = 16 |B6 = 17 |C6 = 18 |D6 = 19 |E6 = 20 |F6 = 21 |G6 = 22 |H6 = 23
-        |A5 = 24 |B5 = 25 |C5 = 26 |D5 = 27 |E5 = 28 |F5 = 29 |G5 = 30 |H5 = 31
-        |A4 = 32 |B4 = 33 |C4 = 34 |D4 = 35 |E4 = 36 |F4 = 37 |G4 = 38 |H4 = 39
-        |A3 = 40 |B3 = 41 |C3 = 42 |D3 = 43 |E3 = 44 |F3 = 45 |G3 = 46 |H3 = 47
-        |A2 = 48 |B2 = 49 |C2 = 50 |D2 = 51 |E2 = 52 |F2 = 53 |G2 = 54 |H2 = 55
-        |A1 = 56 |B1 = 57 |C1 = 58 |D1 = 59 |E1 = 60 |F1 = 61 |G1 = 62 |H1 = 63
-        |Na = 64
+    // Squares on a chess board.
+    // Na is if it's no square on the board.
+    let A8 = 0 
+    let B8 = 1 
+    let C8 = 2 
+    let D8 = 3 
+    let E8 = 4 
+    let F8 = 5 
+    let G8 = 6 
+    let H8 = 7
+    let A7 = 8 
+    let B7 = 9 
+    let C7 = 10 
+    let D7 = 11 
+    let E7 = 12 
+    let F7 = 13 
+    let G7 = 14 
+    let H7 = 15
+    let A6 = 16 
+    let B6 = 17 
+    let C6 = 18 
+    let D6 = 19 
+    let E6 = 20 
+    let F6 = 21 
+    let G6 = 22 
+    let H6 = 23
+    let A5 = 24 
+    let B5 = 25 
+    let C5 = 26 
+    let D5 = 27 
+    let E5 = 28 
+    let F5 = 29 
+    let G5 = 30 
+    let H5 = 31
+    let A4 = 32 
+    let B4 = 33 
+    let C4 = 34 
+    let D4 = 35 
+    let E4 = 36 
+    let F4 = 37 
+    let G4 = 38 
+    let H4 = 39
+    let A3 = 40 
+    let B3 = 41 
+    let C3 = 42 
+    let D3 = 43 
+    let E3 = 44 
+    let F3 = 45 
+    let G3 = 46 
+    let H3 = 47
+    let A2 = 48 
+    let B2 = 49 
+    let C2 = 50 
+    let D2 = 51 
+    let E2 = 52 
+    let F2 = 53 
+    let G2 = 54 
+    let H2 = 55
+    let A1 = 56 
+    let B1 = 57 
+    let C1 = 58 
+    let D1 = 59 
+    let E1 = 60 
+    let F1 = 61 
+    let G1 = 62 
+    let H1 = 63
+    let Na = 64
 
     type Promotion =
         |None = 0
@@ -84,30 +136,30 @@ type Delta =
         add:int array
     }
 
-module Piece =
-    let FromInt(i:int) =
-        let pc:Piece = LanguagePrimitives.EnumOfValue(i)
-        pc
-
 module ColPiece =
     let ToPcCol(colpc:int) =
-        let pc = Piece.FromInt(colpc/2)
-        let col = if pc=Piece.Empty then 2 else colpc%2
+        let pc = colpc/2
+        let col = if pc=EmptyPc then 2 else colpc%2
         pc,col
-    let FromPcCol(piece:Piece,color:int) =
-        if color = 2||piece=Piece.Empty then EmptyColPc
+    let FromPcCol(piece:int,color:int) =
+        if color = 2||piece=EmptyPc then EmptyColPc
         else int(piece)*2 + color
 
 module Square =
-    let FromInt(i:int) =
-        let sq:Square = LanguagePrimitives.EnumOfValue(i)
-        sq
-    let ToFile(sq:Square) = int(sq)%8
-    let OldInt(sq:Square) =
-        let i = int(sq)
-        let r = i/8
-        let c = i%8
-        8*(7-r) + c
+    let FromStr(sq:string) =
+        let f = int(sq[0] - 'a')
+        let r = 8 - int(sq[1] - '0')
+        r * 8 + f
+    let FromUci(uci:string) =
+        FromStr(uci[..1]), FromStr(uci[2..3])
+    let ToFile(sq:int) = sq%8
+    let ToRank(sq:int) = sq/8
+    let ToStr(sq:int) =
+        let r = ToRank(sq)
+        let f = ToFile(sq)
+        let num = (8 - r).ToString()
+        let ltr = ("abcdefgh"[f]).ToString()
+        ltr + num
 
 module Promotion =
     let ToStr(promotion:Promotion) =

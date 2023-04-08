@@ -13,7 +13,7 @@ module OrderedMoveList =
             [| 6005; 6004; 6003; 6002; 6001; 6000 |];
             [| 7005; 7004; 7003; 7002; 7001; 7000 |]
         |]
-    let MvvLva(attacker:Piece, victim:Piece) = MvvLvaTable.[int(victim)].[int(attacker)]
+    let MvvLva(attacker:int, victim:int) = MvvLvaTable.[victim].[attacker]
 
 [<IsByRefLike>]
 type OrderedMoveList =
@@ -33,7 +33,7 @@ type OrderedMoveList =
                 KillerMoveTwo =  killerMoveTable.[1, ply]
                 HistTbl =  historyTable
             }
-        member this.ScoreMove(pieceToMove:Piece, board:Board, move:OrderedMoveEntry, tableMove:OrderedMoveEntry) =
+        member this.ScoreMove(pieceToMove:int, board:Board, move:OrderedMoveEntry, tableMove:OrderedMoveEntry) =
             // Compare our move with the one found from transposition table. There's no guarantee the transposition move
             // is even legal, so this acts as a sort of legal verification for it too.
             // Regardless, if our move is equal to that (also proving that it is legal for this position), then give it
@@ -51,7 +51,7 @@ type OrderedMoveList =
             // with least valuable pieces.
             else
                 let pto = board.Map.PieceOnly(move.To)
-                if (pto <> Piece.Empty) then 
+                if (pto <> EmptyPc) then 
                     let pfrom = board.Map.PieceOnly(move.From)
                     OrderedMoveList.MvvLva(pfrom, pto) * 10000
                 // If the move is a quiet move (not capture / promotion), then we should check if it is a killer move or history
@@ -78,26 +78,26 @@ type OrderedMoveList =
                 // We can only do this if we're not double checked.
                 // In case of double-checked (discovered + normal), only the king can move so we should skip this.
                 // Generate all pawn moves.
-                let mutable fromIterator = board.All(Piece.Pawn, board.Map.stm).GetEnumerator()
+                let mutable fromIterator = board.All(Pawn, board.Map.stm).GetEnumerator()
                 let mutable from = fromIterator.Current
                 while (fromIterator.MoveNext()) do
-                    let moveList = MoveList(board, from, Piece.Pawn, board.Map.stm,hv, d, checks)
+                    let moveList = MoveList(board, from, Pawn, board.Map.stm,hv, d, checks)
                     let mutable moves = moveList.Moves.GetEnumerator()
                     let mutable move = moves.Current
                     while (moves.MoveNext()) do
                         if (moveList.Promotion) then
                             for p in Proms do
                                 this.Internal.[i] <- new OrderedMoveEntry(from, move, p)
-                                this.Internal.[i].Score <- this.ScoreMove(Piece.Pawn, board, this.Internal.[i], transpositionMove)
+                                this.Internal.[i].Score <- this.ScoreMove(Pawn, board, this.Internal.[i], transpositionMove)
                                 i<-i+1
                         else
                             this.Internal.[i] <- new OrderedMoveEntry(from, move, Promotion.None)
-                            this.Internal.[i].Score <- this.ScoreMove(Piece.Pawn, board, this.Internal.[i], transpositionMove)
+                            this.Internal.[i].Score <- this.ScoreMove(Pawn, board, this.Internal.[i], transpositionMove)
                             i<-i+1
                         move <- moves.Current
                     from <- fromIterator.Current
                 // Generate moves for rook, knight, bishop, and queen.
-                for piece in [Piece.Rook;Piece.Knight;Piece.Bishop;Piece.Queen] do
+                for piece in [Rook;Knight;Bishop;Queen] do
                     fromIterator <- board.All(piece, board.Map.stm).GetEnumerator()
                     from <- fromIterator.Current
                     while (fromIterator.MoveNext()) do
@@ -111,15 +111,15 @@ type OrderedMoveList =
                             move <- moves.Current
                         from <- fromIterator.Current
             // Generate all king moves.
-            let mutable fromIterator = board.All(Piece.King, board.Map.stm).GetEnumerator()
+            let mutable fromIterator = board.All(King, board.Map.stm).GetEnumerator()
             let mutable from = fromIterator.Current
             while (fromIterator.MoveNext()) do
-                let moveList = MoveList(board, from, Piece.King, board.Map.stm, hv, d, checks)
+                let moveList = MoveList(board, from, King, board.Map.stm, hv, d, checks)
                 let mutable moves = moveList.Moves.GetEnumerator()
                 let mutable move = moves.Current
                 while (moves.MoveNext()) do
                     this.Internal.[i] <- new OrderedMoveEntry(from, move, Promotion.None)
-                    this.Internal.[i].Score <- this.ScoreMove(Piece.King, board, this.Internal.[i], transpositionMove)
+                    this.Internal.[i].Score <- this.ScoreMove(King, board, this.Internal.[i], transpositionMove)
                     i<-i+1
                     move <- moves.Current
                 from <- fromIterator.Current
@@ -137,7 +137,7 @@ type OrderedMoveList =
                 // We can only do this if we're not double checked.
                 // In case of double-checked (discovered + normal), only the king can move so we should skip this.
                 // Generate all pawn moves.
-                let mutable fromIterator = board.All(Piece.Pawn, board.Map.stm).GetEnumerator()
+                let mutable fromIterator = board.All(Pawn, board.Map.stm).GetEnumerator()
                 let mutable from = fromIterator.Current
                 while (fromIterator.MoveNext()) do
                     let moveList = MoveList(board, from, hv, d, checks)
@@ -147,16 +147,16 @@ type OrderedMoveList =
                         if (moveList.Promotion) then
                             for p in Proms do
                                 this.Internal.[i] <- new OrderedMoveEntry(from, move, p)
-                                this.Internal.[i].Score <- this.ScoreMove(Piece.Pawn, board, this.Internal.[i], transpositionMove)
+                                this.Internal.[i].Score <- this.ScoreMove(Pawn, board, this.Internal.[i], transpositionMove)
                                 i<-i+1
                         else 
                             this.Internal.[i] <- new OrderedMoveEntry(from, move, Promotion.None)
-                            this.Internal.[i].Score <- this.ScoreMove(Piece.Pawn, board, this.Internal.[i], transpositionMove)
+                            this.Internal.[i].Score <- this.ScoreMove(Pawn, board, this.Internal.[i], transpositionMove)
                             i<-i+1
                         move <- moves.Current
                     from <- fromIterator.Current
                 // Generate moves for rook, knight, bishop, and queen.
-                for piece in [Piece.Rook;Piece.Knight;Piece.Bishop;Piece.Queen] do
+                for piece in [Rook;Knight;Bishop;Queen] do
                     let mutable fromIterator = board.All(piece, board.Map.stm).GetEnumerator()
                     let mutable from = fromIterator.Current
                     while (fromIterator.MoveNext()) do
@@ -170,15 +170,15 @@ type OrderedMoveList =
                             move <- moves.Current
                         from <- fromIterator.Current
             // Generate all king moves.
-            let mutable fromIterator = board.All(Piece.King, board.Map.stm).GetEnumerator()
+            let mutable fromIterator = board.All(King, board.Map.stm).GetEnumerator()
             let mutable from = fromIterator.Current
             while (fromIterator.MoveNext()) do
-                let moveList = MoveList(board, from, Piece.King, board.Map.stm, hv, d, checks)
+                let moveList = MoveList(board, from, King, board.Map.stm, hv, d, checks)
                 let mutable moves = (moveList.Moves &&& opposite).GetEnumerator()
                 let mutable move = moves.Current
                 while (moves.MoveNext()) do
                     this.Internal.[i] <- new OrderedMoveEntry(from, move, Promotion.None)
-                    this.Internal.[i].Score <- this.ScoreMove(Piece.King, board, this.Internal.[i], transpositionMove)
+                    this.Internal.[i].Score <- this.ScoreMove(King, board, this.Internal.[i], transpositionMove)
                     i<-i+1                    
                     move <- moves.Current
                 from <- fromIterator.Current

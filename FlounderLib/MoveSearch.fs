@@ -55,7 +55,7 @@ type MoveSearch =
         let count = this.PvTable.Count()
         for i = 0 to count-1 do
             let move:OrderedMoveEntry = this.PvTable.Get(i)
-            pv.Append(move.From).Append(move.To)|>ignore
+            pv.Append(Square.ToStr(move.From)).Append(Square.ToStr(move.To))|>ignore
             if move.Promotion <> Promotion.None then pv.Append(Promotion.ToStr(move.Promotion))|>ignore
             pv.Append(' ')|>ignore
         pv.ToString().ToLower()
@@ -181,11 +181,11 @@ type MoveSearch =
                     // If only the kings are left, it's a draw.
                     if allPiecesCount = 2 then ans <- 0|>Some
                     else
-                        let knightLeft = board.Brd.All(Piece.Knight, 0).ToBool() || board.Brd.All(Piece.Knight, 1).ToBool()
+                        let knightLeft = board.Brd.All(Knight, 0).ToBool() || board.Brd.All(Knight, 1).ToBool()
                         // If only the kings and one knight is left, it's a draw.
                         if (allPiecesCount = 3 && knightLeft) then ans <- 0|>Some
                         else
-                            let bishopLeft = board.Brd.All(Piece.Bishop, 0).ToBool() || board.Brd.All(Piece.Bishop, 1).ToBool()
+                            let bishopLeft = board.Brd.All(Bishop, 0).ToBool() || board.Brd.All(Bishop, 1).ToBool()
                             // If only the kings and one bishop is left, it's a draw.
                             if allPiecesCount = 3 && bishopLeft then ans <- 0|>Some
                             else
@@ -300,7 +300,7 @@ type MoveSearch =
                         if inCheck then -99999999 + plyFromRoot else 0
                     else
                         let mutable bestEvaluation = -100000000
-                        let mutable bestMoveSoFar = OrderedMoveEntry(Square.Na, Square.Na, Promotion.None)
+                        let mutable bestMoveSoFar = OrderedMoveEntry(Na, Na, Promotion.None)
                         let mutable transpositionTableEntryType = MoveTranspositionTableEntryType.AlphaUnchanged
                         // Calculate next iteration variables before getting into the loop.
                         let nextDepth = depth - 1

@@ -8,8 +8,8 @@ type HistoryTable =
                 Internal = Array.zeroCreate size
             }
         member this.Item 
-            with get(piece:Piece, color:int, targetSq:Square) = this.Internal.[int(color) * 384 + int(piece) * 64 + int(targetSq)]
-            and set(piece:Piece, color:int, targetSq:Square) value = this.Internal.[int(color) * 384 + int(piece) * 64 + int(targetSq)] <- value
+            with get(piece:int, color:int, targetSq:int) = this.Internal.[color * 384 + piece * 64 + targetSq]
+            and set(piece:int, color:int, targetSq:int) value = this.Internal.[color * 384 + piece * 64 + targetSq] <- value
         member this.Clear() = this.Internal.Initialize()
     end
 module HistoryTable =   

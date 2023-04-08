@@ -27,8 +27,8 @@ module BitBoard =
     [<Test>]
     let MarkA1AsTrue() =
         let mutable useBoard = BitBoard.Default
-        useBoard.[Square.A1] <- true
-        useBoard.[Square.A1] |> should equal true
+        useBoard.[A1] <- true
+        useBoard.[A1] |> should equal true
 
     [<Test>]
     let MarkWhiteAsTrue() =
@@ -226,24 +226,24 @@ module BitBoard =
 
     [<Test>]
     let FromSq() =
-        let ans = BitBoard.FromSq(Square.A8)
+        let ans = BitBoard.FromSq(A8)
         ans.Internal|>should equal 1UL
 
     [<Test>]
     let ToSq() =
-        let ans:Square = BlackB.ToSq()
-        ans|>should equal Square.A8
+        let ans:int = BlackB.ToSq()
+        ans|>should equal A8
 
     [<Test>]
     let ToSqs() =
-        let ans:Square array = BlackB.ToSqs()
-        ans.[0]|>should equal Square.A8
+        let ans:int array = BlackB.ToSqs()
+        ans.[0]|>should equal A8
         ans.Length|>should equal 16
 
     [<Test>]
     let GetEnum() =
         let ans = BlackB.GetEnumerator()
-        ans.Current|>should equal Square.A8
+        ans.Current|>should equal A8
 
     [<Test>]
     let ToStr() =

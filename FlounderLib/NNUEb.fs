@@ -82,10 +82,10 @@ module NNUEb =
     //NB need to change the from and mto if Black
     let MoveRequiresRefresh(piece:int, from:int, mto:int) =
         let pc,_ = ColPiece.ToPcCol(piece)
-        if pc<>Piece.King then false
+        if pc<>King then false
         elif (from &&& 4) <> (mto &&& 4) then true
         else KING_BUCKETS.[from]<>KING_BUCKETS.[mto]
-    let FeatureIdx(colpc:int, sq:Square, kingsq:Square, view:int) =
+    let FeatureIdx(colpc:int, sq:int, kingsq:int, view:int) =
         let oP = 6 * ((int(colpc) ^^^ view) &&& 0x1) + int(colpc)/2
         let oK = (7 * if (int(kingsq) &&& 4) = 0 then 1 else 0) ^^^ (56 * view) ^^^ int(kingsq)
         let oSq = (7 * if (int(kingsq) &&& 4) = 0 then 1 else 0) ^^^ (56 * view) ^^^ int(sq)
@@ -146,25 +146,25 @@ module NNUEb =
             if move.EnPassant then (if map.stm=1 then BlackPawn else WhitePawn)
             else ColPiece.FromPcCol(move.CapturedPiece,move.CapturedColor)
         let prev = Accumulators.[AccIndex-1].AccValues.[int(view)]
-        let king = map.[Piece.King, view].ToSq()
+        let king = map.[King, view].ToSq()
         let movingSide = move.ColorToMove
-        let colpcto = map.[move.To]
+        let colpcto = map.ColPc(move.To)
         let colpcfrom =
-            if move.Promotion then ColPiece.FromPcCol(Piece.Pawn,movingSide)
+            if move.Promotion then ColPiece.FromPcCol(Pawn,movingSide)
             else colpcto
         let from = FeatureIdx(colpcfrom, move.From, king, view)
         let mto = FeatureIdx(colpcto, move.To, king, view)
         //IsCas
-        if move.SecondaryFrom<>Square.Na then
-            let colpcrook =  ColPiece.FromPcCol(Piece.Rook,movingSide)
+        if move.SecondaryFrom<>Na then
+            let colpcrook =  ColPiece.FromPcCol(Rook,movingSide)
             let rookFrom = FeatureIdx(colpcrook, move.SecondaryFrom, king, view)
             let rookTo = FeatureIdx(colpcrook, move.SecondaryTo, king, view)
             ApplySubSubAddAdd(prev, from, rookFrom, mto, rookTo, view)
         //IsCap
         elif captured <> EmptyColPc then
             let capSq = 
-                if move.EnPassant && movingSide=0 then Square.FromInt(int(move.To) + 8)
-                elif move.EnPassant then Square.FromInt(int(move.To) - 8)
+                if move.EnPassant && movingSide=0 then move.To + 8
+                elif move.EnPassant then move.To - 8
                 else move.To
             let capturedTo = FeatureIdx(captured, capSq, king, view)
             ApplySubSubAdd(prev, from, capturedTo, mto, view)
@@ -188,7 +188,7 @@ module NNUEb =
                 Accumulators.[AccIndex].AccValues.[perspective].[unrollOffset+i] <- regs.[i]
     let ResetAccumulator(map:BitBoardMap,perspective:int) =
         let delta= Delta.Default()
-        let kingSq = map.[Piece.King, perspective].ToSq()
+        let kingSq = map.[King, perspective].ToSq()
         let occupied = ~~~(map.[2])
         let mutable sqIterator = occupied.GetEnumerator()
         let mutable sq = sqIterator.Current
@@ -201,7 +201,7 @@ module NNUEb =
         ApplyDelta(src,delta,perspective)
     let RefreshAccumulator(map:BitBoardMap,perspective:int) =
         let delta = Delta.Default()
-        let kingSq = map.[Piece.King, perspective].ToSq()
+        let kingSq = map.[King, perspective].ToSq()
         let pBucket = if perspective = 0 then 0 else 32
         let kingBucket = KING_BUCKETS.[int(kingSq) ^^^ (56 * perspective)] + (if Square.ToFile(kingSq) > 3 then 16 else 0)
         let state = RefreshTable.[pBucket + kingBucket]
@@ -232,9 +232,9 @@ module NNUEb =
         let mto = 
             if map.stm=1 then int(move.To)
             else int(move.To)^^^56
-        let colpcto = map.[move.To]
+        let colpcto = map.ColPc(move.To)
         let colpcfrom =
-            if move.Promotion then ColPiece.FromPcCol(Piece.Pawn,map.xstm)
+            if move.Promotion then ColPiece.FromPcCol(Pawn,map.xstm)
             else colpcto
         if MoveRequiresRefresh(colpcfrom, from, mto) then
             RefreshAccumulator(map, map.xstm)

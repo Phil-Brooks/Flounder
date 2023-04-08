@@ -78,16 +78,16 @@ module BlackMagicBitBoardFactory =
     // Magic Providers
     let RookMagic:(BitBoard * BitBoard * int) array = Array.zeroCreate 64
     let BishopMagic:(BitBoard * BitBoard * int) array = Array.zeroCreate 64
-    let GenerateRookOccupiedMask(sq:Square) =
+    let GenerateRookOccupiedMask(sq:int) =
         // Horizontal files inside.
-        let hMoves = UtilityTable.Hs.[int(sq) % 8] &&& ~~~(UtilityTable.Vs.[0] ||| UtilityTable.Vs.[7])
+        let hMoves = UtilityTable.Hs.[sq % 8] &&& ~~~(UtilityTable.Vs.[0] ||| UtilityTable.Vs.[7])
         // Vertical ranks inside.
-        let vMoves = UtilityTable.Vs.[int(sq) / 8] &&& ~~~(UtilityTable.Hs.[0] ||| UtilityTable.Hs.[7])
+        let vMoves = UtilityTable.Vs.[sq / 8] &&& ~~~(UtilityTable.Hs.[0] ||| UtilityTable.Hs.[7])
         // Occupied inside but the square.
         (hMoves ||| vMoves) &&& (~~~BitBoard.FromSq(sq))
-    let GenerateBishopOccupiedMask(sq:Square) =
-        let h = int(sq) % 8;
-        let v = int(sq) / 8;
+    let GenerateBishopOccupiedMask(sq:int) =
+        let h = sq % 8
+        let v = sq / 8
         let mutable rays = BitBoard.Default
         // Dumb raycast.
         for hI = 0 to 7 do
@@ -100,27 +100,27 @@ module BlackMagicBitBoardFactory =
     let GenerateRookMagicTable() =
         for h = 0 to 7 do
             for v = 0 to 7 do
-                let sq = Square.FromInt(v * 8 + h)
+                let sq = v * 8 + h
                 let magic, offset = RookMagicData.[int(sq)]
                 // Flip mask for BM bitboards.
                 RookMagic.[int(sq)] <- (magic, ~~~(GenerateRookOccupiedMask(sq)), offset)
     let GenerateBishopMagicTable() =
         for h = 0 to 7 do
             for v = 0 to 7 do
-                let sq = Square.FromInt(v * 8 + h)
+                let sq = v * 8 + h
                 let magic, offset = BishopMagicData.[int(sq)]
                 // Flip mask for BM bitboards.
                 BishopMagic.[int(sq)] <- (magic, ~~~(GenerateBishopOccupiedMask(sq)), offset)
     let SetUp() =
         GenerateRookMagicTable()
         GenerateBishopMagicTable()
-    let GetMagicIndex(piece:Piece, occupied:BitBoard, sq:Square) =
+    let GetMagicIndex(piece:int, occupied:BitBoard, sq:int) =
         let args1,args2 =
-            if piece = Piece.Rook then (RookMagic, ROOK)
-            elif piece = Piece.Bishop then (BishopMagic, BISHOP)
+            if piece = Rook then (RookMagic, ROOK)
+            elif piece = Bishop then (BishopMagic, BISHOP)
             else raise (System.IO.InvalidDataException("No magic table found."))
         // Get magic.
-        let magic, mask, offset = args1.[int(sq)]
+        let magic, mask, offset = args1.[sq]
         // Get the relevant occupied squares.
         let relevantOccupied = occupied ||| mask
         // Get hash based on relevant occupied and magic.

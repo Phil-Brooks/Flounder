@@ -8,8 +8,8 @@ type MoveSearchEffortTable =
                 Internal = Array.zeroCreate size
             }
         member this.Item 
-            with get(from:Square, mto:Square) = this.Internal.[int(from) * 64 + int(mto)]
-            and set(from:Square, mto:Square) value = this.Internal.[int(from) * 64 + int(mto)] <- value
+            with get(from:int, mto:int) = this.Internal.[from * 64 + mto]
+            and set(from:int, mto:int) value = this.Internal.[from * 64 + mto] <- value
         member this.Clear() = this.Internal.Initialize()
     end 
 module MoveSearchEffortTable =

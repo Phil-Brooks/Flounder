@@ -110,7 +110,7 @@ module NNUEb =
         mLast |> should equal -41s
         let mLast = NNUEb.Accumulators.[NNUEb.AccIndex].AccValues.[1].[last]
         mLast |> should equal 39s
-        let rv = board.Move(Square.E1,Square.D1)
+        let rv = board.Move(E1,D1)
         NNUEb.AccIndex<-NNUEb.AccIndex+1
         NNUEb.RefreshAccumulator(board.Map,0)
         let m0 = NNUEb.Accumulators.[NNUEb.AccIndex].AccValues.[0].[0]
@@ -127,9 +127,9 @@ module NNUEb =
         NNUEb.ResetAccumulator(board.Map,0)
         NNUEb.ResetAccumulator(board.Map,1)
         NNUEb.ResetRefreshTable()
-        let ans = NNUEb.MoveRequiresRefresh(WhiteKing,int(Square.E1),int(Square.D1))
+        let ans = NNUEb.MoveRequiresRefresh(WhiteKing,int(E1),int(D1))
         ans|>should equal true
-        let ans = NNUEb.MoveRequiresRefresh(WhitePawn,int(Square.A2),int(Square.A3))
+        let ans = NNUEb.MoveRequiresRefresh(WhitePawn,int(A2),int(A3))
         ans|>should equal false
 
     [<Test>]
@@ -139,7 +139,7 @@ module NNUEb =
         NNUEb.ResetAccumulator(board.Map,0)
         NNUEb.ResetAccumulator(board.Map,1)
         NNUEb.ResetRefreshTable()
-        let rv = board.Move(Square.E1,Square.D1)
+        let rv = board.Move(E1,D1)
         NNUEb.AccIndex<-NNUEb.AccIndex+1
         NNUEb.ApplyUpdates(board.Map,rv,1)
         let m0 = NNUEb.Accumulators.[NNUEb.AccIndex].AccValues.[1].[0]
@@ -156,7 +156,7 @@ module NNUEb =
         NNUEb.ResetAccumulator(board.Map,0)
         NNUEb.ResetAccumulator(board.Map,1)
         NNUEb.ResetRefreshTable()
-        let rv = board.Move(Square.E5,Square.F4)
+        let rv = board.Move(E5,F4)
         NNUEb.AccIndex<-NNUEb.AccIndex+1
         NNUEb.ApplyUpdates(board.Map,rv,0)
         let m0 = NNUEb.Accumulators.[NNUEb.AccIndex].AccValues.[0].[0]
@@ -173,7 +173,7 @@ module NNUEb =
         NNUEb.ResetAccumulator(board.Map,0)
         NNUEb.ResetAccumulator(board.Map,1)
         NNUEb.ResetRefreshTable()
-        let rv = board.Move(Square.E1,Square.G1)
+        let rv = board.Move(E1,G1)
         NNUEb.AccIndex<-NNUEb.AccIndex+1
         NNUEb.ApplyUpdates(board.Map,rv,1)
         let m0 = NNUEb.Accumulators.[NNUEb.AccIndex].AccValues.[1].[0]
@@ -201,7 +201,7 @@ module NNUEb =
         NNUEb.ResetAccumulator(board.Map,0)
         NNUEb.ResetAccumulator(board.Map,1)
         NNUEb.ResetRefreshTable()
-        let rv = board.Move(Square.E1,Square.D1)
+        let rv = board.Move(E1,D1)
         NNUEb.AccIndex<-NNUEb.AccIndex+1
         NNUEb.DoUpdate(board.Map,rv)
         let m0 = NNUEb.Accumulators.[NNUEb.AccIndex].AccValues.[1].[0]
@@ -228,7 +228,7 @@ module NNUEb =
         NNUEb.ResetAccumulator(engbrd.Brd.Map,0)
         NNUEb.ResetAccumulator(engbrd.Brd.Map,1)
         NNUEb.ResetRefreshTable()
-        let mutable mv = OrderedMoveEntry(Square.E4, Square.D3, Promotion.None)
+        let mutable mv = OrderedMoveEntry(E4, D3, Promotion.None)
         let mutable rv = engbrd.Move(&mv)
         let ans = NNUEb.OutputLayer(engbrd.Brd.Map.stm)
         ans|>should equal -45

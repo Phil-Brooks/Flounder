@@ -20,12 +20,12 @@ module Zobrist =
             EnPassantKeys.[i] <- BitConverter.ToUInt64(buffer)
         Random.NextBytes(buffer)
         TurnKey <- BitConverter.ToUInt64(buffer)
-    let HashPiece(zobristHash:byref<uint64>, piece:Piece, color:int, sq:Square) = 
+    let HashPiece(zobristHash:byref<uint64>, piece:int, color:int, sq:int) = 
         zobristHash <- zobristHash ^^^ PieceKeys.[piece, color, sq]
     let HashCastlingRights(zobristHash:byref<uint64>, wk:int, wq:int, bk:int, bq:int) = 
         zobristHash <- zobristHash ^^^ CastlingKeys.[wk ||| wq ||| bk ||| bq]
     let FlipTurnInHash(zobristHash:byref<uint64>) =
         zobristHash <- zobristHash ^^^ TurnKey
-    let HashEp(zobristHash:byref<uint64>, ep:Square) = 
-        zobristHash <- zobristHash ^^^ EnPassantKeys.[int(ep)]
+    let HashEp(zobristHash:byref<uint64>, ep:int) = 
+        zobristHash <- zobristHash ^^^ EnPassantKeys.[ep]
    

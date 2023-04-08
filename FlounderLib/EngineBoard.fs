@@ -16,10 +16,10 @@ type EngineBoard =
             RepHist = board.RepHist.Clone()
         }
     member this.Clone() = EngineBoard(this)
-    member this.PieceOnly(sq:Square) = this.Brd.Map.PieceOnly(sq)
+    member this.PieceOnly(sq:int) = this.Brd.Map.PieceOnly(sq)
     member this.IsRepetition() = 
         this.RepHist.Count(this.Brd.ZobristHash) > 1
-    member this.GuiMove(from:Square, mto:Square, promotion:Promotion) =
+    member this.GuiMove(from:int, mto:int, promotion:Promotion) =
         let moveList = MoveList(this.Brd, from)
         if not(moveList.Moves.[mto]) then raise (InvalidOperationException("Invalid move provided by GUI."))
         if (promotion <> Promotion.None && not moveList.Promotion) then
@@ -28,14 +28,14 @@ type EngineBoard =
         this.RepHist.Append(this.Brd.ZobristHash)
     member this.NullMove() =
         let rv = this.Brd.Map.EnPassantTarget
-        if (this.Brd.Map.EnPassantTarget <> Square.Na) then Zobrist.HashEp(&this.Brd.Map.ZobristHash, this.Brd.Map.EnPassantTarget)
-        this.Brd.Map.EnPassantTarget <- Square.Na
+        if this.Brd.Map.EnPassantTarget <> Na then Zobrist.HashEp(&this.Brd.Map.ZobristHash, this.Brd.Map.EnPassantTarget)
+        this.Brd.Map.EnPassantTarget <- Na
         this.Brd.Map.stm <- this.Brd.Map.stm ^^^ 1
         this.Brd.Map.xstm <- this.Brd.Map.xstm ^^^ 1
         Zobrist.FlipTurnInHash(&this.Brd.Map.ZobristHash)
         rv
-    member this.UndoNullMove(rv:Square) =
-        if (rv <> Square.Na) then
+    member this.UndoNullMove(rv:int) =
+        if rv <> Na then
             this.Brd.Map.EnPassantTarget <- rv
             Zobrist.HashEp(&this.Brd.Map.ZobristHash, rv)
         this.Brd.Map.stm <- this.Brd.Map.stm ^^^ 1

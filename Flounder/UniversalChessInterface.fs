@@ -69,8 +69,7 @@ module UniversalChessInterface =
                 if (args.[argsParsed].ToLower().Equals("moves")) then
                     let MoveCount = args.Length - (argsParsed + 1)
                     for i = argsParsed + 1 to args.Length-1 do
-                        let from = Enum.Parse<Square>(args.[i].[..1], true)
-                        let mto = Enum.Parse<Square>(args.[i].[2..3], true)
+                        let from, mto = Square.FromUci(args.[i])
                         let mutable promotion = Promotion.None
                         if (args.[i].Length > 4) then
                             promotion <- Promotion.FromChar(args.[i].ToLower().[4])
@@ -138,10 +137,7 @@ module UniversalChessInterface =
                     Busy <- true
                     let bestMove = Search.Value.IterativeDeepening(depth)
                     Busy <- false
-                    let from = bestMove.From.ToString().ToLower()
-                    let mto = bestMove.To.ToString().ToLower()
-                    let promotion = if bestMove.Promotion <> Promotion.None then Promotion.ToStr(bestMove.Promotion) else ""
-                    Console.WriteLine("bestmove " + from + mto + promotion)
+                    Console.WriteLine("bestmove " + bestMove.ToString())
         #if DEBUG
                     Console.WriteLine("TT Count: " +  Search.Value.TableCutoffCount.ToString())
         #endif

@@ -5,54 +5,50 @@ open System
 module AttackTable1 =
     // Initialization
     let GenerateBetweenTable() =
-        for obj in Enum.GetValues(typeof<Square>) do
-            let fromSq = unbox<Square> obj
-            if fromSq<>Square.Na then
-                let fromH, fromV = (int(fromSq) % 8, int(fromSq) / 8)
-                UtilityTable.Between.[int(fromSq)] <- Array.zeroCreate 64
-                for obj in Enum.GetValues(typeof<Square>) do
-                    let toSq = unbox<Square> obj
-                    if toSq<>Square.Na then
-                        UtilityTable.Between.[int(fromSq)].[int(toSq)] <- BitBoard.Default
-                        // It's the same square so we can skip.
-                        if (fromSq = toSq) then ()
+        for fromSq = A8 to H1 do
+            let fromH, fromV = fromSq % 8, fromSq / 8
+            UtilityTable.Between.[fromSq] <- Array.zeroCreate 64
+            for toSq = A8 to H1 do
+                UtilityTable.Between.[fromSq].[toSq] <- BitBoard.Default
+                // It's the same square so we can skip.
+                if fromSq = toSq then ()
+                else
+                    let mutable occ = BitBoard.Default
+                    let mutable mFrom = 0
+                    let mutable mTo = 0
+                    let toH, toV = toSq % 8, toSq / 8
+                    if (fromH = toH || fromV = toV) then
+                        // We calculate rook (straight) squares here.
+                        occ <- BitBoard.FromSq(fromSq) ||| BitBoard.FromSq(toSq)
+                        mFrom <- BlackMagicBitBoardFactory.GetMagicIndex(Rook, occ, fromSq)
+                        mTo <- BlackMagicBitBoardFactory.GetMagicIndex(Rook, occ, toSq)
+                        UtilityTable.Between.[fromSq].[toSq] <- (AttackTable.SlidingMoves.[mFrom] &&& AttackTable.SlidingMoves.[mTo])
+                    else
+                        let absH = Math.Abs(fromH - toH)
+                        let absV = Math.Abs(fromV - toV)
+                        if (absH <> absV) then ()
                         else
-                            let mutable occ = BitBoard.Default
-                            let mutable mFrom = 0
-                            let mutable mTo = 0
-                            let toH, toV = int(toSq) % 8, int(toSq) / 8
-                            if (fromH = toH || fromV = toV) then
-                                // We calculate rook (straight) squares here.
-                                occ <- BitBoard.FromSq(fromSq) ||| BitBoard.FromSq(toSq)
-                                mFrom <- BlackMagicBitBoardFactory.GetMagicIndex(Piece.Rook, occ, fromSq)
-                                mTo <- BlackMagicBitBoardFactory.GetMagicIndex(Piece.Rook, occ, toSq)
-                                UtilityTable.Between.[int(fromSq)].[int(toSq)] <- (AttackTable.SlidingMoves.[mFrom] &&& AttackTable.SlidingMoves.[mTo])
-                            else
-                                let absH = Math.Abs(fromH - toH)
-                                let absV = Math.Abs(fromV - toV)
-                                if (absH <> absV) then ()
-                                else
-                                    // We calculate bishop (diagonal) squares between here.
-                                    occ <- BitBoard.FromSq(fromSq) ||| BitBoard.FromSq(toSq)
-                                    mFrom <- BlackMagicBitBoardFactory.GetMagicIndex(Piece.Bishop, occ, fromSq)
-                                    mTo <- BlackMagicBitBoardFactory.GetMagicIndex(Piece.Bishop, occ, toSq)
-                                    UtilityTable.Between.[int(fromSq)].[int(toSq)] <- (AttackTable.SlidingMoves.[mFrom] &&& AttackTable.SlidingMoves.[mTo])
-    let GenerateSlidingMoves(piece:Piece) =
+                            // We calculate bishop (diagonal) squares between here.
+                            occ <- BitBoard.FromSq(fromSq) ||| BitBoard.FromSq(toSq)
+                            mFrom <- BlackMagicBitBoardFactory.GetMagicIndex(Bishop, occ, fromSq)
+                            mTo <- BlackMagicBitBoardFactory.GetMagicIndex(Bishop, occ, toSq)
+                            UtilityTable.Between.[fromSq].[toSq] <- (AttackTable.SlidingMoves.[mFrom] &&& AttackTable.SlidingMoves.[mTo])
+    let GenerateSlidingMoves(piece:int) =
         // Arguments for loop.
         let args1,_ =
-            if piece = Piece.Rook then (BlackMagicBitBoardFactory.RookMagic, BlackMagicBitBoardFactory.ROOK)
-            elif piece = Piece.Bishop then (BlackMagicBitBoardFactory.BishopMagic, BlackMagicBitBoardFactory.BISHOP)
+            if piece = Rook then (BlackMagicBitBoardFactory.RookMagic, BlackMagicBitBoardFactory.ROOK)
+            elif piece = Bishop then (BlackMagicBitBoardFactory.BishopMagic, BlackMagicBitBoardFactory.BISHOP)
             else raise (System.IO.InvalidDataException("No magic table found."))
         // Deltas for pieces.
         let deltas = 
-            if piece = Piece.Rook then
+            if piece = Rook then
                 [|
                     (1, 0);
                     (0, -1);
                     (-1, 0);
                     (0, 1)
                 |]
-            elif piece = Piece.Bishop then
+            elif piece = Bishop then
                 [|
                     (1, 1);
                     (1, -1);
@@ -65,7 +61,7 @@ module AttackTable1 =
                 // Flip the mask.
                 let _,bb2,_ = args1.[v * 8 + h]
                 let mask = ~~~(bb2)
-                let sq = Square.FromInt(v * 8 + h)
+                let sq = v * 8 + h
                 let mutable occupied = BitBoard.Default
                 let mutable keepgoing = true
                 while (keepgoing) do
@@ -81,7 +77,7 @@ module AttackTable1 =
                             else
                                 hI <- hI + dH
                                 vI <- vI + dV
-                                let sqI = Square.FromInt(vI * 8 + hI)
+                                let sqI = vI * 8 + hI
                                 moves <- moves ||| BitBoard.FromSq(sqI)
                     // Add to list with magic index.
                     AttackTable.SlidingMoves.[BlackMagicBitBoardFactory.GetMagicIndex(piece, occupied, sq)] <- moves
@@ -94,8 +90,8 @@ module AttackTable1 =
         // Setup the factory.
         BlackMagicBitBoardFactory.SetUp()
         // Generate sliding moves for sliding pieces.
-        GenerateSlidingMoves(Piece.Rook)
-        GenerateSlidingMoves(Piece.Bishop)
+        GenerateSlidingMoves(Rook)
+        GenerateSlidingMoves(Bishop)
         // Generate between table.
         GenerateBetweenTable()
 

@@ -67,25 +67,16 @@ type BitBoard =
         member this.ToUint64() =
             this.Internal
         member this.ToSq() =
-            Square.FromInt(BitOperations.TrailingZeroCount(this.Internal))
-        member this.ToSqs():Square array =
+            BitOperations.TrailingZeroCount(this.Internal)
+        member this.ToSqs():int array =
             let c = this.Count
             let mutable iterator = BitBoardIterator(this.Internal, c)
-            let mutable a:Square array = Array.zeroCreate c
+            let mutable a:int array = Array.zeroCreate c
             for i = 0 to c-1 do
                 a.[i] <- iterator.Current
                 iterator.MoveNext()|>ignore
             a
         // Indexers
-        member this.Item 
-            with get(sq:Square):bool = 
-                let mutable value = byte((this.Internal >>> int(sq)) &&& 1UL)
-                Unsafe.As<byte, bool>(&value)
-            and set (sq:Square) value = 
-                if value then
-                    this.Internal <- this.Internal ||| (1UL <<< int(sq))
-                else
-                    this.Internal <- this.Internal &&& (~~~(1UL <<< int(sq)))
         member this.Item 
             with get(i:int):bool = 
                 let mutable value = byte((this.Internal >>> i) &&& 1UL)
@@ -109,7 +100,7 @@ type BitBoard =
 module BitBoard =
     let Default = BitBoard(UInt64.MinValue)
     let Filled = BitBoard(UInt64.MaxValue)
-    let FromSq(sq:Square) =
+    let FromSq(sq:int) =
         let mutable a = Default
         a.[sq] <- true
         a

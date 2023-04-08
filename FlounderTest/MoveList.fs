@@ -16,137 +16,137 @@ module MoveList =
 
     [<Test>]
     let CountKnightMovesAtB1() =
-        let moveList = MoveList(board, Square.B1)
+        let moveList = MoveList(board, B1)
         moveList.Count |> should equal 2
 
     [<Test>]
     let CountPawnMovesAtA2() =
-        let moveList = MoveList(board, Square.A2)
+        let moveList = MoveList(board, A2)
         moveList.Count |> should equal 2
         let mutable moves = moveList.Moves.GetEnumerator()
         let mutable move = moves.Current
-        move|> should equal Square.A4
+        move|> should equal A4
         moves.MoveNext()|>ignore
         move <- moves.Current
-        move|> should equal Square.A3
+        move|> should equal A3
 
     [<Test>]
     let CountKnightMovesAtA3() =
         let usebd = board.Clone()
-        let res = usebd.Move(Square.B1, Square.A3)
-        let moveList = MoveList(usebd, Square.A3)
+        let res = usebd.Move(B1, A3)
+        let moveList = MoveList(usebd, A3)
         moveList.Count |> should equal 3
         let mutable moves = moveList.Moves.GetEnumerator()
         let mutable move = moves.Current
-        move|> should equal Square.B5
+        move|> should equal B5
         moves.MoveNext()|>ignore
         move <- moves.Current
-        move|> should equal Square.C4
+        move|> should equal C4
 
     [<Test>]
     let CountRookMovesAtA3() =
         let usebd = board.Clone()
-        let res = usebd.Move(Square.A1, Square.A3)
-        let moveList = MoveList(usebd, Square.A3)
+        let res = usebd.Move(A1, A3)
+        let moveList = MoveList(usebd, A3)
         moveList.Count |> should equal 11
         let mutable moves = moveList.Moves.GetEnumerator()
         let mutable move = moves.Current
-        move|> should equal Square.A7
+        move|> should equal A7
         moves.MoveNext()|>ignore
         move <- moves.Current
-        move|> should equal Square.A6
+        move|> should equal A6
 
     [<Test>]
     let CountRookMovesAtA1() =
-        let moveList = MoveList(board, Square.A1)
+        let moveList = MoveList(board, A1)
         moveList.Count |> should equal 0
 
     [<Test>]
     let CountBishopMovesAtC3() =
         let usebd = board.Clone()
-        let res = usebd.Move(Square.C1, Square.C3)
-        let moveList = MoveList(usebd, Square.C3)
+        let res = usebd.Move(C1, C3)
+        let moveList = MoveList(usebd, C3)
         moveList.Count |> should equal 6
         let mutable moves = moveList.Moves.GetEnumerator()
         let mutable move = moves.Current
-        move|> should equal Square.G7
+        move|> should equal G7
         moves.MoveNext()|>ignore
         move <- moves.Current
-        move|> should equal Square.F6
+        move|> should equal F6
 
     [<Test>]
     let CountQueenMovesAtC3() =
         let usebd = board.Clone()
-        let res = usebd.Move(Square.D1, Square.C3)
-        let moveList = MoveList(usebd, Square.C3)
+        let res = usebd.Move(D1, C3)
+        let moveList = MoveList(usebd, C3)
         moveList.Count |> should equal 17
         let mutable moves = moveList.Moves.GetEnumerator()
         let mutable move = moves.Current
-        move|> should equal Square.C7
+        move|> should equal C7
         moves.MoveNext()|>ignore
         move <- moves.Current
-        move|> should equal Square.G7
+        move|> should equal G7
 
     [<Test>]
     let CountKingMovesAtC3() =
         let usebd = board.Clone()
-        let res = usebd.Move(Square.E1, Square.C3)
-        let moveList = MoveList(usebd, Square.C3)
+        let res = usebd.Move(E1, C3)
+        let moveList = MoveList(usebd, C3)
         moveList.Count |> should equal 5
         let mutable moves = moveList.Moves.GetEnumerator()
         let mutable move = moves.Current
-        move|> should equal Square.B4
+        move|> should equal B4
         moves.MoveNext()|>ignore
         move <- moves.Current
-        move|> should equal Square.C4
+        move|> should equal C4
 
     [<Test>]
     let CountKingMovesAtE1a() =
         let usebd = board.Clone()
-        let res = usebd.Move(Square.F1, Square.F3)
-        let res = usebd.Move(Square.G1, Square.G3)
-        let moveList = MoveList(usebd, Square.E1)
+        let res = usebd.Move(F1, F3)
+        let res = usebd.Move(G1, G3)
+        let moveList = MoveList(usebd, E1)
         moveList.Count |> should equal 2
         let mutable moves = moveList.Moves.GetEnumerator()
         let mutable move = moves.Current
-        move|> should equal Square.F1
+        move|> should equal F1
         moves.MoveNext()|>ignore
         move <- moves.Current
-        move|> should equal Square.G1
+        move|> should equal G1
 
     [<Test>]
     let CountPawnMovesEP() =
-        let moveList = MoveList(epboard, Square.E5)
+        let moveList = MoveList(epboard, E5)
         moveList.Count |> should equal 2
         let mutable moves = moveList.Moves.GetEnumerator()
         let mutable move = moves.Current
-        move|> should equal Square.D6
+        move|> should equal D6
         moves.MoveNext()|>ignore
         move <- moves.Current
-        move|> should equal Square.E6
+        move|> should equal E6
 
     [<Test>]
     let CountPawnMovesPRM() =
-        let moveList = MoveList(prmboard, Square.C7)
+        let moveList = MoveList(prmboard, C7)
         moveList.Count |> should equal 1
         let mutable moves = moveList.Moves.GetEnumerator()
         let mutable move = moves.Current
-        move|> should equal Square.B8
+        move|> should equal B8
         moveList.Promotion |> should equal true
 
     [<Test>]
     let CountPawnCapturesAtAB6() =
         let usebd = board.Clone()
-        let res = usebd.Move(Square.B2, Square.B6)
+        let res = usebd.Move(B2, B6)
         // Generate pins and check bitboards.
         let kingSq = board.KingLoc(board.Map.stm).ToSq()
         let (hv, d) = MoveList.PinBitBoards(board, kingSq, board.Map.stm, board.Map.xstm)
         let (checks, doubleChecked) = MoveList.CheckBitBoard(board, kingSq, board.Map.xstm)
-        let moveList = MoveList(board, Square.B6, hv, d, checks)
+        let moveList = MoveList(board, B6, hv, d, checks)
         moveList.Count |> should equal 2
         let mutable moves = moveList.Moves.GetEnumerator()
         let mutable move = moves.Current
-        move|> should equal Square.A7
+        move|> should equal A7
         moves.MoveNext()|>ignore
         move <- moves.Current
-        move|> should equal Square.C7
+        move|> should equal C7
