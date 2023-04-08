@@ -18,7 +18,7 @@ type MoveTranspositionTable =
                 i <- (i <<< 1) ||| 0x1
             let mutable intnal = Array.zeroCreate (hashFilter + 1)
             for j = 0 to hashFilter do
-                intnal.[j] <- new MoveTranspositionTableEntry()
+                intnal.[j] <- new MoveTranspositionTableEntry(0UL, Invalid, OrderedMoveEntry(Na, Na, PromNone), 0)
     #if DEBUG
             System.Console.WriteLine("Allocated " + (hashFilter * Unsafe.SizeOf<MoveTranspositionTableEntry>()).ToString() + 
                               " bytes for " + hashFilter.ToString() + " TT entries.");
@@ -37,9 +37,9 @@ type MoveTranspositionTable =
             // - OLD_ENTRY_HASH != NEW_ENTRY_HASH
             // - OLD_ENTRY_TYPE == ALPHA_UNCHANGED && ENTRY_TYPE == BETA_CUTOFF
             // - ENTRY_DEPTH > OLD_ENTRY_DEPTH - REPLACEMENT_THRESHOLD
-            if (entry.Type = MoveTranspositionTableEntryType.Exact || entry.ZobristHash <> oldEntry.ZobristHash || 
-                (oldEntry.Type = MoveTranspositionTableEntryType.AlphaUnchanged && 
-                entry.Type = MoveTranspositionTableEntryType.BetaCutoff) ||
+            if (entry.Type = Exact || entry.ZobristHash <> oldEntry.ZobristHash || 
+                (oldEntry.Type = AlphaUnchanged && 
+                entry.Type = BetaCutoff) ||
                 int(entry.Depth) > int(oldEntry.Depth) - REPLACEMENT_DEPTH_THRESHOLD) then
                     this.Internal.[index] <- entry
         member this.FreeMemory() = 

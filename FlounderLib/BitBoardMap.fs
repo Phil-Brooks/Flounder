@@ -213,7 +213,7 @@ type BitBoardMap =
             // Set piece in pieces and colors.
             this.PiecesAndColors.[sq] <- cpc
             // Update Zobrist.
-            Zobrist.HashPiece(&this.ZobristHash, piece, int(color), sq)
+            Zobrist.HashPiece(&this.ZobristHash, piece, color, sq)
         member this.Copy() = BitBoardMap(this, this.Pieces, this.PiecesAndColors)
         member this.GenerateBoardFen() =
             let expandedBoardData:string array = Array.zeroCreate 8
@@ -222,22 +222,21 @@ type BitBoardMap =
                 let mutable h = 0
                 while h < 8 do
                     let sq = v * 8 + h
-                    let piece, color = ColPiece.ToPcCol(this.ColPc(sq))
-                    if piece = EmptyPc then
+                    let cpc = this.ColPc(sq)
+                    if cpc = EmptyColPc then
                         let mutable c = 1
                         let mutable fnd = false
                         for i = h + 1 to 7 do
                             if not fnd then
                                 let sq = v * 8 + i
-                                let pc = this.PieceOnly(sq)
-                                if pc = EmptyPc then c <- c + 1
+                                let pc = this.ColPc(sq)
+                                if pc = EmptyColPc then c <- c + 1
                                 else fnd <- true
                         rankData <- rankData + c.ToString()
                         h <- h + c
                     else
-                        let input = PcChars[piece].ToString()
-                        if color = 0 then rankData <- rankData + input
-                        else rankData <- rankData + input.ToLower()
+                        let input = ColPiece.ToStr(cpc)
+                        rankData <- rankData + input
                         h <- h + 1
                 expandedBoardData.[v] <- rankData
             let FEN_SPR = "/"

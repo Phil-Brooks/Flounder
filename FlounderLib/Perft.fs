@@ -46,7 +46,7 @@ module Perft =
                     if (rv.Promotion) then
                         // Undo original pawn move without promotion.
                         board.UndoMove(&rv)
-                        for pr in Proms do 
+                        for pr = PromKnight to PromQueen do 
                             let nbd = board.Clone()
                             let tnp = nbd.Move(sq, mv, pr)
                             nextCount <- nextCount + (MoveGeneration(nbd, nextDepth))

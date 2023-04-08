@@ -228,7 +228,7 @@ module NNUEb =
         NNUEb.ResetAccumulator(engbrd.Brd.Map,0)
         NNUEb.ResetAccumulator(engbrd.Brd.Map,1)
         NNUEb.ResetRefreshTable()
-        let mutable mv = OrderedMoveEntry(E4, D3, Promotion.None)
+        let mutable mv = OrderedMoveEntry(E4, D3, PromNone)
         let mutable rv = engbrd.Move(&mv)
         let ans = NNUEb.OutputLayer(engbrd.Brd.Map.stm)
         ans|>should equal -45

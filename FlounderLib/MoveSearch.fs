@@ -56,7 +56,7 @@ type MoveSearch =
         for i = 0 to count-1 do
             let move:OrderedMoveEntry = this.PvTable.Get(i)
             pv.Append(Square.ToStr(move.From)).Append(Square.ToStr(move.To))|>ignore
-            if move.Promotion <> Promotion.None then pv.Append(Promotion.ToStr(move.Promotion))|>ignore
+            if move.Promotion <> PromNone then pv.Append(Promotion.ToStr(move.Promotion))|>ignore
             pv.Append(' ')|>ignore
         pv.ToString().ToLower()
     member this.NodeCounting(depth:int, bestMove:OrderedMoveEntry, itimePreviouslyUpdated:bool) = 
@@ -95,10 +95,10 @@ type MoveSearch =
         if not isPvNode then
             let storedEntry = this.MvTrnTbl.[board.Brd.ZobristHash]
             if (storedEntry.ZobristHash = board.Brd.ZobristHash &&
-                (storedEntry.Type = MoveTranspositionTableEntryType.Exact ||
-                storedEntry.Type = MoveTranspositionTableEntryType.BetaCutoff &&
+                (storedEntry.Type = Exact ||
+                storedEntry.Type = BetaCutoff &&
                 storedEntry.BestMove.Score >= beta ||
-                storedEntry.Type = MoveTranspositionTableEntryType.AlphaUnchanged &&
+                storedEntry.Type = AlphaUnchanged &&
                 storedEntry.BestMove.Score <= alpha)) then
                 // If our entry is valid for our position, and it's one of the following caseS:
                 // - Exact
@@ -199,7 +199,7 @@ type MoveSearch =
             ans.Value
         else
             let storedEntry = this.MvTrnTbl.[board.Brd.ZobristHash]
-            let valid = storedEntry.Type <> MoveTranspositionTableEntryType.Invalid
+            let valid = storedEntry.Type <> Invalid
             let mutable transpositionMove = OrderedMoveEntry.Default
             let mutable transpositionHit = false
 
@@ -211,18 +211,18 @@ type MoveSearch =
                 if not isPvNode && int(storedEntry.Depth) >= idepth then
                     // If it came from a higher depth search than our current depth, it means the results are definitely
                     // more trustworthy than the ones we could achieve at this depth.
-                    if storedEntry.Type=MoveTranspositionTableEntryType.Exact then
+                    if storedEntry.Type = Exact then
                             // In the case of an exact evaluation, we have previously found this was our best move
                             // in said transposition. Therefore, it is reasonable to return early.
                             ans <- storedEntry.BestMove.Score|>Some
                         // In the case that we didn't have an exact, we must alter our bounds to make our search for this
                         // depth as best as possible (and possibly get a cutoff without having to search).
-                    elif storedEntry.Type=MoveTranspositionTableEntryType.BetaCutoff then
+                    elif storedEntry.Type = BetaCutoff then
                             // In the case we had a beta-cutoff, we can check the max between our alpha and the stored 
                             // beta-cutoff and set it as our new alpha. This is to ensure all moves will be better than the
                             // stored cutoff.
                             alpha <- Math.Max(alpha, storedEntry.BestMove.Score)
-                    elif storedEntry.Type=MoveTranspositionTableEntryType.AlphaUnchanged then
+                    elif storedEntry.Type = AlphaUnchanged then
                             // In the rare case that alpha was unchanged, we must try and change the beta value to
                             // be the minimum value between our current beta and the stored unchanged alpha. This ensures
                             // that if alpha would remain unchanged, we would receive a beta-cutoff.
@@ -300,8 +300,8 @@ type MoveSearch =
                         if inCheck then -99999999 + plyFromRoot else 0
                     else
                         let mutable bestEvaluation = -100000000
-                        let mutable bestMoveSoFar = OrderedMoveEntry(Na, Na, Promotion.None)
-                        let mutable transpositionTableEntryType = MoveTranspositionTableEntryType.AlphaUnchanged
+                        let mutable bestMoveSoFar = OrderedMoveEntry(Na, Na, PromNone)
+                        let mutable transpositionTableEntryType = AlphaUnchanged
                         // Calculate next iteration variables before getting into the loop.
                         let nextDepth = depth - 1
                         let mutable i = 0
@@ -345,7 +345,7 @@ type MoveSearch =
                                     if quietMove then
                                         this.DoQuiet(plyFromRoot,move,board,depth,quietMoveCounter,moveList,i)
                                     // We had a beta cutoff, hence it's a beta cutoff entry.
-                                    transpositionTableEntryType <- MoveTranspositionTableEntryType.BetaCutoff
+                                    transpositionTableEntryType <- BetaCutoff
                                     keepgoing <- false
                                 if rootNode then this.SearchEffort.[move.From, move.To] <- this.TotalNodeSearchCount - previousNodeCount
                                 i <- i + 1
@@ -481,7 +481,7 @@ type MoveSearch =
             // an unlikely path. Thus, we should evaluate it clearly using a full-window research.
             evaluation <- -this.AbSearch(true, board, nextPlyFromRoot, nextDepth, -beta, -alpha)
     [<MethodImpl(MethodImplOptions.AggressiveInlining)>]
-    member this.HandleEvaluation(evaluation:int, move:OrderedMoveEntry, bestEvaluation:byref<int>, bestMoveSoFar:byref<OrderedMoveEntry>, isPvNode:bool, plyFromRoot:int, alpha:byref<int>, beta:int, transpositionTableEntryType:byref<MoveTranspositionTableEntryType>) =
+    member this.HandleEvaluation(evaluation:int, move:OrderedMoveEntry, bestEvaluation:byref<int>, bestMoveSoFar:byref<OrderedMoveEntry>, isPvNode:bool, plyFromRoot:int, alpha:byref<int>, beta:int, transpositionTableEntryType:byref<TranTableType>) =
         if (evaluation <= bestEvaluation) then true
         else
             // If our evaluation was better than our current best evaluation, we should update our evaluation
@@ -504,7 +504,7 @@ type MoveSearch =
                 // replace our alpha with our evaluation.
                 alpha <- evaluation
                 // Our alpha changed, so it is no longer an unchanged alpha entry.
-                transpositionTableEntryType <- MoveTranspositionTableEntryType.Exact
+                transpositionTableEntryType <- Exact
                 // If the evaluation was better than beta, it means the position was too good. Thus, there
                 // is a good chance that the opponent will avoid this path. Hence, there is currently no
                 // reason to evaluate it further.

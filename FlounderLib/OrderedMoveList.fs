@@ -45,7 +45,7 @@ type OrderedMoveList =
             // Bishop    | PRIORITY - 5
             // Knight    | PRIORITY - 6
             // Rook      | PRIORITY - 7 (LOWEST)
-            elif (move.Promotion <> Promotion.None) then this.PRIORITY - 8 + int(move.Promotion)
+            elif move.Promotion <> PromNone then this.PRIORITY - 8 + move.Promotion
             // Score captures based on the piece capturing and the piece being captured.
             // The idea behind it is to give highest priority to captures that are capturing most valuable pieces
             // with least valuable pieces.
@@ -86,12 +86,12 @@ type OrderedMoveList =
                     let mutable move = moves.Current
                     while (moves.MoveNext()) do
                         if (moveList.Promotion) then
-                            for p in Proms do
+                            for p = PromKnight to PromQueen do
                                 this.Internal.[i] <- new OrderedMoveEntry(from, move, p)
                                 this.Internal.[i].Score <- this.ScoreMove(Pawn, board, this.Internal.[i], transpositionMove)
                                 i<-i+1
                         else
-                            this.Internal.[i] <- new OrderedMoveEntry(from, move, Promotion.None)
+                            this.Internal.[i] <- new OrderedMoveEntry(from, move, PromNone)
                             this.Internal.[i].Score <- this.ScoreMove(Pawn, board, this.Internal.[i], transpositionMove)
                             i<-i+1
                         move <- moves.Current
@@ -105,7 +105,7 @@ type OrderedMoveList =
                         let mutable moves = moveList.Moves.GetEnumerator()
                         let mutable move = moves.Current
                         while (moves.MoveNext()) do
-                            this.Internal.[i] <- new OrderedMoveEntry(from, move, Promotion.None)
+                            this.Internal.[i] <- new OrderedMoveEntry(from, move, PromNone)
                             this.Internal.[i].Score <- this.ScoreMove(piece, board, this.Internal.[i], transpositionMove)
                             i<-i+1
                             move <- moves.Current
@@ -118,7 +118,7 @@ type OrderedMoveList =
                 let mutable moves = moveList.Moves.GetEnumerator()
                 let mutable move = moves.Current
                 while (moves.MoveNext()) do
-                    this.Internal.[i] <- new OrderedMoveEntry(from, move, Promotion.None)
+                    this.Internal.[i] <- new OrderedMoveEntry(from, move, PromNone)
                     this.Internal.[i].Score <- this.ScoreMove(King, board, this.Internal.[i], transpositionMove)
                     i<-i+1
                     move <- moves.Current
@@ -145,12 +145,12 @@ type OrderedMoveList =
                     let mutable move = moves.Current
                     while (moves.MoveNext()) do
                         if (moveList.Promotion) then
-                            for p in Proms do
+                            for p = PromKnight to PromQueen do
                                 this.Internal.[i] <- new OrderedMoveEntry(from, move, p)
                                 this.Internal.[i].Score <- this.ScoreMove(Pawn, board, this.Internal.[i], transpositionMove)
                                 i<-i+1
                         else 
-                            this.Internal.[i] <- new OrderedMoveEntry(from, move, Promotion.None)
+                            this.Internal.[i] <- new OrderedMoveEntry(from, move, PromNone)
                             this.Internal.[i].Score <- this.ScoreMove(Pawn, board, this.Internal.[i], transpositionMove)
                             i<-i+1
                         move <- moves.Current
@@ -164,7 +164,7 @@ type OrderedMoveList =
                         let mutable moves = (moveList.Moves &&& opposite).GetEnumerator()
                         let mutable move = moves.Current
                         while (moves.MoveNext()) do
-                            this.Internal.[i] <- new OrderedMoveEntry(from, move, Promotion.None)
+                            this.Internal.[i] <- new OrderedMoveEntry(from, move, PromNone)
                             this.Internal.[i].Score <- this.ScoreMove(piece, board, this.Internal.[i], transpositionMove)
                             i<-i+1
                             move <- moves.Current
@@ -177,7 +177,7 @@ type OrderedMoveList =
                 let mutable moves = (moveList.Moves &&& opposite).GetEnumerator()
                 let mutable move = moves.Current
                 while (moves.MoveNext()) do
-                    this.Internal.[i] <- new OrderedMoveEntry(from, move, Promotion.None)
+                    this.Internal.[i] <- new OrderedMoveEntry(from, move, PromNone)
                     this.Internal.[i].Score <- this.ScoreMove(King, board, this.Internal.[i], transpositionMove)
                     i<-i+1                    
                     move <- moves.Current

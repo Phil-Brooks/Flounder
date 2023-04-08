@@ -19,10 +19,10 @@ type EngineBoard =
     member this.PieceOnly(sq:int) = this.Brd.Map.PieceOnly(sq)
     member this.IsRepetition() = 
         this.RepHist.Count(this.Brd.ZobristHash) > 1
-    member this.GuiMove(from:int, mto:int, promotion:Promotion) =
+    member this.GuiMove(from:int, mto:int, promotion:int) =
         let moveList = MoveList(this.Brd, from)
         if not(moveList.Moves.[mto]) then raise (InvalidOperationException("Invalid move provided by GUI."))
-        if (promotion <> Promotion.None && not moveList.Promotion) then
+        if (promotion <> PromNone && not moveList.Promotion) then
             raise (InvalidOperationException("Invalid move provided by GUI."))
         let rv = this.Brd.Move(from, mto, promotion)
         this.RepHist.Append(this.Brd.ZobristHash)

@@ -3,7 +3,7 @@
 type MoveTranspositionTableEntry =
     struct
         val ZobristHash: uint64
-        val Type: MoveTranspositionTableEntryType
+        val Type: TranTableType
         val BestMove: OrderedMoveEntry
         val Depth: int
         new(zobristHash, typ, bestMove, depth) = 

@@ -2,7 +2,7 @@
 
 [<AutoOpen>]
 module Types =
-    let VersionNo = "0.4.1.4"
+    let VersionNo = "0.4.1.5"
 
     // The type of piece.
     let WhitePawn = 0
@@ -18,6 +18,7 @@ module Types =
     let WhiteKing = 10
     let BlackKing = 11
     let EmptyColPc = 12
+    let ColPcChars = "PpNnBbRrQqKk."
     
     // The type of piece.
     let Pawn = 0
@@ -27,7 +28,7 @@ module Types =
     let Queen = 4
     let King = 5
     let EmptyPc = 6
-    let PcChars = "PNBRQK"
+    let PcChars = "PNBRQK."
 
     // The color of the piece.
     let White = 0
@@ -102,19 +103,18 @@ module Types =
     let H1 = 63
     let Na = 64
 
-    type Promotion =
-        |None = 0
-        |Knight = 1
-        |Bishop = 2
-        |Rook = 3
-        |Queen = 4
-    let Proms = [|Promotion.Queen;Promotion.Rook;Promotion.Bishop;Promotion.Knight|]
+    let PromNone = 0
+    let PromKnight = 1
+    let PromBishop = 2
+    let PromRook = 3
+    let PromQueen = 4
+    let PromChars = ".nbrq."
 
-    type MoveTranspositionTableEntryType =
-        | Exact = 0
-        | BetaCutoff = 1
-        | AlphaUnchanged = 2
-        | Invalid = 3
+    type TranTableType =
+        | Exact
+        | BetaCutoff
+        | AlphaUnchanged
+        | Invalid
 
     let KING_BUCKETS = 
         [|
@@ -136,6 +136,9 @@ type Delta =
         add:int array
     }
 
+module Piece =
+    let ToStr(pc:int) = PcChars[pc].ToString()
+
 module ColPiece =
     let ToPcCol(colpc:int) =
         let pc = colpc/2
@@ -143,7 +146,8 @@ module ColPiece =
         pc,col
     let FromPcCol(piece:int,color:int) =
         if color = 2||piece=EmptyPc then EmptyColPc
-        else int(piece)*2 + color
+        else piece*2 + color
+    let ToStr(pc:int) = ColPcChars[pc].ToString()
 
 module Square =
     let FromStr(sq:string) =
@@ -162,18 +166,13 @@ module Square =
         ltr + num
 
 module Promotion =
-    let ToStr(promotion:Promotion) =
-        let notation = promotion.ToString().[0].ToString().ToLower()
-        if promotion = Promotion.Knight then "n" else notation
-    let FromInt(i:int) =
-        let prm:Promotion = LanguagePrimitives.EnumOfValue(i)
-        prm
+    let ToStr(prm:int) = PromChars[prm].ToString()
     let FromChar(ch:char) =
-        if ch = 'r' then Promotion.Rook
-        elif ch = 'n' then Promotion.Knight
-        elif ch = 'b' then Promotion.Bishop
-        elif ch = 'q' then Promotion.Queen
-        else Promotion.None
+        if ch = 'n' then PromKnight
+        elif ch = 'b' then PromBishop
+        elif ch = 'r' then PromRook
+        elif ch = 'q' then PromQueen
+        else PromNone
 
 module Delta =
     let Default() =

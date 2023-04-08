@@ -25,8 +25,8 @@ type Board =
         let pc = this.Map.ColPc(sq)
         pc = EmptyColPc
     // Move
-    member this.Move(from:int, mto:int, ?promotion0:Promotion) =
-        let promotion = defaultArg promotion0 Promotion.None
+    member this.Move(from:int, mto:int, ?promotion0:int) =
+        let promotion = defaultArg promotion0 PromNone
         let cpcF = this.Map.ColPc(from)
         let cpcT = this.Map.ColPc(mto)
         let pieceF, colorF = ColPiece.ToPcCol(cpcF)
@@ -58,7 +58,7 @@ type Board =
         else this.Map.EnPassantTarget <- Na
         // Make the move.
         this.Map.Move(cpcF, cpcT, from, mto)
-        if (promotion <> Promotion.None) then
+        if promotion <> PromNone then
             this.Map.Empty(cpcF, mto)
             let prompc = int(promotion)*2 + int(colorF)
             this.Map.InsertPiece(prompc, mto)

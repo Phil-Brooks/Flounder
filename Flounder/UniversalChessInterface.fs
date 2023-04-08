@@ -70,7 +70,7 @@ module UniversalChessInterface =
                     let MoveCount = args.Length - (argsParsed + 1)
                     for i = argsParsed + 1 to args.Length-1 do
                         let from, mto = Square.FromUci(args.[i])
-                        let mutable promotion = Promotion.None
+                        let mutable promotion = PromNone
                         if (args.[i].Length > 4) then
                             promotion <- Promotion.FromChar(args.[i].ToLower().[4])
                         EngBrd.GuiMove(from, mto, promotion)
