@@ -23,12 +23,9 @@ module MoveList =
     let CountPawnMovesAtA2() =
         let moveList = MoveList(board, A2)
         moveList.Count |> should equal 2
-        let mutable moves = moveList.Moves.GetEnumerator()
-        let mutable move = moves.Current
-        move|> should equal A4
-        moves.MoveNext()|>ignore
-        move <- moves.Current
-        move|> should equal A3
+        let movearr = Bits.ToArray(moveList.Moves.Internal)
+        movearr[0]|> should equal A4
+        movearr[1]|> should equal A3
 
     [<Test>]
     let CountKnightMovesAtA3() =
@@ -36,12 +33,9 @@ module MoveList =
         let res = usebd.Move(B1, A3)
         let moveList = MoveList(usebd, A3)
         moveList.Count |> should equal 3
-        let mutable moves = moveList.Moves.GetEnumerator()
-        let mutable move = moves.Current
-        move|> should equal B5
-        moves.MoveNext()|>ignore
-        move <- moves.Current
-        move|> should equal C4
+        let movearr = Bits.ToArray(moveList.Moves.Internal)
+        movearr[0]|> should equal B5
+        movearr[1]|> should equal C4
 
     [<Test>]
     let CountRookMovesAtA3() =
@@ -49,12 +43,9 @@ module MoveList =
         let res = usebd.Move(A1, A3)
         let moveList = MoveList(usebd, A3)
         moveList.Count |> should equal 11
-        let mutable moves = moveList.Moves.GetEnumerator()
-        let mutable move = moves.Current
-        move|> should equal A7
-        moves.MoveNext()|>ignore
-        move <- moves.Current
-        move|> should equal A6
+        let movearr = Bits.ToArray(moveList.Moves.Internal)
+        movearr[0]|> should equal A7
+        movearr[1]|> should equal A6
 
     [<Test>]
     let CountRookMovesAtA1() =
@@ -67,12 +58,9 @@ module MoveList =
         let res = usebd.Move(C1, C3)
         let moveList = MoveList(usebd, C3)
         moveList.Count |> should equal 6
-        let mutable moves = moveList.Moves.GetEnumerator()
-        let mutable move = moves.Current
-        move|> should equal G7
-        moves.MoveNext()|>ignore
-        move <- moves.Current
-        move|> should equal F6
+        let movearr = Bits.ToArray(moveList.Moves.Internal)
+        movearr[0]|> should equal G7
+        movearr[1]|> should equal F6
 
     [<Test>]
     let CountQueenMovesAtC3() =
@@ -80,12 +68,9 @@ module MoveList =
         let res = usebd.Move(D1, C3)
         let moveList = MoveList(usebd, C3)
         moveList.Count |> should equal 17
-        let mutable moves = moveList.Moves.GetEnumerator()
-        let mutable move = moves.Current
-        move|> should equal C7
-        moves.MoveNext()|>ignore
-        move <- moves.Current
-        move|> should equal G7
+        let movearr = Bits.ToArray(moveList.Moves.Internal)
+        movearr[0]|> should equal C7
+        movearr[1]|> should equal G7
 
     [<Test>]
     let CountKingMovesAtC3() =
@@ -93,12 +78,9 @@ module MoveList =
         let res = usebd.Move(E1, C3)
         let moveList = MoveList(usebd, C3)
         moveList.Count |> should equal 5
-        let mutable moves = moveList.Moves.GetEnumerator()
-        let mutable move = moves.Current
-        move|> should equal B4
-        moves.MoveNext()|>ignore
-        move <- moves.Current
-        move|> should equal C4
+        let movearr = Bits.ToArray(moveList.Moves.Internal)
+        movearr[0]|> should equal B4
+        movearr[1]|> should equal C4
 
     [<Test>]
     let CountKingMovesAtE1a() =
@@ -107,31 +89,24 @@ module MoveList =
         let res = usebd.Move(G1, G3)
         let moveList = MoveList(usebd, E1)
         moveList.Count |> should equal 2
-        let mutable moves = moveList.Moves.GetEnumerator()
-        let mutable move = moves.Current
-        move|> should equal F1
-        moves.MoveNext()|>ignore
-        move <- moves.Current
-        move|> should equal G1
+        let movearr = Bits.ToArray(moveList.Moves.Internal)
+        movearr[0]|> should equal F1
+        movearr[1]|> should equal G1
 
     [<Test>]
     let CountPawnMovesEP() =
         let moveList = MoveList(epboard, E5)
         moveList.Count |> should equal 2
-        let mutable moves = moveList.Moves.GetEnumerator()
-        let mutable move = moves.Current
-        move|> should equal D6
-        moves.MoveNext()|>ignore
-        move <- moves.Current
-        move|> should equal E6
+        let movearr = Bits.ToArray(moveList.Moves.Internal)
+        movearr[0]|> should equal D6
+        movearr[1]|> should equal E6
 
     [<Test>]
     let CountPawnMovesPRM() =
         let moveList = MoveList(prmboard, C7)
         moveList.Count |> should equal 1
-        let mutable moves = moveList.Moves.GetEnumerator()
-        let mutable move = moves.Current
-        move|> should equal B8
+        let movearr = Bits.ToArray(moveList.Moves.Internal)
+        movearr[0]|> should equal B8
         moveList.Promotion |> should equal true
 
     [<Test>]
@@ -144,9 +119,6 @@ module MoveList =
         let (checks, doubleChecked) = MoveList.CheckBitBoard(board, kingSq, board.Map.xstm)
         let moveList = MoveList(board, B6, hv, d, checks)
         moveList.Count |> should equal 2
-        let mutable moves = moveList.Moves.GetEnumerator()
-        let mutable move = moves.Current
-        move|> should equal A7
-        moves.MoveNext()|>ignore
-        move <- moves.Current
-        move|> should equal C7
+        let movearr = Bits.ToArray(moveList.Moves.Internal)
+        movearr[0]|> should equal A7
+        movearr[1]|> should equal C7

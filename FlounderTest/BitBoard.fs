@@ -242,8 +242,8 @@ module BitBoard =
 
     [<Test>]
     let GetEnum() =
-        let ans = BlackB.GetEnumerator()
-        ans.Current|>should equal A8
+        let ans = Bits.ToSeq(BlackB.Internal)
+        ans|>Seq.head|>should equal A8
 
     [<Test>]
     let ToStr() =

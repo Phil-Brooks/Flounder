@@ -69,13 +69,7 @@ type BitBoard =
         member this.ToSq() =
             BitOperations.TrailingZeroCount(this.Internal)
         member this.ToSqs():int array =
-            let c = this.Count
-            let mutable iterator = BitBoardIterator(this.Internal, c)
-            let mutable a:int array = Array.zeroCreate c
-            for i = 0 to c-1 do
-                a.[i] <- iterator.Current
-                iterator.MoveNext()|>ignore
-            a
+            Bits.ToArray(this.Internal)
         // Indexers
         member this.Item 
             with get(i:int):bool = 
@@ -86,7 +80,6 @@ type BitBoard =
                     this.Internal <- this.Internal ||| (1UL <<< i)
                 else
                     this.Internal <- this.Internal &&& (~~~(1UL <<< i))
-        member this.GetEnumerator() = BitBoardIterator(this.Internal, this.Count)
         override this.ToString() =
             let mutable final = ""
             for v = 0 to 7 do

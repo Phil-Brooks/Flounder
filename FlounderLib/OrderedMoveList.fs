@@ -78,13 +78,11 @@ type OrderedMoveList =
                 // We can only do this if we're not double checked.
                 // In case of double-checked (discovered + normal), only the king can move so we should skip this.
                 // Generate all pawn moves.
-                let mutable fromIterator = board.All(Pawn, board.Map.stm).GetEnumerator()
-                let mutable from = fromIterator.Current
-                while (fromIterator.MoveNext()) do
+                let fromarr = Bits.ToArray(board.All(Pawn, board.Map.stm).Internal)
+                for from in fromarr do
                     let moveList = MoveList(board, from, Pawn, board.Map.stm,hv, d, checks)
-                    let mutable moves = moveList.Moves.GetEnumerator()
-                    let mutable move = moves.Current
-                    while (moves.MoveNext()) do
+                    let movearr = Bits.ToArray(moveList.Moves.Internal)
+                    for move in movearr do
                         if (moveList.Promotion) then
                             for p = PromKnight to PromQueen do
                                 this.Internal.[i] <- new OrderedMoveEntry(from, move, p)
@@ -94,35 +92,25 @@ type OrderedMoveList =
                             this.Internal.[i] <- new OrderedMoveEntry(from, move, PromNone)
                             this.Internal.[i].Score <- this.ScoreMove(Pawn, board, this.Internal.[i], transpositionMove)
                             i<-i+1
-                        move <- moves.Current
-                    from <- fromIterator.Current
                 // Generate moves for rook, knight, bishop, and queen.
                 for piece in [Rook;Knight;Bishop;Queen] do
-                    fromIterator <- board.All(piece, board.Map.stm).GetEnumerator()
-                    from <- fromIterator.Current
-                    while (fromIterator.MoveNext()) do
+                    let fromarr = Bits.ToArray(board.All(piece, board.Map.stm).Internal)
+                    for from in fromarr do
                         let moveList = MoveList(board, from, piece, board.Map.stm, hv, d, checks)
-                        let mutable moves = moveList.Moves.GetEnumerator()
-                        let mutable move = moves.Current
-                        while (moves.MoveNext()) do
+                        let movearr = Bits.ToArray(moveList.Moves.Internal)
+                        for move in movearr do
                             this.Internal.[i] <- new OrderedMoveEntry(from, move, PromNone)
                             this.Internal.[i].Score <- this.ScoreMove(piece, board, this.Internal.[i], transpositionMove)
                             i<-i+1
-                            move <- moves.Current
-                        from <- fromIterator.Current
             // Generate all king moves.
-            let mutable fromIterator = board.All(King, board.Map.stm).GetEnumerator()
-            let mutable from = fromIterator.Current
-            while (fromIterator.MoveNext()) do
+            let fromarr = Bits.ToArray(board.All(King, board.Map.stm).Internal)
+            for from in fromarr do
                 let moveList = MoveList(board, from, King, board.Map.stm, hv, d, checks)
-                let mutable moves = moveList.Moves.GetEnumerator()
-                let mutable move = moves.Current
-                while (moves.MoveNext()) do
+                let movearr = Bits.ToArray(moveList.Moves.Internal)
+                for move in movearr do
                     this.Internal.[i] <- new OrderedMoveEntry(from, move, PromNone)
                     this.Internal.[i].Score <- this.ScoreMove(King, board, this.Internal.[i], transpositionMove)
                     i<-i+1
-                    move <- moves.Current
-                from <- fromIterator.Current
             i
         member this.QSearchMoveGeneration(board:Board, transpositionMove:OrderedMoveEntry) =
             // If we only want capture moves, we should also define our opposite board.
@@ -137,14 +125,12 @@ type OrderedMoveList =
                 // We can only do this if we're not double checked.
                 // In case of double-checked (discovered + normal), only the king can move so we should skip this.
                 // Generate all pawn moves.
-                let mutable fromIterator = board.All(Pawn, board.Map.stm).GetEnumerator()
-                let mutable from = fromIterator.Current
-                while (fromIterator.MoveNext()) do
+                let fromarr = Bits.ToArray(board.All(Pawn, board.Map.stm).Internal)
+                for from in fromarr do
                     let moveList = MoveList(board, from, hv, d, checks)
-                    let mutable moves = moveList.Moves.GetEnumerator()
-                    let mutable move = moves.Current
-                    while (moves.MoveNext()) do
-                        if (moveList.Promotion) then
+                    let movearr = Bits.ToArray(moveList.Moves.Internal)
+                    for move in movearr do
+                        if moveList.Promotion then
                             for p = PromKnight to PromQueen do
                                 this.Internal.[i] <- new OrderedMoveEntry(from, move, p)
                                 this.Internal.[i].Score <- this.ScoreMove(Pawn, board, this.Internal.[i], transpositionMove)
@@ -153,35 +139,25 @@ type OrderedMoveList =
                             this.Internal.[i] <- new OrderedMoveEntry(from, move, PromNone)
                             this.Internal.[i].Score <- this.ScoreMove(Pawn, board, this.Internal.[i], transpositionMove)
                             i<-i+1
-                        move <- moves.Current
-                    from <- fromIterator.Current
                 // Generate moves for rook, knight, bishop, and queen.
                 for piece in [Rook;Knight;Bishop;Queen] do
-                    let mutable fromIterator = board.All(piece, board.Map.stm).GetEnumerator()
-                    let mutable from = fromIterator.Current
-                    while (fromIterator.MoveNext()) do
+                    let fromarr = Bits.ToArray(board.All(piece, board.Map.stm).Internal)
+                    for from in fromarr do
                         let moveList = MoveList(board, from, piece, board.Map.stm, hv, d, checks)
-                        let mutable moves = (moveList.Moves &&& opposite).GetEnumerator()
-                        let mutable move = moves.Current
-                        while (moves.MoveNext()) do
+                        let movearr = Bits.ToArray((moveList.Moves &&& opposite).Internal)
+                        for move in movearr do
                             this.Internal.[i] <- new OrderedMoveEntry(from, move, PromNone)
                             this.Internal.[i].Score <- this.ScoreMove(piece, board, this.Internal.[i], transpositionMove)
                             i<-i+1
-                            move <- moves.Current
-                        from <- fromIterator.Current
             // Generate all king moves.
-            let mutable fromIterator = board.All(King, board.Map.stm).GetEnumerator()
-            let mutable from = fromIterator.Current
-            while (fromIterator.MoveNext()) do
+            let fromarr = Bits.ToArray(board.All(King, board.Map.stm).Internal)
+            for from in fromarr do
                 let moveList = MoveList(board, from, King, board.Map.stm, hv, d, checks)
-                let mutable moves = (moveList.Moves &&& opposite).GetEnumerator()
-                let mutable move = moves.Current
-                while (moves.MoveNext()) do
+                let movearr = Bits.ToArray((moveList.Moves &&& opposite).Internal)
+                for move in movearr do
                     this.Internal.[i] <- new OrderedMoveEntry(from, move, PromNone)
                     this.Internal.[i].Score <- this.ScoreMove(King, board, this.Internal.[i], transpositionMove)
                     i<-i+1                    
-                    move <- moves.Current
-                from <- fromIterator.Current
             i
         member this.Item with get(i:int):byref<OrderedMoveEntry> = 
             &(this.Internal.[i])

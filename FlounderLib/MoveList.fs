@@ -97,22 +97,17 @@ module MoveList =
         let mutable horizontalVerticalPin = BitBoard.Default
         let mutable diagonalPin = BitBoard.Default
         // Iterate over the rooks and queens (pinning straight).
-        let mutable rookQueenIterator = rookQueenCheck.GetEnumerator()
-        let mutable rqSq = rookQueenIterator.Current
-        while (rookQueenIterator.MoveNext()) do
-            let rqS = int(rqSq)
-            let possiblePin = UtilityTable.Between.[sq].[rqS] ||| BitBoard.FromSq(rqSq)
+        let rqSqarr = Bits.ToArray(rookQueenCheck.Internal)
+        let dorqSq rqSq =
+            let possiblePin = UtilityTable.Between.[sq].[rqSq] ||| BitBoard.FromSq(rqSq)
             if ((possiblePin &&& board.All(us)).Count = 1) then horizontalVerticalPin <- horizontalVerticalPin ||| possiblePin
-            // Next square iteration.
-            rqSq <- rookQueenIterator.Current
+        Array.iter dorqSq rqSqarr
         // Iterate over the bishops and queens (pinning diagonally).
-        let mutable bishopQueenIterator = bishopQueenCheck.GetEnumerator()
-        let mutable bqSq = bishopQueenIterator.Current
-        while (bishopQueenIterator.MoveNext()) do
+        let bqSqarr = Bits.ToArray(bishopQueenCheck.Internal)
+        let dobqSq bqSq =
             let possiblePin = UtilityTable.Between.[sq].[bqSq] ||| BitBoard.FromSq(bqSq)
             if ((possiblePin &&& board.All(us)).Count = 1) then diagonalPin <- diagonalPin ||| possiblePin
-            // Next square iteration.
-            bqSq <- bishopQueenIterator.Current
+        Array.iter dobqSq bqSqarr
         (horizontalVerticalPin, diagonalPin)
     let LegalPawnMoveCaptures(color:int, board:Board, from:int, hv:BitBoard, d:BitBoard, c:BitBoard) =
         let mutable moves = BitBoard.Default
@@ -293,13 +288,9 @@ module MoveList =
             moves
         else
             let ioppositeColor = color^^^1
-            let mutable kingMovesIterator = kingMoves.GetEnumerator()
-            let mutable move = kingMovesIterator.Current
             board.RemovePiece((if color=0 then WhiteKing else BlackKing), from)
-            while (kingMovesIterator.MoveNext()) do
-                if (UnderAttack(board, move, ioppositeColor)) then kingMoves.[move] <- false
-                // Next square iteration.
-                move <- kingMovesIterator.Current
+            let movearr = Bits.ToArray(kingMoves.Internal)
+            Array.iter (fun move -> if (UnderAttack(board, move, ioppositeColor)) then kingMoves.[move] <- false) movearr
             board.InsertPiece((if color=0 then WhiteKing else BlackKing), from)
             moves <- moves ||| kingMoves
             // Castling

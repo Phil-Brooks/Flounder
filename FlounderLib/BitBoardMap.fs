@@ -110,11 +110,8 @@ type BitBoardMap =
                 for piece = Pawn to King do
                     let cpc = ColPiece.FromPcCol(piece,stm)
                     let psbb = pieces.[cpc]
-                    let mutable pieceSquareIterator = psbb.GetEnumerator()  
-                    let mutable sq:int = pieceSquareIterator.Current
-                    while (pieceSquareIterator.MoveNext()) do
-                        zobristHash <- zobristHash ^^^ Zobrist.PieceKeys.[piece, stm, sq]
-                        sq <- pieceSquareIterator.Current
+                    let sqarr = Bits.ToArray(psbb.Internal)
+                    Array.iter (fun sq -> zobristHash <- zobristHash ^^^ Zobrist.PieceKeys.[piece, stm, sq]) sqarr
                 if stm=0 then zobristHash <- zobristHash ^^^ Zobrist.TurnKey
                 if enPassantTarget <> Na then zobristHash <- zobristHash ^^^ Zobrist.EnPassantKeys.[int(enPassantTarget)]
                 zobristHash <- zobristHash ^^^ Zobrist.CastlingKeys.[int(whiteKCastle) ||| int(whiteQCastle) ||| int(blackKCastle) ||| int(blackQCastle)]
@@ -248,11 +245,8 @@ module BitBoardMap =
         let mutable zobristHash = 0UL
         for piece = Pawn to King do
             let psbb:BitBoard = map.[piece,map.stm]
-            let mutable pieceSquareIterator:BitBoardIterator = psbb.GetEnumerator()  
-            let mutable sq:int = pieceSquareIterator.Current
-            while (pieceSquareIterator.MoveNext()) do
-                zobristHash <- zobristHash ^^^ Zobrist.PieceKeys.[piece, map.stm, sq]
-                sq <- pieceSquareIterator.Current
+            let sqarr = Bits.ToArray(psbb.Internal)
+            Array.iter (fun sq -> zobristHash <- zobristHash ^^^ Zobrist.PieceKeys.[piece, map.stm, sq]) sqarr
         if map.stm = 0 then zobristHash <- zobristHash ^^^ Zobrist.TurnKey
         if map.EnPassantTarget <> Na then zobristHash <- zobristHash ^^^ Zobrist.EnPassantKeys.[int(map.EnPassantTarget)]
         zobristHash <- zobristHash ^^^ Zobrist.CastlingKeys.[map.WhiteKCastle ||| map.WhiteQCastle ||| map.BlackKCastle ||| map.BlackQCastle]

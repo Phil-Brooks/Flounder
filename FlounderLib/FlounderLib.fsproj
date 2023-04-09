@@ -13,7 +13,7 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
     <Compile Include="Types.fs" />
-    <Compile Include="BitBoardIterator.fs" />
+    <Compile Include="Bits.fs" />
     <Compile Include="BitBoard.fs" />
     <Compile Include="ZobristPieceKeyTable.fs" />
     <Compile Include="Zobrist.fs" />
@@ -43,7 +43,5 @@
     <Compile Include="MoveSearch.fs" />
     <Compile Include="Perft.fs" />
   </ItemGroup>
-
-  <ItemGroup />
 
 </Project>

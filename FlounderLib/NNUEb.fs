@@ -190,13 +190,12 @@ module NNUEb =
         let delta= Delta.Default()
         let kingSq = map.[King, perspective].ToSq()
         let occupied = ~~~(map.[2])
-        let mutable sqIterator = occupied.GetEnumerator()
-        let mutable sq = sqIterator.Current
-        while (sqIterator.MoveNext()) do
+        let sqarr = Bits.ToArray(occupied.Internal)
+        let dosq sq =
             let colpc = map.PiecesAndColors.[int(sq)]
             delta.add.[delta.a] <- FeatureIdx(colpc,sq,kingSq,perspective)
-            sq <- sqIterator.Current
             delta.a <- delta.a + 1
+        Array.iter dosq sqarr
         let src = Array.copy NNUEin.InputBiases
         ApplyDelta(src,delta,perspective)
     let RefreshAccumulator(map:BitBoardMap,perspective:int) =
@@ -210,18 +209,16 @@ module NNUEb =
             let prev = state.Pcs.[pc] 
             let rem = prev &&& ~~~curr
             let add = curr &&& ~~~prev
-            let mutable remIterator = rem.GetEnumerator()
-            let mutable sq = remIterator.Current
-            while (remIterator.MoveNext()) do
+            let sqarr = Bits.ToArray(rem.Internal)
+            let dosq sq =
                 delta.rem.[delta.r] <- FeatureIdx(pc,sq,kingSq,perspective)
-                sq <- remIterator.Current
                 delta.r <- delta.r + 1
-            let mutable addIterator = add.GetEnumerator()
-            let mutable sq = addIterator.Current
-            while (addIterator.MoveNext()) do
+            Array.iter dosq sqarr
+            let sqarr = Bits.ToArray(add.Internal)
+            let dosq sq =
                 delta.add.[delta.a] <- FeatureIdx(pc,sq,kingSq,perspective)
-                sq <- addIterator.Current
                 delta.a <- delta.a + 1
+            Array.iter dosq sqarr
             state.Pcs.[int(pc)] <- curr
         ApplyDelta(state.AccKsValues, delta, perspective)
         RefreshTable.[pBucket + kingBucket] <- {state with AccKsValues = Array.copy Accumulators.[AccIndex].AccValues.[int(perspective)]}
