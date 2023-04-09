@@ -13,28 +13,28 @@ module Perft =
         // Get all squares occupied by our color.
         let colored = iboard.All(iboard.Map.stm)
         // Generate pins and check bitboards.
-        let kingSq = iboard.KingLoc(iboard.Map.stm).ToSq()
+        let kingSq = Bits.ToInt(iboard.KingLoc(iboard.Map.stm))
         let (hv, d) = MoveList.PinBitBoards(iboard, kingSq, iboard.Map.stm, iboard.Map.xstm)
         let (checks, doubleChecked) = MoveList.CheckBitBoard(iboard, kingSq, iboard.Map.xstm)
         // Generate all pseudo-legal moves for our square iteration.
         if (depth = 1) then
             // If depth is 1, then we don't need to do any further recursion and can just do +1 to the count.
-            let sqs = colored.ToSqs()
+            let sqs = Bits.ToArray(colored)
             let dosq sq =
                 let piece, pieceColor = ColPiece.ToPcCol(iboard.At(sq))
-                let moveList = MoveList(iboard, sq, piece, int(pieceColor), hv, d, checks, doubleChecked)
+                let moveList = MoveList(iboard, sq, piece, int(pieceColor), BitBoard(hv), BitBoard(d), BitBoard(checks), doubleChecked)
                 if moveList.Promotion then uint64(moveList.Count * 4) else uint64(moveList.Count)
             sqs|>Array.map dosq|>Array.sum
         else
             // If depth is > 1, then we need to do recursion at depth = depth - 1.
             // Pre-figure our next depth to avoid calculations inside loop.
             let nextDepth = depth - 1
-            let sqs = colored.ToSqs()
+            let sqs = Bits.ToArray(colored)
             let dosq sq =
                 let board = iboard.Clone()
                 // Generate all pseudo-legal moves for our square iteration.
                 let (piece, pieceColor) = ColPiece.ToPcCol(board.At(sq))
-                let moveList = MoveList(board, sq, piece, int(pieceColor), hv, d, checks, doubleChecked)
+                let moveList = MoveList(board, sq, piece, int(pieceColor), BitBoard(hv), BitBoard(d), BitBoard(checks), doubleChecked)
                 let mvs = moveList.Moves.ToSqs()
                 let domv mv =
                    // Make our move iteration for our square iteration. Save the revert move for reverting

@@ -146,7 +146,7 @@ module NNUEb =
             if move.EnPassant then (if map.stm=1 then BlackPawn else WhitePawn)
             else ColPiece.FromPcCol(move.CapturedPiece,move.CapturedColor)
         let prev = Accumulators.[AccIndex-1].AccValues.[int(view)]
-        let king = map.[King, view].ToSq()
+        let king = Bits.ToInt(map.[King, view])
         let movingSide = move.ColorToMove
         let colpcto = map.ColPc(move.To)
         let colpcfrom =
@@ -188,9 +188,9 @@ module NNUEb =
                 Accumulators.[AccIndex].AccValues.[perspective].[unrollOffset+i] <- regs.[i]
     let ResetAccumulator(map:BitBoardMap,perspective:int) =
         let delta= Delta.Default()
-        let kingSq = map.[King, perspective].ToSq()
+        let kingSq = Bits.ToInt(map.[King, perspective])
         let occupied = ~~~(map.[2])
-        let sqarr = Bits.ToArray(occupied.Internal)
+        let sqarr = Bits.ToArray(occupied)
         let dosq sq =
             let colpc = map.PiecesAndColors.[int(sq)]
             delta.add.[delta.a] <- FeatureIdx(colpc,sq,kingSq,perspective)
@@ -200,26 +200,26 @@ module NNUEb =
         ApplyDelta(src,delta,perspective)
     let RefreshAccumulator(map:BitBoardMap,perspective:int) =
         let delta = Delta.Default()
-        let kingSq = map.[King, perspective].ToSq()
+        let kingSq = Bits.ToInt(map.[King, perspective])
         let pBucket = if perspective = 0 then 0 else 32
         let kingBucket = KING_BUCKETS.[int(kingSq) ^^^ (56 * perspective)] + (if Square.ToFile(kingSq) > 3 then 16 else 0)
         let state = RefreshTable.[pBucket + kingBucket]
         for pc = WhitePawn to BlackKing do
             let curr = map.Pieces.[pc]
-            let prev = state.Pcs.[pc] 
+            let prev = state.Pcs.[pc].Internal 
             let rem = prev &&& ~~~curr
             let add = curr &&& ~~~prev
-            let sqarr = Bits.ToArray(rem.Internal)
+            let sqarr = Bits.ToArray(rem)
             let dosq sq =
                 delta.rem.[delta.r] <- FeatureIdx(pc,sq,kingSq,perspective)
                 delta.r <- delta.r + 1
             Array.iter dosq sqarr
-            let sqarr = Bits.ToArray(add.Internal)
+            let sqarr = Bits.ToArray(add)
             let dosq sq =
                 delta.add.[delta.a] <- FeatureIdx(pc,sq,kingSq,perspective)
                 delta.a <- delta.a + 1
             Array.iter dosq sqarr
-            state.Pcs.[int(pc)] <- curr
+            state.Pcs.[int(pc)] <- BitBoard(curr)
         ApplyDelta(state.AccKsValues, delta, perspective)
         RefreshTable.[pBucket + kingBucket] <- {state with AccKsValues = Array.copy Accumulators.[AccIndex].AccValues.[int(perspective)]}
     let DoUpdate(map:BitBoardMap, move:RevertMove) =

@@ -58,7 +58,7 @@ module BitBoardMap =
         let useMap = Map.Copy()
         useMap.Move(A2, A7)
         WhitePawn |> should equal (useMap.ColPc(A7))
-        useMap.[Pawn, 1].Count |> should equal 7
+        Bits.Count(useMap.[Pawn, 1]) |> should equal 7
 
     [<Test>]
     let RemoveWhitePawn() =
@@ -89,17 +89,17 @@ module BitBoardMap =
     let Elements() =
         Map.stm|>should equal 0
         Map.Pieces.Length|> should equal 12
-        Map.Pieces.[10].Count |> should equal 1
-        Map.Pieces.[7].Count |> should equal 2
-        Map.Pieces.[1].Count |> should equal 8
+        Bits.Count(Map.Pieces.[10]) |> should equal 1
+        Bits.Count(Map.Pieces.[7]) |> should equal 2
+        Bits.Count(Map.Pieces.[1]) |> should equal 8
 
         Map.PiecesAndColors.Length |> should equal 64
         Map.PiecesAndColors.[0] |> should equal BlackRook
         Map.PiecesAndColors.[63] |> should equal WhiteRook
         Map.PiecesAndColors.[8] |> should equal BlackPawn
 
-        Map.White.Count |> should equal 16
-        Map.Black.Count |> should equal 16
+        Bits.Count(Map.White) |> should equal 16
+        Bits.Count(Map.Black) |> should equal 16
         Map.BlackKCastle |> should equal 0x4
         Map.BlackQCastle |> should equal 0x8
         Map.WhiteKCastle |> should equal 0x1
@@ -114,12 +114,12 @@ module BitBoardMap =
 
     [<Test>]
     let ItemW() =
-        let ans = Map.[0].Count
+        let ans = Bits.Count(Map.[0])
         ans |> should equal 16
 
     [<Test>]
     let ItemWP() =
-        let ans = Map.[Pawn, 0].Count
+        let ans = Bits.Count(Map.[Pawn, 0])
         ans |> should equal 8
 
     [<Test>]

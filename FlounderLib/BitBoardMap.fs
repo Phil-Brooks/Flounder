@@ -6,10 +6,10 @@ type BitBoardMap =
     struct
         val mutable stm:int // side to move
         val mutable xstm:int // not side to move
-        val Pieces:BitBoard array
+        val Pieces:uint64 array
         val PiecesAndColors:int array
-        val mutable White:BitBoard
-        val mutable Black:BitBoard
+        val mutable White:uint64
+        val mutable Black:uint64
         val mutable WhiteKCastle:int
         val mutable WhiteQCastle:int
         val mutable BlackKCastle:int
@@ -33,11 +33,7 @@ type BitBoardMap =
             }
         new(boardFen:string, turnData:string, castlingData:string, enPassantTargetData:string) =
             let FEN_SPR = "/"
-            let pieces =
-                [|
-                    BitBoard.Default;BitBoard.Default;BitBoard.Default;BitBoard.Default;BitBoard.Default;BitBoard.Default;
-                    BitBoard.Default;BitBoard.Default;BitBoard.Default;BitBoard.Default;BitBoard.Default;BitBoard.Default
-                |]
+            let pieces = Array.zeroCreate 12
             let piecesAndColors:int array = Array.zeroCreate 64
             for i = 0 to 63 do
                 piecesAndColors[i] <- EmptyColPc
@@ -53,41 +49,41 @@ type BitBoardMap =
                     else
                         if (Char.IsUpper(p)) then
                             if p = 'P' then
-                                pieces.[WhitePawn].[v * 8 + h] <- true
+                                Bits.SetBit(&pieces.[WhitePawn], v * 8 + h)
                                 piecesAndColors.[v * 8 + h] <- WhitePawn
                             elif p = 'N' then
-                                pieces.[WhiteKnight].[v * 8 + h] <- true
+                                Bits.SetBit(&pieces.[WhiteKnight], v * 8 + h)
                                 piecesAndColors.[v * 8 + h] <- WhiteKnight
                             elif p = 'B' then
-                                pieces.[WhiteBishop].[v * 8 + h] <- true
+                                Bits.SetBit(&pieces.[WhiteBishop], v * 8 + h)
                                 piecesAndColors.[v * 8 + h] <- WhiteBishop
                             elif p = 'R' then
-                                pieces.[WhiteRook].[v * 8 + h] <- true
+                                Bits.SetBit(&pieces.[WhiteRook], v * 8 + h)
                                 piecesAndColors.[v * 8 + h] <- WhiteRook
                             elif p = 'Q' then
-                                pieces.[WhiteQueen].[v * 8 + h] <- true
+                                Bits.SetBit(&pieces.[WhiteQueen], v * 8 + h)
                                 piecesAndColors.[v * 8 + h] <- WhiteQueen
                             elif p = 'K' then
-                                pieces.[WhiteKing].[v * 8 + h] <- true
+                                Bits.SetBit(&pieces.[WhiteKing], v * 8 + h)
                                 piecesAndColors.[v * 8 + h] <- WhiteKing
                         else
                             if p = 'p' then
-                                pieces.[BlackPawn].[v * 8 + h] <- true
+                                Bits.SetBit(&pieces.[BlackPawn], v * 8 + h)
                                 piecesAndColors.[v * 8 + h] <- BlackPawn
                             elif p = 'n' then
-                                pieces.[BlackKnight].[v * 8 + h] <- true
+                                Bits.SetBit(&pieces.[BlackKnight], v * 8 + h)
                                 piecesAndColors.[v * 8 + h] <- BlackKnight
                             elif p = 'b' then
-                                pieces.[BlackBishop].[v * 8 + h] <- true
+                                Bits.SetBit(&pieces.[BlackBishop], v * 8 + h)
                                 piecesAndColors.[v * 8 + h] <- BlackBishop
                             elif p = 'r' then
-                                pieces.[BlackRook].[v * 8 + h] <- true
+                                Bits.SetBit(&pieces.[BlackRook], v * 8 + h)
                                 piecesAndColors.[v * 8 + h] <- BlackRook
                             elif p = 'q' then
-                                pieces.[BlackQueen].[v * 8 + h] <- true
+                                Bits.SetBit(&pieces.[BlackQueen], v * 8 + h)
                                 piecesAndColors.[v * 8 + h] <- BlackQueen
                             elif p = 'k' then
-                                pieces.[BlackKing].[v * 8 + h] <- true
+                                Bits.SetBit(&pieces.[BlackKing], v * 8 + h)
                                 piecesAndColors.[v * 8 + h] <- BlackKing
                         h <- h + 1
             let white = pieces.[WhitePawn] ||| pieces.[WhiteKnight] ||| 
@@ -110,7 +106,7 @@ type BitBoardMap =
                 for piece = Pawn to King do
                     let cpc = ColPiece.FromPcCol(piece,stm)
                     let psbb = pieces.[cpc]
-                    let sqarr = Bits.ToArray(psbb.Internal)
+                    let sqarr = Bits.ToArray(psbb)
                     Array.iter (fun sq -> zobristHash <- zobristHash ^^^ Zobrist.PieceKeys.[piece, stm, sq]) sqarr
                 if stm=0 then zobristHash <- zobristHash ^^^ Zobrist.TurnKey
                 if enPassantTarget <> Na then zobristHash <- zobristHash ^^^ Zobrist.EnPassantKeys.[int(enPassantTarget)]
@@ -118,7 +114,7 @@ type BitBoardMap =
                 zobristHash
             let zobristHash = gethash()
             BitBoardMap(stm,xstm,pieces,piecesAndColors,white,black,whiteKCastle,whiteQCastle,blackKCastle,blackQCastle,enPassantTarget,zobristHash)
-        new(map:BitBoardMap, pieces:BitBoard array, piecesAndColors:int array) =
+        new(map:BitBoardMap, pieces:uint64 array, piecesAndColors:int array) =
             let stm = map.stm
             let xstm = map.xstm
             let White = map.White
@@ -153,28 +149,28 @@ type BitBoardMap =
             let cF = pF%2
             if (pT <> EmptyColPc) then
                 // If moving to piece isn't empty, then we capture.
-                this.Pieces.[pT].[mto] <- false
+                Bits.PopBit(&this.Pieces.[pT], mto)
                 // Remove from color bitboards.
-                if (cT = 0) then
-                    this.White.[mto] <- false
+                if cT = 0 then
+                    Bits.PopBit(&this.White, mto)
                 else
-                    this.Black.[mto] <- false
+                    Bits.PopBit(&this.Black, mto)
                 // Update Zobrist.
                 Zobrist.HashPiece(&this.ZobristHash, pT/2, cT, mto)
             // We remove from original square.
-            this.Pieces.[pF].[from] <- false
+            Bits.PopBit(&this.Pieces.[pF], from)
             // Set at next square.
-            this.Pieces.[pF].[mto] <- true
+            Bits.SetBit(&this.Pieces.[pF], mto)
             // Make sure to update the pieces and colors.
             this.PiecesAndColors.[mto] <- this.PiecesAndColors.[from]
             this.PiecesAndColors.[from] <- EmptyColPc
             // Update color bitboards.
             if cF = 0 then
-                this.White.[from] <- false
-                this.White.[mto] <- true
+                Bits.PopBit(&this.White, from)
+                Bits.SetBit(&this.White, mto)
             else 
-                this.Black.[from] <- false
-                this.Black.[mto] <- true
+                Bits.PopBit(&this.Black, from)
+                Bits.SetBit(&this.Black, mto)
             // Update Zobrist.
             Zobrist.HashPiece(&this.ZobristHash, pF/2, cF, from)
             Zobrist.HashPiece(&this.ZobristHash, pF/2, cF, mto)
@@ -185,14 +181,14 @@ type BitBoardMap =
         member this.Empty(cpc:int, sq:int) =
             let piece,color = ColPiece.ToPcCol(cpc)
             // Remove from square.
-            this.Pieces.[cpc].[sq] <- false
+            Bits.PopBit(&this.Pieces.[cpc], sq)
             // Set empty in pieces and colors.
             this.PiecesAndColors.[sq] <- EmptyColPc
             // Remove from color bitboards.
             if color = 0 then
-                this.White.[sq] <- false
+                Bits.PopBit(&this.White, sq)
             else 
-                this.Black.[sq] <- false
+                Bits.PopBit(&this.Black, sq)
             // Update Zobrist.
             Zobrist.HashPiece(&this.ZobristHash, piece, int(color), sq)
         member this.Empty(sq:int) =
@@ -201,12 +197,12 @@ type BitBoardMap =
         member this.InsertPiece(cpc:int,sq:int) =
             let piece,color = ColPiece.ToPcCol(cpc)
             // Insert the piece at square.
-            this.Pieces.[int(cpc)].[sq] <- true
+            Bits.SetBit(&this.Pieces.[cpc], sq)
             // Insert into color bitboards.
             if color = 0 then
-                this.White.[sq] <- true
+                Bits.SetBit(&this.White, sq)
             else 
-                this.Black.[sq] <- true
+                Bits.SetBit(&this.Black, sq)
             // Set piece in pieces and colors.
             this.PiecesAndColors.[sq] <- cpc
             // Update Zobrist.
@@ -244,8 +240,8 @@ module BitBoardMap =
     let Hash(map:BitBoardMap) =
         let mutable zobristHash = 0UL
         for piece = Pawn to King do
-            let psbb:BitBoard = map.[piece,map.stm]
-            let sqarr = Bits.ToArray(psbb.Internal)
+            let psbb = map.[piece,map.stm]
+            let sqarr = Bits.ToArray(psbb)
             Array.iter (fun sq -> zobristHash <- zobristHash ^^^ Zobrist.PieceKeys.[piece, map.stm, sq]) sqarr
         if map.stm = 0 then zobristHash <- zobristHash ^^^ Zobrist.TurnKey
         if map.EnPassantTarget <> Na then zobristHash <- zobristHash ^^^ Zobrist.EnPassantKeys.[int(map.EnPassantTarget)]

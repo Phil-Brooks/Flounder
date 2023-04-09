@@ -177,15 +177,15 @@ type MoveSearch =
                 // We had a three-fold repetition, so return earlier.
                 if board.IsRepetition() then ans <- 0|>Some
                 else
-                    let allPiecesCount = board.Brd.All().Count
+                    let allPiecesCount = Bits.Count(board.Brd.All())
                     // If only the kings are left, it's a draw.
                     if allPiecesCount = 2 then ans <- 0|>Some
                     else
-                        let knightLeft = board.Brd.All(Knight, 0).ToBool() || board.Brd.All(Knight, 1).ToBool()
+                        let knightLeft = board.Brd.All(Knight, 0) <> 0UL || board.Brd.All(Knight, 1) <> 0UL
                         // If only the kings and one knight is left, it's a draw.
                         if (allPiecesCount = 3 && knightLeft) then ans <- 0|>Some
                         else
-                            let bishopLeft = board.Brd.All(Bishop, 0).ToBool() || board.Brd.All(Bishop, 1).ToBool()
+                            let bishopLeft = board.Brd.All(Bishop, 0) <> 0UL || board.Brd.All(Bishop, 1) <> 0UL
                             // If only the kings and one bishop is left, it's a draw.
                             if allPiecesCount = 3 && bishopLeft then ans <- 0|>Some
                             else
@@ -245,7 +245,7 @@ type MoveSearch =
                 // Determine whether we should prune moves.
                 let icolor = board.Brd.Map.stm
                 let ioppositeColor = board.Brd.Map.xstm
-                let kingSq = board.Brd.KingLoc(board.Brd.Map.stm).ToSq()
+                let kingSq = Bits.ToInt(board.Brd.KingLoc(board.Brd.Map.stm))
                 let mutable inCheck = MoveList.UnderAttack(board.Brd, kingSq, ioppositeColor)
                 let mutable improving = false
                 // We should use the evaluation from our transposition table if we had a hit.
@@ -316,7 +316,7 @@ type MoveSearch =
                             moveList.SortNext(i, moveCount)
                             let previousNodeCount = this.TotalNodeSearchCount
                             let mutable move = moveList.[i]
-                            let quietMove = not (board.Brd.All(ioppositeColor).[move.To])
+                            let quietMove = not (Bits.IsSet(board.Brd.All(ioppositeColor), move.To))
                             if quietMove then quietMoveCounter <- quietMoveCounter + 1
                             //Late Move Pruning
                                 // If we are past a certain threshold and we have searched the required quiet moves for this depth for

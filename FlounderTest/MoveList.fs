@@ -114,10 +114,10 @@ module MoveList =
         let usebd = board.Clone()
         let res = usebd.Move(B2, B6)
         // Generate pins and check bitboards.
-        let kingSq = board.KingLoc(board.Map.stm).ToSq()
+        let kingSq = Bits.ToInt(board.KingLoc(board.Map.stm))
         let (hv, d) = MoveList.PinBitBoards(board, kingSq, board.Map.stm, board.Map.xstm)
         let (checks, doubleChecked) = MoveList.CheckBitBoard(board, kingSq, board.Map.xstm)
-        let moveList = MoveList(board, B6, hv, d, checks)
+        let moveList = MoveList(board, B6, BitBoard(hv), BitBoard(d), BitBoard(checks))
         moveList.Count |> should equal 2
         let movearr = Bits.ToArray(moveList.Moves.Internal)
         movearr[0]|> should equal A7

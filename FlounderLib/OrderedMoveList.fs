@@ -67,7 +67,7 @@ type OrderedMoveList =
                 else this.HistTbl.[pieceToMove, board.Map.stm, move.To]
         member this.NormalMoveGeneration(board:Board, transpositionMove:OrderedMoveEntry) =
             // Generate pins and check bitboards.
-            let kingSq = board.KingLoc(board.Map.stm).ToSq()
+            let kingSq = Bits.ToInt(board.KingLoc(board.Map.stm))
             let (hv, d) = MoveList.PinBitBoards(board, kingSq, board.Map.stm, board.Map.xstm)
             let checks, doubleChecked = MoveList.CheckBitBoard(board, kingSq, board.Map.xstm)
             // Define the list.
@@ -78,9 +78,9 @@ type OrderedMoveList =
                 // We can only do this if we're not double checked.
                 // In case of double-checked (discovered + normal), only the king can move so we should skip this.
                 // Generate all pawn moves.
-                let fromarr = Bits.ToArray(board.All(Pawn, board.Map.stm).Internal)
+                let fromarr = Bits.ToArray(board.All(Pawn, board.Map.stm))
                 for from in fromarr do
-                    let moveList = MoveList(board, from, Pawn, board.Map.stm,hv, d, checks)
+                    let moveList = MoveList(board, from, Pawn, board.Map.stm,BitBoard(hv), BitBoard(d), BitBoard(checks))
                     let movearr = Bits.ToArray(moveList.Moves.Internal)
                     for move in movearr do
                         if (moveList.Promotion) then
@@ -94,18 +94,18 @@ type OrderedMoveList =
                             i<-i+1
                 // Generate moves for rook, knight, bishop, and queen.
                 for piece in [Rook;Knight;Bishop;Queen] do
-                    let fromarr = Bits.ToArray(board.All(piece, board.Map.stm).Internal)
+                    let fromarr = Bits.ToArray(board.All(piece, board.Map.stm))
                     for from in fromarr do
-                        let moveList = MoveList(board, from, piece, board.Map.stm, hv, d, checks)
+                        let moveList = MoveList(board, from, piece, board.Map.stm, BitBoard(hv), BitBoard(d), BitBoard(checks))
                         let movearr = Bits.ToArray(moveList.Moves.Internal)
                         for move in movearr do
                             this.Internal.[i] <- new OrderedMoveEntry(from, move, PromNone)
                             this.Internal.[i].Score <- this.ScoreMove(piece, board, this.Internal.[i], transpositionMove)
                             i<-i+1
             // Generate all king moves.
-            let fromarr = Bits.ToArray(board.All(King, board.Map.stm).Internal)
+            let fromarr = Bits.ToArray(board.All(King, board.Map.stm))
             for from in fromarr do
-                let moveList = MoveList(board, from, King, board.Map.stm, hv, d, checks)
+                let moveList = MoveList(board, from, King, board.Map.stm, BitBoard(hv), BitBoard(d), BitBoard(checks))
                 let movearr = Bits.ToArray(moveList.Moves.Internal)
                 for move in movearr do
                     this.Internal.[i] <- new OrderedMoveEntry(from, move, PromNone)
@@ -116,7 +116,7 @@ type OrderedMoveList =
             // If we only want capture moves, we should also define our opposite board.
             let opposite = board.All(board.Map.xstm)
             // Generate pins and check bitboards.
-            let kingSq = board.KingLoc(board.Map.stm).ToSq()
+            let kingSq = Bits.ToInt(board.KingLoc(board.Map.stm))
             let (hv, d) = MoveList.PinBitBoards(board, kingSq, board.Map.stm, board.Map.xstm)
             let (checks, doubleChecked) = MoveList.CheckBitBoard(board, kingSq, board.Map.xstm)
             // Define the list.
@@ -125,9 +125,9 @@ type OrderedMoveList =
                 // We can only do this if we're not double checked.
                 // In case of double-checked (discovered + normal), only the king can move so we should skip this.
                 // Generate all pawn moves.
-                let fromarr = Bits.ToArray(board.All(Pawn, board.Map.stm).Internal)
+                let fromarr = Bits.ToArray(board.All(Pawn, board.Map.stm))
                 for from in fromarr do
-                    let moveList = MoveList(board, from, hv, d, checks)
+                    let moveList = MoveList(board, from, BitBoard(hv), BitBoard(d), BitBoard(checks))
                     let movearr = Bits.ToArray(moveList.Moves.Internal)
                     for move in movearr do
                         if moveList.Promotion then
@@ -141,19 +141,19 @@ type OrderedMoveList =
                             i<-i+1
                 // Generate moves for rook, knight, bishop, and queen.
                 for piece in [Rook;Knight;Bishop;Queen] do
-                    let fromarr = Bits.ToArray(board.All(piece, board.Map.stm).Internal)
+                    let fromarr = Bits.ToArray(board.All(piece, board.Map.stm))
                     for from in fromarr do
-                        let moveList = MoveList(board, from, piece, board.Map.stm, hv, d, checks)
-                        let movearr = Bits.ToArray((moveList.Moves &&& opposite).Internal)
+                        let moveList = MoveList(board, from, piece, board.Map.stm, BitBoard(hv), BitBoard(d), BitBoard(checks))
+                        let movearr = Bits.ToArray((moveList.Moves.Internal &&& opposite))
                         for move in movearr do
                             this.Internal.[i] <- new OrderedMoveEntry(from, move, PromNone)
                             this.Internal.[i].Score <- this.ScoreMove(piece, board, this.Internal.[i], transpositionMove)
                             i<-i+1
             // Generate all king moves.
-            let fromarr = Bits.ToArray(board.All(King, board.Map.stm).Internal)
+            let fromarr = Bits.ToArray(board.All(King, board.Map.stm))
             for from in fromarr do
-                let moveList = MoveList(board, from, King, board.Map.stm, hv, d, checks)
-                let movearr = Bits.ToArray((moveList.Moves &&& opposite).Internal)
+                let moveList = MoveList(board, from, King, board.Map.stm, BitBoard(hv), BitBoard(d), BitBoard(checks))
+                let movearr = Bits.ToArray((moveList.Moves.Internal &&& opposite))
                 for move in movearr do
                     this.Internal.[i] <- new OrderedMoveEntry(from, move, PromNone)
                     this.Internal.[i].Score <- this.ScoreMove(King, board, this.Internal.[i], transpositionMove)
