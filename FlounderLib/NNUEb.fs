@@ -17,7 +17,7 @@ type Accumulator =
 type AccumulatorKingState =
     {
         AccKsValues:int16 array
-        Pcs:BitBoard array
+        Pcs:uint64 array
     }
 module NNUEb =
     let NNUEin = 
@@ -206,7 +206,7 @@ module NNUEb =
         let state = RefreshTable.[pBucket + kingBucket]
         for pc = WhitePawn to BlackKing do
             let curr = map.Pieces.[pc]
-            let prev = state.Pcs.[pc].Internal 
+            let prev = state.Pcs.[pc] 
             let rem = prev &&& ~~~curr
             let add = curr &&& ~~~prev
             let sqarr = Bits.ToArray(rem)
@@ -219,7 +219,7 @@ module NNUEb =
                 delta.add.[delta.a] <- FeatureIdx(pc,sq,kingSq,perspective)
                 delta.a <- delta.a + 1
             Array.iter dosq sqarr
-            state.Pcs.[int(pc)] <- BitBoard(curr)
+            state.Pcs.[int(pc)] <- curr
         ApplyDelta(state.AccKsValues, delta, perspective)
         RefreshTable.[pBucket + kingBucket] <- {state with AccKsValues = Array.copy Accumulators.[AccIndex].AccValues.[int(perspective)]}
     let DoUpdate(map:BitBoardMap, move:RevertMove) =

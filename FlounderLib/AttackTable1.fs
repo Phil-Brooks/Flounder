@@ -9,17 +9,17 @@ module AttackTable1 =
             let fromH, fromV = fromSq % 8, fromSq / 8
             UtilityTable.Between.[fromSq] <- Array.zeroCreate 64
             for toSq = A8 to H1 do
-                UtilityTable.Between.[fromSq].[toSq] <- BitBoard.Default
+                UtilityTable.Between.[fromSq].[toSq] <- 0UL
                 // It's the same square so we can skip.
                 if fromSq = toSq then ()
                 else
-                    let mutable occ = BitBoard.Default
+                    let mutable occ = 0UL
                     let mutable mFrom = 0
                     let mutable mTo = 0
                     let toH, toV = toSq % 8, toSq / 8
                     if (fromH = toH || fromV = toV) then
                         // We calculate rook (straight) squares here.
-                        occ <- BitBoard.FromSq(fromSq) ||| BitBoard.FromSq(toSq)
+                        occ <- Bits.FromSq(fromSq) ||| Bits.FromSq(toSq)
                         mFrom <- BlackMagicBitBoardFactory.GetMagicIndex(Rook, occ, fromSq)
                         mTo <- BlackMagicBitBoardFactory.GetMagicIndex(Rook, occ, toSq)
                         UtilityTable.Between.[fromSq].[toSq] <- (AttackTable.SlidingMoves.[mFrom] &&& AttackTable.SlidingMoves.[mTo])
@@ -29,7 +29,7 @@ module AttackTable1 =
                         if (absH <> absV) then ()
                         else
                             // We calculate bishop (diagonal) squares between here.
-                            occ <- BitBoard.FromSq(fromSq) ||| BitBoard.FromSq(toSq)
+                            occ <- Bits.FromSq(fromSq) ||| Bits.FromSq(toSq)
                             mFrom <- BlackMagicBitBoardFactory.GetMagicIndex(Bishop, occ, fromSq)
                             mTo <- BlackMagicBitBoardFactory.GetMagicIndex(Bishop, occ, toSq)
                             UtilityTable.Between.[fromSq].[toSq] <- (AttackTable.SlidingMoves.[mFrom] &&& AttackTable.SlidingMoves.[mTo])
@@ -62,29 +62,29 @@ module AttackTable1 =
                 let _,bb2,_ = args1.[v * 8 + h]
                 let mask = ~~~(bb2)
                 let sq = v * 8 + h
-                let mutable occupied = BitBoard.Default
+                let mutable occupied = 0UL
                 let mutable keepgoing = true
                 while (keepgoing) do
-                    let mutable moves = BitBoard.Default
+                    let mutable moves = 0UL
                     // Use deltas for slides.
                     for (dH, dV) in deltas do
                         let mutable hI = h
                         let mutable vI = v
                         // Dumb raycast
                         let mutable keepgoing2 = true
-                        while (keepgoing2 && not occupied.[vI * 8 + hI]) do
+                        while (keepgoing2 && not (Bits.IsSet(occupied, vI * 8 + hI))) do
                             if (hI + dH > 7 || hI + dH < 0 )|| (vI + dV > 7 || vI + dV < 0) then keepgoing2 <- false
                             else
                                 hI <- hI + dH
                                 vI <- vI + dV
                                 let sqI = vI * 8 + hI
-                                moves <- moves ||| BitBoard.FromSq(sqI)
+                                moves <- moves ||| Bits.FromSq(sqI)
                     // Add to list with magic index.
                     AttackTable.SlidingMoves.[BlackMagicBitBoardFactory.GetMagicIndex(piece, occupied, sq)] <- moves
                     // Reset mask.
                     occupied <- (occupied - mask) &&& mask
                     // If there is no occupied, we can break to next iteration.
-                    if (occupied.Count = 0) then
+                    if Bits.Count(occupied) = 0 then
                         keepgoing <- false
     let SetUp() =
         // Setup the factory.

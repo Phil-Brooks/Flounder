@@ -22,7 +22,7 @@ module Perft =
             let sqs = Bits.ToArray(colored)
             let dosq sq =
                 let piece, pieceColor = ColPiece.ToPcCol(iboard.At(sq))
-                let moveList = MoveList(iboard, sq, piece, int(pieceColor), BitBoard(hv), BitBoard(d), BitBoard(checks), doubleChecked)
+                let moveList = MoveList(iboard, sq, piece, int(pieceColor), hv, d, checks, doubleChecked)
                 if moveList.Promotion then uint64(moveList.Count * 4) else uint64(moveList.Count)
             sqs|>Array.map dosq|>Array.sum
         else
@@ -34,8 +34,8 @@ module Perft =
                 let board = iboard.Clone()
                 // Generate all pseudo-legal moves for our square iteration.
                 let (piece, pieceColor) = ColPiece.ToPcCol(board.At(sq))
-                let moveList = MoveList(board, sq, piece, int(pieceColor), BitBoard(hv), BitBoard(d), BitBoard(checks), doubleChecked)
-                let mvs = moveList.Moves.ToSqs()
+                let moveList = MoveList(board, sq, piece, int(pieceColor), hv, d, checks, doubleChecked)
+                let mvs = Bits.ToArray(moveList.Moves)
                 let domv mv =
                    // Make our move iteration for our square iteration. Save the revert move for reverting
                     // in future.

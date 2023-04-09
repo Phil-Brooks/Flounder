@@ -23,7 +23,7 @@ module MoveList =
     let CountPawnMovesAtA2() =
         let moveList = MoveList(board, A2)
         moveList.Count |> should equal 2
-        let movearr = Bits.ToArray(moveList.Moves.Internal)
+        let movearr = Bits.ToArray(moveList.Moves)
         movearr[0]|> should equal A4
         movearr[1]|> should equal A3
 
@@ -33,7 +33,7 @@ module MoveList =
         let res = usebd.Move(B1, A3)
         let moveList = MoveList(usebd, A3)
         moveList.Count |> should equal 3
-        let movearr = Bits.ToArray(moveList.Moves.Internal)
+        let movearr = Bits.ToArray(moveList.Moves)
         movearr[0]|> should equal B5
         movearr[1]|> should equal C4
 
@@ -43,7 +43,7 @@ module MoveList =
         let res = usebd.Move(A1, A3)
         let moveList = MoveList(usebd, A3)
         moveList.Count |> should equal 11
-        let movearr = Bits.ToArray(moveList.Moves.Internal)
+        let movearr = Bits.ToArray(moveList.Moves)
         movearr[0]|> should equal A7
         movearr[1]|> should equal A6
 
@@ -58,7 +58,7 @@ module MoveList =
         let res = usebd.Move(C1, C3)
         let moveList = MoveList(usebd, C3)
         moveList.Count |> should equal 6
-        let movearr = Bits.ToArray(moveList.Moves.Internal)
+        let movearr = Bits.ToArray(moveList.Moves)
         movearr[0]|> should equal G7
         movearr[1]|> should equal F6
 
@@ -68,7 +68,7 @@ module MoveList =
         let res = usebd.Move(D1, C3)
         let moveList = MoveList(usebd, C3)
         moveList.Count |> should equal 17
-        let movearr = Bits.ToArray(moveList.Moves.Internal)
+        let movearr = Bits.ToArray(moveList.Moves)
         movearr[0]|> should equal C7
         movearr[1]|> should equal G7
 
@@ -78,7 +78,7 @@ module MoveList =
         let res = usebd.Move(E1, C3)
         let moveList = MoveList(usebd, C3)
         moveList.Count |> should equal 5
-        let movearr = Bits.ToArray(moveList.Moves.Internal)
+        let movearr = Bits.ToArray(moveList.Moves)
         movearr[0]|> should equal B4
         movearr[1]|> should equal C4
 
@@ -89,7 +89,7 @@ module MoveList =
         let res = usebd.Move(G1, G3)
         let moveList = MoveList(usebd, E1)
         moveList.Count |> should equal 2
-        let movearr = Bits.ToArray(moveList.Moves.Internal)
+        let movearr = Bits.ToArray(moveList.Moves)
         movearr[0]|> should equal F1
         movearr[1]|> should equal G1
 
@@ -97,7 +97,7 @@ module MoveList =
     let CountPawnMovesEP() =
         let moveList = MoveList(epboard, E5)
         moveList.Count |> should equal 2
-        let movearr = Bits.ToArray(moveList.Moves.Internal)
+        let movearr = Bits.ToArray(moveList.Moves)
         movearr[0]|> should equal D6
         movearr[1]|> should equal E6
 
@@ -105,7 +105,7 @@ module MoveList =
     let CountPawnMovesPRM() =
         let moveList = MoveList(prmboard, C7)
         moveList.Count |> should equal 1
-        let movearr = Bits.ToArray(moveList.Moves.Internal)
+        let movearr = Bits.ToArray(moveList.Moves)
         movearr[0]|> should equal B8
         moveList.Promotion |> should equal true
 
@@ -117,8 +117,8 @@ module MoveList =
         let kingSq = Bits.ToInt(board.KingLoc(board.Map.stm))
         let (hv, d) = MoveList.PinBitBoards(board, kingSq, board.Map.stm, board.Map.xstm)
         let (checks, doubleChecked) = MoveList.CheckBitBoard(board, kingSq, board.Map.xstm)
-        let moveList = MoveList(board, B6, BitBoard(hv), BitBoard(d), BitBoard(checks))
+        let moveList = MoveList(board, B6, hv, d, checks)
         moveList.Count |> should equal 2
-        let movearr = Bits.ToArray(moveList.Moves.Internal)
+        let movearr = Bits.ToArray(moveList.Moves)
         movearr[0]|> should equal A7
         movearr[1]|> should equal C7

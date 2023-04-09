@@ -57,7 +57,7 @@ module NNUEb =
         NNUEb.ResetRefreshTable()
         let m0 = NNUEb.RefreshTable.[0].AccKsValues.[0]
         m0 |> should equal -391s
-        NNUEb.RefreshTable.[0].Pcs.[0].Internal |> should equal 0UL
+        NNUEb.RefreshTable.[0].Pcs.[0] |> should equal 0UL
         let m100 = NNUEb.RefreshTable.[0].AccKsValues.[100]
         m100 |> should equal -307s
         let last = NNUEb.RefreshTable.[0].AccKsValues.Length - 1

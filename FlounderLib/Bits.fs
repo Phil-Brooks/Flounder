@@ -24,3 +24,7 @@ module Bits =
     let PopBit(bb:byref<uint64>, sq) = bb <- (bb &&& ~~~(1UL <<< sq))
     let Count(bb:uint64) = BitOperations.PopCount(bb)
     let IsSet(bb,sq) = ((bb >>> sq) &&& 1UL) <> 0UL
+    let FromSq(sq:int) =
+        let mutable bb = 0UL
+        SetBit(&bb, sq)
+        bb

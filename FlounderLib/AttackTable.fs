@@ -3,7 +3,7 @@
 module AttackTable =
     // Attack tables & BM bitboards for fast move-generation.
     // Square BitBoards (size 64)
-    let BlackPawnAttacks:BitBoard array = 
+    let BlackPawnAttacks:uint64 array = 
         [|
             0x0000000000000200uL; 0x0000000000000500uL; 0x0000000000000a00uL; 0x0000000000001400uL; 
             0x0000000000002800uL; 0x0000000000005000uL; 0x000000000000a000uL; 0x0000000000004000uL; 
@@ -22,8 +22,7 @@ module AttackTable =
             0x0000000000000000uL; 0x0000000000000000uL; 0x0000000000000000uL; 0x0000000000000000uL; 
             0x0000000000000000uL; 0x0000000000000000uL; 0x0000000000000000uL; 0x0000000000000000uL
         |]
-        |> Array.map(fun u -> BitBoard(u))
-    let WhitePawnAttacks:BitBoard array = 
+    let WhitePawnAttacks:uint64 array = 
         [|
             0x0000000000000000uL; 0x0000000000000000uL; 0x0000000000000000uL; 0x0000000000000000uL; 
             0x0000000000000000uL; 0x0000000000000000uL; 0x0000000000000000uL; 0x0000000000000000uL;
@@ -42,8 +41,7 @@ module AttackTable =
             0x0002000000000000uL; 0x0005000000000000uL; 0x000a000000000000uL; 0x0014000000000000uL; 
             0x0028000000000000uL; 0x0050000000000000uL; 0x00a0000000000000uL; 0x0040000000000000uL
         |]
-        |> Array.map(fun u -> BitBoard(u))
-    let KnightMoves:BitBoard array = 
+    let KnightMoves:uint64 array = 
         [|
             0x0000000000020400uL; 0x0000000000050800uL; 0x00000000000A1100uL; 0x0000000000142200uL;
             0x0000000000284400uL; 0x0000000000508800uL; 0x0000000000A01000uL; 0x0000000000402000uL;
@@ -62,8 +60,7 @@ module AttackTable =
             0x0004020000000000uL; 0x0008050000000000uL; 0x00110A0000000000uL; 0x0022140000000000uL;
             0x0044280000000000uL; 0x0088500000000000uL; 0x0010A00000000000uL; 0x0020400000000000uL
         |]
-        |> Array.map(fun u -> BitBoard(u))
-    let KingMoves:BitBoard array = 
+    let KingMoves:uint64 array = 
         [|
             0x0000000000000302uL; 0x0000000000000705uL; 0x0000000000000E0AuL; 0x0000000000001C14uL;
             0x0000000000003828uL; 0x0000000000007050uL; 0x000000000000E0A0uL; 0x000000000000C040uL;
@@ -82,6 +79,5 @@ module AttackTable =
             0x0203000000000000uL; 0x0507000000000000uL; 0x0A0E000000000000uL; 0x141C000000000000uL;
             0x2838000000000000uL; 0x5070000000000000uL; 0xA0E0000000000000uL; 0x40C0000000000000uL
         |]
-        |> Array.map(fun u -> BitBoard(u))
     // Fixed-shift Black Magic BitBoards (size 87988)
-    let SlidingMoves:BitBoard array = Array.zeroCreate 87988
+    let SlidingMoves:uint64 array = Array.zeroCreate 87988

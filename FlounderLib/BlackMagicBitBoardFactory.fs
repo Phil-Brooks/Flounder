@@ -5,7 +5,7 @@ module BlackMagicBitBoardFactory =
     let ROOK = 12
     let BISHOP = 9
     // Magic Data
-    let RookMagicData:(BitBoard * int) array = 
+    let RookMagicData:(uint64 * int) array = 
         [|
             (0x80280013FF84FFFFuL, 10890); (0x5FFBFEFDFEF67FFFuL, 50579); (0xFFEFFAFFEFFDFFFFuL, 62020);
             (0x003000900300008AuL, 67322); (0x0050028010500023uL, 80251); (0x0020012120A00020uL, 58503);
@@ -39,8 +39,7 @@ module BlackMagicBitBoardFactory =
             (0xFFFDFFFF777B7D6EuL, 36054); (0x48300007E8080C02uL, 78538); (0xAFE0000FFF780402uL, 28745);
             (0xEE73FFFBFFBB77FEuL,  8555); (0x0002000308482882uL, 1009)
         |]
-        |>Array.map(fun(u,i) -> BitBoard(u),i)
-    let BishopMagicData :(BitBoard * int) array = 
+    let BishopMagicData :(uint64 * int) array = 
         [|
             (0xA7020080601803D8uL, 60984); (0x13802040400801F1uL, 66046); (0x0A0080181001F60CuL, 32910);
             (0x1840802004238008uL, 16369); (0xC03FE00100000000uL, 42115); (0x24C00BFFFF400000uL,   835);
@@ -74,27 +73,26 @@ module BlackMagicBitBoardFactory =
             (0xFFF1FFFFFFF7FFC1uL, 57058); (0x0878040000FFE01FuL, 58912); (0x945E388000801012uL, 22194);
             (0x0840800080200FDAuL, 70880); (0x100000C05F582008uL, 11140)
         |]
-        |>Array.map(fun(u,i) -> BitBoard(u),i)
     // Magic Providers
-    let RookMagic:(BitBoard * BitBoard * int) array = Array.zeroCreate 64
-    let BishopMagic:(BitBoard * BitBoard * int) array = Array.zeroCreate 64
+    let RookMagic:(uint64 * uint64 * int) array = Array.zeroCreate 64
+    let BishopMagic:(uint64 * uint64 * int) array = Array.zeroCreate 64
     let GenerateRookOccupiedMask(sq:int) =
         // Horizontal files inside.
         let hMoves = UtilityTable.Hs.[sq % 8] &&& ~~~(UtilityTable.Vs.[0] ||| UtilityTable.Vs.[7])
         // Vertical ranks inside.
         let vMoves = UtilityTable.Vs.[sq / 8] &&& ~~~(UtilityTable.Hs.[0] ||| UtilityTable.Hs.[7])
         // Occupied inside but the square.
-        (hMoves ||| vMoves) &&& (~~~BitBoard.FromSq(sq))
+        (hMoves ||| vMoves) &&& (~~~Bits.FromSq(sq))
     let GenerateBishopOccupiedMask(sq:int) =
         let h = sq % 8
         let v = sq / 8
-        let mutable rays = BitBoard.Default
+        let mutable rays = 0UL
         // Dumb raycast.
         for hI = 0 to 7 do
             for vI = 0 to 7 do
                 let hD = Math.Abs(hI - h)
                 let vD = Math.Abs(vI - v)
-                if (hD = vD && vD <> 0)  then rays <- rays ||| BitBoard(1UL <<< vI * 8 + hI)
+                if (hD = vD && vD <> 0)  then rays <- rays ||| (1UL <<< vI * 8 + hI)
         // All rays inside.
         rays &&& ~~~(UtilityTable.Edged)
     let GenerateRookMagicTable() =
@@ -114,7 +112,7 @@ module BlackMagicBitBoardFactory =
     let SetUp() =
         GenerateRookMagicTable()
         GenerateBishopMagicTable()
-    let GetMagicIndex(piece:int, occupied:BitBoard, sq:int) =
+    let GetMagicIndex(piece:int, occupied:uint64, sq:int) =
         let args1,args2 =
             if piece = Rook then (RookMagic, ROOK)
             elif piece = Bishop then (BishopMagic, BISHOP)
@@ -126,4 +124,4 @@ module BlackMagicBitBoardFactory =
         // Get hash based on relevant occupied and magic.
         let hash = relevantOccupied * magic
         // Return with offset.
-        offset + int(uint64(hash.ToUint64() >>> 64 - args2))
+        offset + int(uint64(hash >>> 64 - args2))
