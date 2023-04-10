@@ -2,30 +2,30 @@
 open System
 
 module Zobrist =
-    let ZOBRIST_SEED = 462279021
-    let Random = Random(ZOBRIST_SEED)
-    let PieceKeys = ZobristPieceKeyTable(Random)
-    let CastlingKeys:uint64 array = Array.zeroCreate 16
-    let EnPassantKeys :uint64 array = Array.zeroCreate 64
-    let mutable TurnKey = 0UL
-
-    let Setup() =
-        let bufferSpanarr = Array.zeroCreate<byte>(sizeof<uint64>)
-        let mutable buffer = new Span<byte>(bufferSpanarr)
-        for i = 0 to CastlingKeys.Length-1 do
-            Random.NextBytes(buffer)
-            CastlingKeys.[i] <- BitConverter.ToUInt64(buffer)
-        for i = 0 to EnPassantKeys.Length-1 do
-            Random.NextBytes(buffer)
-            EnPassantKeys.[i] <- BitConverter.ToUInt64(buffer)
-        Random.NextBytes(buffer)
-        TurnKey <- BitConverter.ToUInt64(buffer)
-    let HashPiece(zobristHash:byref<uint64>, piece:int, color:int, sq:int) = 
-        zobristHash <- zobristHash ^^^ PieceKeys.[piece, color, sq]
-    let HashCastlingRights(zobristHash:byref<uint64>, wk:int, wq:int, bk:int, bq:int) = 
-        zobristHash <- zobristHash ^^^ CastlingKeys.[wk ||| wq ||| bk ||| bq]
-    let FlipTurnInHash(zobristHash:byref<uint64>) =
-        zobristHash <- zobristHash ^^^ TurnKey
+    let rnd = new Random(123456)
+    let ZobristPieces =
+        let ans:uint64 array array = Array.zeroCreate 12
+        for i = 0 to 11 do
+            ans[i] <- Array.zeroCreate 64
+            for j = 0 to 63 do
+                ans[i][j] <- uint64(rnd.NextInt64())
+        ans
+    let ZobristEpKeys =
+        let ans:uint64 array = Array.zeroCreate 64
+        for i = 0 to 63 do
+            ans[i] <- uint64(rnd.NextInt64())
+        ans
+    let ZobristCastleKeys =
+        let ans:uint64 array = Array.zeroCreate 16
+        for i = 0 to 15 do
+            ans[i] <- uint64(rnd.NextInt64())
+        ans
+    let ZobristSideKey = uint64(rnd.NextInt64())
+    let HashPiece(zobristHash:byref<uint64>, cpc:int, sq:int) = 
+        zobristHash <- zobristHash ^^^ ZobristPieces[cpc][sq]
     let HashEp(zobristHash:byref<uint64>, ep:int) = 
-        zobristHash <- zobristHash ^^^ EnPassantKeys.[ep]
-   
+        zobristHash <- zobristHash ^^^ ZobristEpKeys[ep]
+    let HashCastlingRights(zobristHash:byref<uint64>, wk:int, wq:int, bk:int, bq:int) = 
+        zobristHash <- zobristHash ^^^ ZobristCastleKeys[wk ||| wq ||| bk ||| bq]
+    let FlipTurnInHash(zobristHash:byref<uint64>) =
+        zobristHash <- zobristHash ^^^ ZobristSideKey

@@ -13,4 +13,4 @@ module Zobrist =
 
     [<Test>]
     let Hash() =
-        BitBoardMap.Hash(Map) |> should equal 608795416857759544UL
+        BitBoardMap.Hash(Map) |> should equal 2506267901269816621UL

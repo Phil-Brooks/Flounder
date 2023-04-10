@@ -6,7 +6,6 @@ open System.IO
 [<EntryPoint>]
 let main argv =
     AttackTable1.SetUp()
-    Zobrist.Setup()
     NNUEb.ResetRefreshTable()
     let command = Environment.CommandLine
     if (command.ToLower().Contains("test")) then

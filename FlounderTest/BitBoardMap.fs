@@ -105,7 +105,7 @@ module BitBoardMap =
         Map.WhiteKCastle |> should equal 0x1
         Map.WhiteQCastle |> should equal 0x2
         Map.EnPassantTarget |> should equal Na
-        Map.ZobristHash |> should equal 608795416857759544UL
+        Map.ZobristHash |> should equal 2506267901269816621UL
 
     [<Test>]
     let ItemE1() =
