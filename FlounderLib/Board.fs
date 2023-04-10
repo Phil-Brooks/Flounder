@@ -123,8 +123,7 @@ type Board =
             this.Map.BlackKCastle, this.Map.BlackQCastle
         )
         // Flip the turn.
-        this.Map.stm <- this.Map.stm ^^^ 1  
-        this.Map.xstm <- this.Map.xstm ^^^ 1  
+        this.Map.IsWtm <- not this.Map.IsWtm  
         // Update Zobrist.
         Zobrist.FlipTurnInHash(&this.Map.ZobristHash)
         rv
@@ -155,8 +154,7 @@ type Board =
             // If we don't have an empty EP, we should hash it in.
             Zobrist.HashEp(&this.Map.ZobristHash, this.Map.EnPassantTarget)
         // Revert to previous turn.
-        this.Map.stm <- this.Map.stm ^^^ 1
-        this.Map.xstm <- this.Map.xstm ^^^ 1
+        this.Map.IsWtm <- not this.Map.IsWtm  
         Zobrist.FlipTurnInHash(&this.Map.ZobristHash)
         if (rv.Promotion) then
             let color = this.Map.ColorOnly(rv.To)
@@ -184,7 +182,7 @@ type Board =
         "FEN: " + this.GenerateFen() + "\nHash: " + $"{this.Map.ZobristHash:X}" + "\n"
     member this.GenerateFen() =
         let boardData = this.Map.GenerateBoardFen()
-        let turnData = if this.Map.stm = 0 then "w" else "b"
+        let turnData = if this.Map.IsWtm then "w" else "b"
         let mutable castlingRight = ""
         if (this.Map.WhiteKCastle = 0x0 && this.Map.WhiteQCastle = 0x0 && this.Map.BlackKCastle = 0x0 && this.Map.BlackQCastle = 0x0) then
             castlingRight <- "-"

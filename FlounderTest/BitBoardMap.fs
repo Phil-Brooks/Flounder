@@ -87,7 +87,7 @@ module BitBoardMap =
 
     [<Test>]
     let Elements() =
-        Map.stm|>should equal 0
+        Map.IsWtm|>should equal true
         Map.Pieces.Length|> should equal 12
         Bits.Count(Map.Pieces.[10]) |> should equal 1
         Bits.Count(Map.Pieces.[7]) |> should equal 2

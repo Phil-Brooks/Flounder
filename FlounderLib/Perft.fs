@@ -11,11 +11,13 @@ module Perft =
     let Board = Board.Default()
     let rec MoveGeneration(iboard:Board, depth) =
         // Get all squares occupied by our color.
-        let colored = iboard.All(iboard.Map.stm)
+        let stm = if iboard.Map.IsWtm then 0 else 1 
+        let xstm = if iboard.Map.IsWtm then 1 else 0 
+        let colored = iboard.All(stm)
         // Generate pins and check bitboards.
-        let kingSq = Bits.ToInt(iboard.KingLoc(iboard.Map.stm))
-        let (hv, d) = MoveList.PinBitBoards(iboard, kingSq, iboard.Map.stm, iboard.Map.xstm)
-        let (checks, doubleChecked) = MoveList.CheckBitBoard(iboard, kingSq, iboard.Map.xstm)
+        let kingSq = Bits.ToInt(iboard.KingLoc(stm))
+        let (hv, d) = MoveList.PinBitBoards(iboard, kingSq, stm, xstm)
+        let (checks, doubleChecked) = MoveList.CheckBitBoard(iboard, kingSq, xstm)
         // Generate all pseudo-legal moves for our square iteration.
         if (depth = 1) then
             // If depth is 1, then we don't need to do any further recursion and can just do +1 to the count.

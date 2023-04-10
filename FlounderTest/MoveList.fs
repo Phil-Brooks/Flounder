@@ -114,9 +114,11 @@ module MoveList =
         let usebd = board.Clone()
         let res = usebd.Move(B2, B6)
         // Generate pins and check bitboards.
-        let kingSq = Bits.ToInt(board.KingLoc(board.Map.stm))
-        let (hv, d) = MoveList.PinBitBoards(board, kingSq, board.Map.stm, board.Map.xstm)
-        let (checks, doubleChecked) = MoveList.CheckBitBoard(board, kingSq, board.Map.xstm)
+        let stm = if board.Map.IsWtm then 0 else 1
+        let xstm = if board.Map.IsWtm then 1 else 0
+        let kingSq = Bits.ToInt(board.KingLoc(stm))
+        let (hv, d) = MoveList.PinBitBoards(board, kingSq, stm, xstm)
+        let (checks, doubleChecked) = MoveList.CheckBitBoard(board, kingSq, xstm)
         let moveList = MoveList(board, B6, hv, d, checks)
         moveList.Count |> should equal 2
         let movearr = Bits.ToArray(moveList.Moves)

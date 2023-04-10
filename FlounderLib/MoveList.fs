@@ -110,7 +110,8 @@ module MoveList =
             if Bits.Count(possiblePin &&& board.All(us)) = 1 then diagonalPin <- diagonalPin ||| possiblePin
         Array.iter dobqSq bqSqarr
         (horizontalVerticalPin, diagonalPin)
-    let LegalPawnMoveCaptures(color:int, board:Board, from:int, hv:uint64, d:uint64, c:uint64) =
+    let LegalPawnMoveCaptures(iswtm:bool, board:Board, from:int, hv:uint64, d:uint64, c:uint64) =
+        let color = if iswtm then 0 else 1
         let mutable moves = 0UL
         if Bits.IsSet(hv, from) then
             // If pawn is horizontally pinned, then we have no moves.
@@ -395,7 +396,7 @@ type MoveList =
             new MoveList(board, from, horizontalVertical, diagonal, checks, moves, promotion)
         new(board:Board, from:int, horizontalVertical:uint64, diagonal:uint64, checks:uint64) =
             //this can only be used when processing pawn captiures
-            let moves,promotion = MoveList.LegalPawnMoveCaptures(board.Map.stm,board,from,horizontalVertical,diagonal,checks)
+            let moves,promotion = MoveList.LegalPawnMoveCaptures(board.Map.IsWtm,board,from,horizontalVertical,diagonal,checks)
             new MoveList(board, from, horizontalVertical, diagonal, checks, moves, promotion)
   
     end

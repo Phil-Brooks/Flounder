@@ -4,8 +4,7 @@ open System
 
 type BitBoardMap =
     struct
-        val mutable stm:int // side to move
-        val mutable xstm:int // not side to move
+        val mutable IsWtm:bool
         val Pieces:uint64 array
         val PiecesAndColors:int array
         val mutable White:uint64
@@ -16,10 +15,9 @@ type BitBoardMap =
         val mutable BlackQCastle:int
         val mutable EnPassantTarget:int
         val mutable ZobristHash:uint64
-        new(stm,xstm,pieces,piecesAndColors,white,black,whiteKCastle,whiteQCastle,blackKCastle,blackQCastle,enPassantTarget,zobristHash) =
+        new(isWtm,pieces,piecesAndColors,white,black,whiteKCastle,whiteQCastle,blackKCastle,blackQCastle,enPassantTarget,zobristHash) =
             {
-                stm = stm
-                xstm = xstm
+                IsWtm = isWtm
                 Pieces = pieces
                 PiecesAndColors = piecesAndColors
                 White = white
@@ -92,8 +90,7 @@ type BitBoardMap =
             let black = pieces.[BlackPawn] ||| pieces.[BlackKnight] ||| 
                         pieces.[BlackBishop] ||| pieces.[BlackRook] ||| 
                         pieces.[BlackQueen] ||| pieces.[BlackKing] 
-            let stm = if turnData.[0] = 'w' then 0 else 1
-            let xstm = stm^^^1
+            let isWtm = turnData.[0] = 'w'
             let whiteKCastle = if castlingData.Contains('K') then 0x1 else 0x0
             let whiteQCastle = if castlingData.Contains('Q') then 0x2 else 0x0
             let blackKCastle = if castlingData.Contains('k') then 0x4 else 0x0
@@ -107,15 +104,14 @@ type BitBoardMap =
                     let psbb = pieces.[cpc]
                     let sqarr = Bits.ToArray(psbb)
                     Array.iter (fun sq -> zobristHash <- zobristHash ^^^ Zobrist.ZobristPieces.[cpc][sq]) sqarr
-                if stm=1 then zobristHash <- zobristHash ^^^ Zobrist.ZobristSideKey
+                if not isWtm then zobristHash <- zobristHash ^^^ Zobrist.ZobristSideKey
                 if enPassantTarget <> Na then zobristHash <- zobristHash ^^^ Zobrist.ZobristEpKeys.[enPassantTarget]
                 zobristHash <- zobristHash ^^^ Zobrist.ZobristCastleKeys.[whiteKCastle ||| whiteQCastle ||| blackKCastle ||| blackQCastle]
                 zobristHash
             let zobristHash = gethash()
-            BitBoardMap(stm,xstm,pieces,piecesAndColors,white,black,whiteKCastle,whiteQCastle,blackKCastle,blackQCastle,enPassantTarget,zobristHash)
+            BitBoardMap(isWtm,pieces,piecesAndColors,white,black,whiteKCastle,whiteQCastle,blackKCastle,blackQCastle,enPassantTarget,zobristHash)
         new(map:BitBoardMap, pieces:uint64 array, piecesAndColors:int array) =
-            let stm = map.stm
-            let xstm = map.xstm
+            let isWtm = map.IsWtm
             let White = map.White
             let Black = map.Black
             let WhiteKCastle = map.WhiteKCastle
@@ -126,7 +122,7 @@ type BitBoardMap =
             let Pieces = Array.copy pieces
             let PiecesAndColors = Array.copy piecesAndColors
             let ZobristHash = map.ZobristHash
-            BitBoardMap(stm,xstm,Pieces,PiecesAndColors,White,Black,WhiteKCastle,WhiteQCastle,BlackKCastle,BlackQCastle,EnPassantTarget,ZobristHash)
+            BitBoardMap(isWtm,Pieces,PiecesAndColors,White,Black,WhiteKCastle,WhiteQCastle,BlackKCastle,BlackQCastle,EnPassantTarget,ZobristHash)
         member this.ColPc(sq:int):int = 
                 this.PiecesAndColors.[sq]
         member this.Item 
@@ -242,7 +238,7 @@ module BitBoardMap =
             let psbb = map.Pieces[cpc]
             let sqarr = Bits.ToArray(psbb)
             Array.iter (fun sq -> zobristHash <- zobristHash ^^^ Zobrist.ZobristPieces[cpc][sq]) sqarr
-        if map.stm = 1 then zobristHash <- zobristHash ^^^ Zobrist.ZobristSideKey
+        if not map.IsWtm then zobristHash <- zobristHash ^^^ Zobrist.ZobristSideKey
         if map.EnPassantTarget <> Na then zobristHash <- zobristHash ^^^ Zobrist.ZobristEpKeys.[map.EnPassantTarget]
         zobristHash <- zobristHash ^^^ Zobrist.ZobristCastleKeys.[map.WhiteKCastle ||| map.WhiteQCastle ||| map.BlackKCastle ||| map.BlackQCastle]
         zobristHash

@@ -143,7 +143,7 @@ module NNUEb =
                 Accumulators.[AccIndex].AccValues.[view].[unrollOffset+i] <- regs.[i]
     let ApplyUpdates(map:BitBoardMap, move:RevertMove, view:int) =
         let captured = 
-            if move.EnPassant then (if map.stm=1 then BlackPawn else WhitePawn)
+            if move.EnPassant then (if not map.IsWtm then BlackPawn else WhitePawn)
             else ColPiece.FromPcCol(move.CapturedPiece,move.CapturedColor)
         let prev = Accumulators.[AccIndex-1].AccValues.[int(view)]
         let king = Bits.ToInt(map.[King, view])
@@ -223,23 +223,26 @@ module NNUEb =
         ApplyDelta(state.AccKsValues, delta, perspective)
         RefreshTable.[pBucket + kingBucket] <- {state with AccKsValues = Array.copy Accumulators.[AccIndex].AccValues.[int(perspective)]}
     let DoUpdate(map:BitBoardMap, move:RevertMove) =
+        let stm = if map.IsWtm then 0 else 1
+        let xstm = if map.IsWtm then 1 else 0
         let from = 
-            if map.stm=1 then int(move.From)
+            if not map.IsWtm then int(move.From)
             else int(move.From)^^^56
         let mto = 
-            if map.stm=1 then int(move.To)
+            if not map.IsWtm then int(move.To)
             else int(move.To)^^^56
         let colpcto = map.ColPc(move.To)
         let colpcfrom =
-            if move.Promotion then ColPiece.FromPcCol(Pawn,map.xstm)
+            if move.Promotion then ColPiece.FromPcCol(Pawn,xstm)
             else colpcto
         if MoveRequiresRefresh(colpcfrom, from, mto) then
-            RefreshAccumulator(map, map.xstm)
-            ApplyUpdates(map, move, map.stm)
+            RefreshAccumulator(map, xstm)
+            ApplyUpdates(map, move, stm)
         else
             ApplyUpdates(map, move, 0)
             ApplyUpdates(map, move, 1)
-    let OutputLayer(stm:int) =
+    let OutputLayer(iswtm:bool) =
+        let stm = if iswtm then 0 else 1
         let mutable result = NNUEin.OutputBias
         for c = 0 to 767 do
            result <- result + Math.Max(int(Accumulators.[AccIndex].AccValues.[stm].[c]), 0) * int(NNUEin.OutputWeights.[c])

@@ -109,7 +109,7 @@ type MoveSearch =
         if ans.IsSome then 
             ans.Value
         else
-            let earlyEval = NNUEb.OutputLayer(board.Brd.Map.stm)
+            let earlyEval = NNUEb.OutputLayer(board.Brd.Map.IsWtm)
 
             // In the rare case our evaluation is already too good, we don't need to further evaluate captures any further,
             // as this position is overwhelmingly winning.
@@ -243,14 +243,14 @@ type MoveSearch =
                 // Calculate deeper ply.
                 let nextPlyFromRoot = plyFromRoot + 1
                 // Determine whether we should prune moves.
-                let icolor = board.Brd.Map.stm
-                let ioppositeColor = board.Brd.Map.xstm
-                let kingSq = Bits.ToInt(board.Brd.KingLoc(board.Brd.Map.stm))
+                let icolor = if board.Brd.Map.IsWtm then 0 else 1
+                let ioppositeColor = if board.Brd.Map.IsWtm then 1 else 0
+                let kingSq = Bits.ToInt(board.Brd.KingLoc(icolor))
                 let mutable inCheck = MoveList.UnderAttack(board.Brd, kingSq, ioppositeColor)
                 let mutable improving = false
                 // We should use the evaluation from our transposition table if we had a hit.
                 // As that evaluation isn't truly static and may have been from a previous deep search.
-                let positionalEvaluation = if transpositionHit then transpositionMove.Score else NNUEb.OutputLayer(board.Brd.Map.stm)
+                let positionalEvaluation = if transpositionHit then transpositionMove.Score else NNUEb.OutputLayer(board.Brd.Map.IsWtm)
                 // Also store the evaluation to later check if it improved.
                 this.MvSrchStck.[plyFromRoot].PositionalEvaluation <- positionalEvaluation
         
@@ -519,8 +519,9 @@ type MoveSearch =
             this.KillerMvTbl.ReOrder(plyFromRoot)
             this.KillerMvTbl.[0, plyFromRoot] <- move
         // Increment the move that caused a beta cutoff to get a historical heuristic of best quiet moves.
-        this.HistTbl.[board.PieceOnly(move.From), board.Brd.Map.stm, move.To] <- this.HistTbl.[board.PieceOnly(move.From), board.Brd.Map.stm, move.To] + historyBonus
+        let stm = if board.Brd.Map.IsWtm then 0 else 1 
+        this.HistTbl.[board.PieceOnly(move.From), stm, move.To] <- this.HistTbl.[board.PieceOnly(move.From), stm, move.To] + historyBonus
         // Decrement all other quiet moves to ensure a branch local history heuristic.
         for j = 1 to quietMoveCounter-1 do
             let otherMove = moveList.[i - j]
-            this.HistTbl.[board.PieceOnly(otherMove.From), board.Brd.Map.stm, otherMove.To] <- this.HistTbl.[board.PieceOnly(otherMove.From), board.Brd.Map.stm, otherMove.To] - historyBonus
+            this.HistTbl.[board.PieceOnly(otherMove.From), stm, otherMove.To] <- this.HistTbl.[board.PieceOnly(otherMove.From), stm, otherMove.To] - historyBonus
