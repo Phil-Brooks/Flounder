@@ -16,19 +16,19 @@ type Board =
     // Readonly Properties
     member this.CastlingRight(color) = 
         if color = 0 then (this.Map.WhiteQCastle, this.Map.WhiteKCastle) else (this.Map.BlackQCastle, this.Map.BlackKCastle)
-    member this.At(sq:int) = this.Map.ColPc(sq)
-    member this.All() = this.Map.[0] ||| this.Map.[1]
-    member this.All(color:int) = this.Map.[color]
+    member this.At(sq:int) = this.Map.Squares[sq]
+    member this.All() = this.Map.Both
+    member this.All(color:int) = if color = 0 then this.Map.White else this.Map.Black
     member this.All(piece, color) = this.Map.[piece, color]
     member this.KingLoc(color:int) = this.Map.[King, color]
     member this.EnptyAt(sq:int) = 
-        let pc = this.Map.ColPc(sq)
+        let pc = this.Map.Squares[sq]
         pc = EmptyColPc
     // Move
     member this.Move(from:int, mto:int, ?promotion0:int) =
         let promotion = defaultArg promotion0 PromNone
-        let cpcF = this.Map.ColPc(from)
-        let cpcT = this.Map.ColPc(mto)
+        let cpcF = this.Map.Squares[from]
+        let cpcT = this.Map.Squares[mto]
         let pieceF, colorF = ColPiece.ToPcCol(cpcF)
         let pieceT, colorT = ColPiece.ToPcCol(cpcT)
         // Generate a revert move before the map has been altered.
@@ -158,10 +158,10 @@ type Board =
         Zobrist.FlipTurnInHash(&this.Map.ZobristHash)
         if (rv.Promotion) then
             let color = this.Map.ColorOnly(rv.To)
-            this.Map.Empty(this.Map.ColPc(rv.To), rv.To)
+            this.Map.Empty(this.Map.Squares[rv.To], rv.To)
             this.Map.InsertPiece(color, rv.To)
-        let pF = this.Map.ColPc(rv.To)
-        let pT = this.Map.ColPc(rv.From)
+        let pF = this.Map.Squares[rv.To]
+        let pT = this.Map.Squares[rv.From]
         // Undo the move by moving the piece back.
         this.Map.Move(pF, pT, rv.To, rv.From)
         if (rv.EnPassant) then

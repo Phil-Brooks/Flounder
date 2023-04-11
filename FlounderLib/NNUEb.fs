@@ -148,7 +148,7 @@ module NNUEb =
         let prev = Accumulators.[AccIndex-1].AccValues.[int(view)]
         let king = Bits.ToInt(map.[King, view])
         let movingSide = move.ColorToMove
-        let colpcto = map.ColPc(move.To)
+        let colpcto = map.Squares[move.To]
         let colpcfrom =
             if move.Promotion then ColPiece.FromPcCol(Pawn,movingSide)
             else colpcto
@@ -189,13 +189,12 @@ module NNUEb =
     let ResetAccumulator(map:BitBoardMap,perspective:int) =
         let delta= Delta.Default()
         let kingSq = Bits.ToInt(map.[King, perspective])
-        let occupied = ~~~(map.[2])
+        let occupied = map.Both
         let sqarr = Bits.ToArray(occupied)
-        let dosq sq =
-            let colpc = map.PiecesAndColors.[int(sq)]
+        for sq in sqarr do
+            let colpc = map.Squares[sq]
             delta.add.[delta.a] <- FeatureIdx(colpc,sq,kingSq,perspective)
             delta.a <- delta.a + 1
-        Array.iter dosq sqarr
         let src = Array.copy NNUEin.InputBiases
         ApplyDelta(src,delta,perspective)
     let RefreshAccumulator(map:BitBoardMap,perspective:int) =
@@ -231,7 +230,7 @@ module NNUEb =
         let mto = 
             if not map.IsWtm then int(move.To)
             else int(move.To)^^^56
-        let colpcto = map.ColPc(move.To)
+        let colpcto = map.Squares[move.To]
         let colpcfrom =
             if move.Promotion then ColPiece.FromPcCol(Pawn,xstm)
             else colpcto

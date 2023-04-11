@@ -20,7 +20,7 @@ module MoveList =
         else
             // Next, we check if the square is being attacked by sliding pieces.
             // To do this, first we need to find all occupied squares (by our and opposing pieces).
-            let occupied = ~~~(board.All(2))
+            let occupied = board.Map.Both
             // We should check queen along with rook/bishop as queen moves are (rook moves | bishop moves).
             let queen = board.All(Queen, by)
             // Generate a reverse attack mask for rook, letting our square act as a rook and seeing if opposing rook or
@@ -48,7 +48,7 @@ module MoveList =
         // Next, we generate a knight check.
         let knightCheck = AttackTable.KnightMoves.[sq] &&& board.All(Knight, by)
         // For sliding pieces, we use a BitBoard of all pieces.
-        let occupied = ~~~(board.All(2))
+        let occupied = board.Map.Both
         // We will reference the queen along with rooks and bishops for the checks.
         let queen = board.All(Queen, by)
         // Now, we generate a rook or queen (straight only) check.
@@ -211,7 +211,7 @@ module MoveList =
             //Normal moves
             let mutable pushes = 0UL
             // Push pawn once.
-            pushes <- pushes ||| (if color = 0 then Bits.FromSq(from) >>> 8 else Bits.FromSq(from) <<< 8) &&& board.All(2)
+            pushes <- pushes ||| (if color = 0 then Bits.FromSq(from) >>> 8 else Bits.FromSq(from) <<< 8) &&& ~~~board.Map.Both
             if ((from < A1 && from > H3 || from < A6 && from > H8) && pushes <> 0UL) then
                 // If we are on the starting pawn position & the first pawn push was successful.
                 // Push once more.
@@ -254,7 +254,7 @@ module MoveList =
         if Bits.IsSet(d, from) then moves
         else
             // Calculate pseudo-legal moves within check board.
-            let mIndex = BlackMagicBitBoardFactory.GetMagicIndex(Rook, ~~~(board.All(2)), from)
+            let mIndex = BlackMagicBitBoardFactory.GetMagicIndex(Rook, board.Map.Both, from)
             moves <- moves ||| AttackTable.SlidingMoves.[mIndex] &&& ~~~(board.All(color)) &&& c
             // If rook is horizontally or vertically pinned, it can only move within the pin.
             if Bits.IsSet(hv, from) then moves <- moves &&& hv
@@ -271,7 +271,7 @@ module MoveList =
         if Bits.IsSet(hv, from) then moves
         else
             // Calculate pseudo-legal moves within check board.
-            let mIndex = BlackMagicBitBoardFactory.GetMagicIndex(Bishop, ~~~(board.All(2)), from)
+            let mIndex = BlackMagicBitBoardFactory.GetMagicIndex(Bishop, board.Map.Both, from)
             moves <- moves ||| AttackTable.SlidingMoves.[mIndex] &&& ~~~(board.All(color)) &&& c
             // If bishop is diagonally pinned, it can only move within the pin.
             if Bits.IsSet(d, from) then moves <- moves &&& d
@@ -306,7 +306,7 @@ module MoveList =
                     // Generate path of castle queen-side.
                     let path = if color = 0 then WHITE_QUEEN_CASTLE else BLACK_QUEEN_CASTLE
                     // If path is empty, we can castle.
-                    let all = ~~~(board.All(2))
+                    let all = board.Map.Both
                     if (path &&& all) = 0UL then
                         moves <- moves ||| Bits.FromSq(from - 2)
                 // Make sure castling close-path isn't under attack.
@@ -314,7 +314,7 @@ module MoveList =
                     // Generate path of castle king-side.
                     let path = if color = 0 then WHITE_KING_CASTLE else BLACK_KING_CASTLE
                     // If path is empty, we can castle.
-                    let all = ~~~(board.All(2))
+                    let all = board.Map.Both
                     if (path &&& all) = 0UL then
                         moves <- moves ||| Bits.FromSq(from + 2)
                 moves
@@ -343,7 +343,7 @@ type MoveList =
             }
         new(board:Board, from:int) =
             let piece, color = ColPiece.ToPcCol(board.At(from))
-            let icolor = int(color)
+            let icolor = color
             let ioppositeColor = icolor^^^1
             let kingSq = Bits.ToInt(board.KingLoc(icolor))
             let (horizontalVertical, diagonal) = MoveList.PinBitBoards(board, kingSq, icolor, ioppositeColor)
