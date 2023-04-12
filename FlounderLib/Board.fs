@@ -12,15 +12,14 @@ type Board =
         }
     member this.EnPassantTarget = this.Map.EnPassantTarget
     member this.ZobristHash = this.Map.ZobristHash
-    member this.Clone() = Board(this.Map.Copy())
     // Readonly Properties
     member this.CastlingRight(color) = 
         if color = 0 then (this.Map.WhiteQCastle, this.Map.WhiteKCastle) else (this.Map.BlackQCastle, this.Map.BlackKCastle)
     member this.At(sq:int) = this.Map.Squares[sq]
     member this.All() = this.Map.Both
     member this.All(color:int) = if color = 0 then this.Map.White else this.Map.Black
-    member this.All(piece, color) = this.Map.[piece, color]
-    member this.KingLoc(color:int) = this.Map.[King, color]
+    member this.All(piece, color) = this.Map.Pieces[piece*2 + color]
+    member this.KingLoc(color:int) = if color= White then this.Map.Pieces[WhiteKing] else this.Map.Pieces[BlackKing]
     member this.EnptyAt(sq:int) = 
         let pc = this.Map.Squares[sq]
         pc = EmptyColPc
@@ -57,7 +56,7 @@ type Board =
             Zobrist.HashEp(&this.Map.ZobristHash, this.Map.EnPassantTarget)
         else this.Map.EnPassantTarget <- Na
         // Make the move.
-        this.Map.Move(cpcF, cpcT, from, mto)
+        BitBoardMap.Move(&this.Map, from, mto)
         if promotion <> PromNone then
             this.Map.Empty(cpcF, mto)
             let prompc = int(promotion)*2 + int(colorF)
@@ -103,9 +102,7 @@ type Board =
                     rv.SecondaryFrom <- mto - 2
                     rv.SecondaryTo <- mto + 1
                 // Make the secondary move.
-                this.Map.Move(
-                    (if colorF=0 then WhiteRook else BlackRook), EmptyColPc, rv.SecondaryFrom, rv.SecondaryTo
-                )
+                BitBoardMap.Move(&this.Map, rv.SecondaryFrom, rv.SecondaryTo)
         // If our rook was captured, we must also update castling rights so we don't castle with enemy piece.
         if pieceT = Rook then
             if colorT = 0 then
@@ -157,13 +154,13 @@ type Board =
         this.Map.IsWtm <- not this.Map.IsWtm  
         Zobrist.FlipTurnInHash(&this.Map.ZobristHash)
         if (rv.Promotion) then
-            let color = this.Map.ColorOnly(rv.To)
+            let color = this.Map.Squares.[rv.To]%2
             this.Map.Empty(this.Map.Squares[rv.To], rv.To)
             this.Map.InsertPiece(color, rv.To)
         let pF = this.Map.Squares[rv.To]
         let pT = this.Map.Squares[rv.From]
         // Undo the move by moving the piece back.
-        this.Map.Move(pF, pT, rv.To, rv.From)
+        BitBoardMap.Move(&this.Map, rv.To, rv.From)
         if (rv.EnPassant) then
             // If it was an EP attack, we must insert a pawn at the affected square.
             let insertion = if rv.CapturedColor = 0 then rv.To - 8 else rv.To + 8
@@ -172,7 +169,7 @@ type Board =
             // If a capture happened, we must insert the piece at the relevant square.
             this.Map.InsertPiece(rv.CapturedPiece*2 + int(rv.CapturedColor), rv.To)
         // If there was a secondary move (castling), revert the secondary move.
-        elif rv.SecondaryFrom <> Na then this.Map.Move(rv.SecondaryTo, rv.SecondaryFrom)
+        elif rv.SecondaryFrom <> Na then BitBoardMap.Move(&this.Map, rv.SecondaryTo, rv.SecondaryFrom)  //this.Map.Move(rv.SecondaryTo, rv.SecondaryFrom)
     // Insert/Remove
     member this.InsertPiece(cpc, sq) = 
         this.Map.InsertPiece(cpc, sq)

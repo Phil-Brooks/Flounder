@@ -29,7 +29,7 @@ module MoveList =
 
     [<Test>]
     let CountKnightMovesAtA3() =
-        let usebd = board.Clone()
+        let usebd = Board.Default()
         let res = usebd.Move(B1, A3)
         let moveList = MoveList(usebd, A3)
         moveList.Count |> should equal 3
@@ -39,7 +39,7 @@ module MoveList =
 
     [<Test>]
     let CountRookMovesAtA3() =
-        let usebd = board.Clone()
+        let usebd = Board.Default()
         let res = usebd.Move(A1, A3)
         let moveList = MoveList(usebd, A3)
         moveList.Count |> should equal 11
@@ -54,7 +54,7 @@ module MoveList =
 
     [<Test>]
     let CountBishopMovesAtC3() =
-        let usebd = board.Clone()
+        let usebd = Board.Default()
         let res = usebd.Move(C1, C3)
         let moveList = MoveList(usebd, C3)
         moveList.Count |> should equal 6
@@ -64,7 +64,7 @@ module MoveList =
 
     [<Test>]
     let CountQueenMovesAtC3() =
-        let usebd = board.Clone()
+        let usebd = Board.Default()
         let res = usebd.Move(D1, C3)
         let moveList = MoveList(usebd, C3)
         moveList.Count |> should equal 17
@@ -74,7 +74,7 @@ module MoveList =
 
     [<Test>]
     let CountKingMovesAtC3() =
-        let usebd = board.Clone()
+        let usebd = Board.Default()
         let res = usebd.Move(E1, C3)
         let moveList = MoveList(usebd, C3)
         moveList.Count |> should equal 5
@@ -84,7 +84,7 @@ module MoveList =
 
     [<Test>]
     let CountKingMovesAtE1a() =
-        let usebd = board.Clone()
+        let usebd = Board.Default()
         let res = usebd.Move(F1, F3)
         let res = usebd.Move(G1, G3)
         let moveList = MoveList(usebd, E1)
@@ -111,7 +111,7 @@ module MoveList =
 
     [<Test>]
     let CountPawnCapturesAtAB6() =
-        let usebd = board.Clone()
+        let usebd = Board.Default()
         let res = usebd.Move(B2, B6)
         // Generate pins and check bitboards.
         let stm = if board.Map.IsWtm then 0 else 1

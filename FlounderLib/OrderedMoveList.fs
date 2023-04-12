@@ -50,9 +50,9 @@ type OrderedMoveList =
             // The idea behind it is to give highest priority to captures that are capturing most valuable pieces
             // with least valuable pieces.
             else
-                let pto = board.Map.PieceOnly(move.To)
+                let pto = board.Map.Squares[move.To]/2
                 if (pto <> EmptyPc) then 
-                    let pfrom = board.Map.PieceOnly(move.From)
+                    let pfrom = board.Map.Squares[move.From]/2
                     OrderedMoveList.MvvLva(pfrom, pto) * 10000
                 // If the move is a quiet move (not capture / promotion), then we should check if it is a killer move or history
                 // move.

@@ -146,7 +146,7 @@ module NNUEb =
             if move.EnPassant then (if not map.IsWtm then BlackPawn else WhitePawn)
             else ColPiece.FromPcCol(move.CapturedPiece,move.CapturedColor)
         let prev = Accumulators.[AccIndex-1].AccValues.[int(view)]
-        let king = Bits.ToInt(map.[King, view])
+        let king = Bits.ToInt(if view= White then map.Pieces[WhiteKing] else map.Pieces[BlackKing])
         let movingSide = move.ColorToMove
         let colpcto = map.Squares[move.To]
         let colpcfrom =
@@ -170,7 +170,7 @@ module NNUEb =
             ApplySubSubAdd(prev, from, capturedTo, mto, view)
         else
             ApplySubAdd(prev, from, mto, view)    
-    let ApplyDelta(src:int16 array, delta:Delta, perspective:int) =
+    let ApplyDelta(src:int16 array, delta:DeltaRec, perspective:int) =
         let regs:int16 array = Array.zeroCreate 16
         for c = 0 to 768/16-1 do
             let unrollOffset = c * 16
@@ -188,7 +188,7 @@ module NNUEb =
                 Accumulators.[AccIndex].AccValues.[perspective].[unrollOffset+i] <- regs.[i]
     let ResetAccumulator(map:BitBoardMap,perspective:int) =
         let delta= Delta.Default()
-        let kingSq = Bits.ToInt(map.[King, perspective])
+        let kingSq = Bits.ToInt(if perspective = White then map.Pieces[WhiteKing] else map.Pieces[BlackKing])
         let occupied = map.Both
         let sqarr = Bits.ToArray(occupied)
         for sq in sqarr do
@@ -199,7 +199,7 @@ module NNUEb =
         ApplyDelta(src,delta,perspective)
     let RefreshAccumulator(map:BitBoardMap,perspective:int) =
         let delta = Delta.Default()
-        let kingSq = Bits.ToInt(map.[King, perspective])
+        let kingSq = Bits.ToInt(if perspective = White then map.Pieces[WhiteKing] else map.Pieces[BlackKing])
         let pBucket = if perspective = 0 then 0 else 32
         let kingBucket = KING_BUCKETS.[int(kingSq) ^^^ (56 * perspective)] + (if Square.ToFile(kingSq) > 3 then 16 else 0)
         let state = RefreshTable.[pBucket + kingBucket]

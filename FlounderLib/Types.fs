@@ -2,7 +2,7 @@
 
 [<AutoOpen>]
 module Types =
-    let VersionNo = "0.4.2.1"
+    let VersionNo = "0.4.2.2"
 
     // The type of piece.
     let WhitePawn = 0
@@ -109,6 +109,23 @@ module Types =
     let PromRook = 3
     let PromQueen = 4
     let PromChars = ".nbrq."
+    
+    [<Struct>]
+    type BoardRec =
+        {
+            mutable IsWtm:bool
+            Pieces:uint64 array
+            Squares:int array
+            mutable White:uint64
+            mutable Black:uint64
+            mutable Both:uint64
+            mutable WhiteKCastle:int
+            mutable WhiteQCastle:int
+            mutable BlackKCastle:int
+            mutable BlackQCastle:int
+            mutable EnPassantTarget:int
+            mutable ZobristHash:uint64
+        }
 
     type TranTableType =
         | Exact
@@ -128,7 +145,7 @@ module Types =
             3;  2;  1;  0;  0;  1;  2;  3 
         |]
 
-type Delta =
+type DeltaRec =
     {   
         mutable r:int
         mutable a:int

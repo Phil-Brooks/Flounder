@@ -16,7 +16,7 @@ type EngineBoard =
             RepHist = board.RepHist.Clone()
         }
     member this.Clone() = EngineBoard(this)
-    member this.PieceOnly(sq:int) = this.Brd.Map.PieceOnly(sq)
+    member this.PieceOnly(sq:int) = this.Brd.Map.Squares.[sq]/2
     member this.IsRepetition() = 
         this.RepHist.Count(this.Brd.ZobristHash) > 1
     member this.GuiMove(from:int, mto:int, promotion:int) =

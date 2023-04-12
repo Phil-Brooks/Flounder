@@ -12,10 +12,6 @@ module BitBoardMap =
         ()
 
     [<Test>]
-    let Clone() =
-        Map |> should equal Map
-
-    [<Test>]
     let GetWhitePawn() =
         WhitePawn |> should equal (Map.Squares[A2])
 
@@ -49,20 +45,20 @@ module BitBoardMap =
 
     [<Test>]
     let MoveWhitePawn() =
-        let useMap = Map.Copy()
-        useMap.Move(A2, A4)
+        let mutable useMap = BitBoardMap("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR", "w", "KQkq", "-")
+        BitBoardMap.Move(&useMap, A2, A4)
         WhitePawn |> should equal (useMap.Squares[A4])
 
     [<Test>]
     let MoveWhitePawnInEnemy() =
-        let useMap = Map.Copy()
-        useMap.Move(A2, A7)
+        let mutable useMap = BitBoardMap("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR", "w", "KQkq", "-")
+        BitBoardMap.Move(&useMap, A2, A7)
         WhitePawn |> should equal (useMap.Squares[A7])
-        Bits.Count(useMap.[Pawn, 1]) |> should equal 7
+        Bits.Count(useMap.Pieces[BlackPawn]) |> should equal 7
 
     [<Test>]
     let RemoveWhitePawn() =
-        let useMap = Map.Copy()
+        let useMap = BitBoardMap("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR", "w", "KQkq", "-")
         useMap.Empty(A2)
         EmptyColPc  |> should equal (useMap.Squares[A2])
         let fen = useMap.GenerateBoardFen()
@@ -70,13 +66,13 @@ module BitBoardMap =
 
     [<Test>]
     let MoveKnightToA3() =
-        let useMap = Map.Copy()
-        useMap.Move(B1, A3)
+        let mutable useMap = BitBoardMap("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR", "w", "KQkq", "-")
+        BitBoardMap.Move(&useMap, B1, A3)
         WhiteKnight |> should equal (useMap.Squares[A3])
 
     [<Test>]
     let AddWhitePawn() =
-        let useMap = Map.Copy()
+        let useMap = BitBoardMap("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR", "w", "KQkq", "-")
         useMap.InsertPiece(WhitePawn,A4)
         WhitePawn |> should equal (useMap.Squares[A4])
 
@@ -120,15 +116,15 @@ module BitBoardMap =
 
     [<Test>]
     let ItemWP() =
-        let ans = Bits.Count(Map.[Pawn, 0])
+        let ans = Bits.Count(Map.Pieces[WhitePawn])
         ans |> should equal 8
 
     [<Test>]
     let PieceOnlyE1() =
-        let ans = Map.PieceOnly(E1)
+        let ans = Map.Squares.[E1]/2
         ans |> should equal King
 
     [<Test>]
     let ColorOnlyE1() =
-        let ans = Map.ColorOnly(E1)
+        let ans = Map.Squares.[E1]%2
         ans |> should equal 0
