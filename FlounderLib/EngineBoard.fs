@@ -31,6 +31,8 @@ type EngineBoard =
         if this.Brd.Map.EnPassantTarget <> Na then Zobrist.HashEp(&this.Brd.Map.ZobristHash, this.Brd.Map.EnPassantTarget)
         this.Brd.Map.EnPassantTarget <- Na
         this.Brd.Map.IsWtm <- not this.Brd.Map.IsWtm
+        this.Brd.Map.Stm <- this.Brd.Map.Stm ^^^ 1  
+        this.Brd.Map.Xstm <- this.Brd.Map.Xstm ^^^ 1  
         Zobrist.FlipTurnInHash(&this.Brd.Map.ZobristHash)
         rv
     member this.UndoNullMove(rv:int) =
@@ -38,6 +40,8 @@ type EngineBoard =
             this.Brd.Map.EnPassantTarget <- rv
             Zobrist.HashEp(&this.Brd.Map.ZobristHash, rv)
         this.Brd.Map.IsWtm <- not this.Brd.Map.IsWtm
+        this.Brd.Map.Stm <- this.Brd.Map.Stm ^^^ 1  
+        this.Brd.Map.Xstm <- this.Brd.Map.Xstm ^^^ 1  
         Zobrist.FlipTurnInHash(&this.Brd.Map.ZobristHash)
     member this.Move(move:byref<OrderedMoveEntry>) =
         let rv:MoveRec =

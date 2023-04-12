@@ -120,6 +120,8 @@ type Board =
         )
         // Flip the turn.
         this.Map.IsWtm <- not this.Map.IsWtm  
+        this.Map.Stm <- this.Map.Stm ^^^ 1  
+        this.Map.Xstm <- this.Map.Xstm ^^^ 1  
         // Update Zobrist.
         Zobrist.FlipTurnInHash(&this.Map.ZobristHash)
         rv
@@ -150,7 +152,9 @@ type Board =
             // If we don't have an empty EP, we should hash it in.
             Zobrist.HashEp(&this.Map.ZobristHash, this.Map.EnPassantTarget)
         // Revert to previous turn.
-        this.Map.IsWtm <- not this.Map.IsWtm  
+        this.Map.IsWtm <- not this.Map.IsWtm
+        this.Map.Stm <- this.Map.Stm ^^^ 1  
+        this.Map.Xstm <- this.Map.Xstm ^^^ 1  
         Zobrist.FlipTurnInHash(&this.Map.ZobristHash)
         if rv.Promotion then
             let color = this.Map.Squares.[rv.To]%2

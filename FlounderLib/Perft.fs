@@ -11,8 +11,8 @@ module Perft =
     let Board = Board.Default()
     let rec MoveGeneration(board:Board, depth) =
         // Get all squares occupied by our color.
-        let stm = if board.Map.IsWtm then 0 else 1 
-        let xstm = if board.Map.IsWtm then 1 else 0 
+        let stm = board.Map.Stm
+        let xstm = board.Map.Xstm
         let colored = board.All(stm)
         // Generate pins and check bitboards.
         let kingSq = Bits.ToInt(board.KingLoc(stm))

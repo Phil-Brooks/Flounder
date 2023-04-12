@@ -2,7 +2,7 @@
 
 [<AutoOpen>]
 module Types =
-    let VersionNo = "0.4.2.4"
+    let VersionNo = "0.4.2.5"
 
     // The type of piece.
     let WhitePawn = 0
@@ -114,6 +114,8 @@ module Types =
     type BoardRec =
         {
             mutable IsWtm:bool
+            mutable Stm:int
+            mutable Xstm:int
             Pieces:uint64 array
             Squares:int array
             mutable White:uint64
@@ -144,11 +146,18 @@ module Types =
             mutable SecondaryTo:int
         }
 
-    type TranTableType =
-        | Exact
-        | BetaCutoff
-        | AlphaUnchanged
-        | Invalid
+    //type NNUEinB =
+    //    {
+    //        InputWeights:int array
+    //        InputBiases:int array
+    //        OutputWeights:int array
+    //        OutputBias:int
+    //    }
+    //type AccumulatorKingState =
+    //    {
+    //        AccKsValues:int array
+    //        Pcs:uint64 array
+    //    }
 
     let KING_BUCKETS = 
         [|
@@ -162,13 +171,19 @@ module Types =
             3;  2;  1;  0;  0;  1;  2;  3 
         |]
 
-type DeltaRec =
-    {   
-        mutable r:int
-        mutable a:int
-        rem:int array
-        add:int array
-    }
+    type DeltaRec =
+        {   
+            mutable r:int
+            mutable a:int
+            rem:int array
+            add:int array
+        }
+
+    type TranTableType =
+        | Exact
+        | BetaCutoff
+        | AlphaUnchanged
+        | Invalid
 
 module Piece =
     let ToStr(pc:int) = PcChars[pc].ToString()

@@ -240,7 +240,8 @@ module NNUEb =
         else
             ApplyUpdates(map, move, 0)
             ApplyUpdates(map, move, 1)
-    let OutputLayer(iswtm:bool) =
+    let OutputLayer(map:BoardRec) =
+        let iswtm = map.IsWtm
         let stm = if iswtm then 0 else 1
         let mutable result = NNUEin.OutputBias
         for c = 0 to 767 do

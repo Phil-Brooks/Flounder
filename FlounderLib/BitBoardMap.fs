@@ -65,6 +65,8 @@ module BitBoardMap =
                     pieces[BlackQueen] ||| pieces[BlackKing] 
         let both = white ||| black
         let isWtm = turnData[0] = 'w'
+        let stm = if isWtm then White else Black
+        let xstm = if isWtm then Black else White
         let whiteKCastle = if castlingData.Contains('K') then 0x1 else 0x0
         let whiteQCastle = if castlingData.Contains('Q') then 0x2 else 0x0
         let blackKCastle = if castlingData.Contains('k') then 0x4 else 0x0
@@ -75,6 +77,8 @@ module BitBoardMap =
         let mutable ans =
             {
                 IsWtm = isWtm
+                Stm = stm
+                Xstm = xstm
                 Pieces = pieces
                 Squares = squares
                 White = white

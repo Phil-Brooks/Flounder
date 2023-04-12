@@ -18,5 +18,5 @@ type Overall() =
         FlounderLib.Perft.MoveGeneration(Default, 4)|>ignore
         NNUEb.ResetAccumulator(Default.Map,0)
         NNUEb.ResetAccumulator(Default.Map,1)
-        NNUEb.OutputLayer(Default.Map.IsWtm)|>ignore
+        NNUEb.OutputLayer(Default.Map)|>ignore
 

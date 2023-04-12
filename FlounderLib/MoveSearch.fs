@@ -109,7 +109,7 @@ type MoveSearch =
         if ans.IsSome then 
             ans.Value
         else
-            let earlyEval = NNUEb.OutputLayer(board.Brd.Map.IsWtm)
+            let earlyEval = NNUEb.OutputLayer(board.Brd.Map)
 
             // In the rare case our evaluation is already too good, we don't need to further evaluate captures any further,
             // as this position is overwhelmingly winning.
@@ -250,7 +250,7 @@ type MoveSearch =
                 let mutable improving = false
                 // We should use the evaluation from our transposition table if we had a hit.
                 // As that evaluation isn't truly static and may have been from a previous deep search.
-                let positionalEvaluation = if transpositionHit then transpositionMove.Score else NNUEb.OutputLayer(board.Brd.Map.IsWtm)
+                let positionalEvaluation = if transpositionHit then transpositionMove.Score else NNUEb.OutputLayer(board.Brd.Map)
                 // Also store the evaluation to later check if it improved.
                 this.MvSrchStck.[plyFromRoot].PositionalEvaluation <- positionalEvaluation
         
