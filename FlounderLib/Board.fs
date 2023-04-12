@@ -2,11 +2,11 @@
 open System
 
 type Board =
-    val mutable Map:BitBoardMap 
+    val mutable Map:BoardRec
     new(boardData:string, turnData, castlingData, enPassantTargetData) = 
-        let map = new BitBoardMap(boardData, turnData, castlingData, enPassantTargetData)
+        let map = BitBoardMap.FromParts(boardData, turnData, castlingData, enPassantTargetData)
         Board(map)
-    new(map:BitBoardMap) = 
+    new(map:BoardRec) = 
         {
             Map = map
         }
@@ -42,7 +42,7 @@ type Board =
             let epPieceSq = if colorF = 0 then this.EnPassantTarget + 8 else this.EnPassantTarget - 8
             let oppositeColor = colorF^^^1
             let eppc = if colorF=0 then BlackPawn else WhitePawn
-            this.Map.Empty(eppc, epPieceSq)
+            BitBoardMap.Empty(&this.Map, epPieceSq)
             // Set it in revert move.
             rv.EnPassant <- true
             // We only need to reference the color.
@@ -58,9 +58,9 @@ type Board =
         // Make the move.
         BitBoardMap.Move(&this.Map, from, mto)
         if promotion <> PromNone then
-            this.Map.Empty(cpcF, mto)
+            BitBoardMap.Empty(&this.Map, mto)
             let prompc = int(promotion)*2 + int(colorF)
-            this.Map.InsertPiece(prompc, mto)
+            BitBoardMap.InsertPiece(&this.Map, prompc, mto)
             rv.Promotion <- true
         // Update revert move.
         rv.From <- from
@@ -155,8 +155,8 @@ type Board =
         Zobrist.FlipTurnInHash(&this.Map.ZobristHash)
         if (rv.Promotion) then
             let color = this.Map.Squares.[rv.To]%2
-            this.Map.Empty(this.Map.Squares[rv.To], rv.To)
-            this.Map.InsertPiece(color, rv.To)
+            BitBoardMap.Empty(&this.Map, rv.To)
+            BitBoardMap.InsertPiece(&this.Map, color, rv.To)
         let pF = this.Map.Squares[rv.To]
         let pT = this.Map.Squares[rv.From]
         // Undo the move by moving the piece back.
@@ -164,21 +164,21 @@ type Board =
         if (rv.EnPassant) then
             // If it was an EP attack, we must insert a pawn at the affected square.
             let insertion = if rv.CapturedColor = 0 then rv.To - 8 else rv.To + 8
-            this.Map.InsertPiece(int(rv.CapturedColor), insertion)
+            BitBoardMap.InsertPiece(&this.Map, rv.CapturedColor, insertion)
         elif rv.CapturedPiece <> EmptyPc then
             // If a capture happened, we must insert the piece at the relevant square.
-            this.Map.InsertPiece(rv.CapturedPiece*2 + int(rv.CapturedColor), rv.To)
+            BitBoardMap.InsertPiece(&this.Map, rv.CapturedPiece*2 + rv.CapturedColor, rv.To)
         // If there was a secondary move (castling), revert the secondary move.
         elif rv.SecondaryFrom <> Na then BitBoardMap.Move(&this.Map, rv.SecondaryTo, rv.SecondaryFrom)  //this.Map.Move(rv.SecondaryTo, rv.SecondaryFrom)
     // Insert/Remove
     member this.InsertPiece(cpc, sq) = 
-        this.Map.InsertPiece(cpc, sq)
+        BitBoardMap.InsertPiece(&this.Map, cpc, sq)
     member this.RemovePiece(cpc, sq) =
-        this.Map.Empty(cpc, sq)
+        BitBoardMap.Empty(&this.Map, sq)
     override this.ToString() =
         "FEN: " + this.GenerateFen() + "\nHash: " + $"{this.Map.ZobristHash:X}" + "\n"
     member this.GenerateFen() =
-        let boardData = this.Map.GenerateBoardFen()
+        let boardData =  BitBoardMap.GenerateBoardFen(this.Map)
         let turnData = if this.Map.IsWtm then "w" else "b"
         let mutable castlingRight = ""
         if (this.Map.WhiteKCastle = 0x0 && this.Map.WhiteQCastle = 0x0 && this.Map.BlackKCastle = 0x0 && this.Map.BlackQCastle = 0x0) then

@@ -16,7 +16,7 @@ type RevertMove =
         val mutable CapturedColor:int
         val mutable SecondaryFrom:int
         val mutable SecondaryTo:int
-        new(map:BitBoardMap) =
+        new(map:BoardRec) =
             {
                 WhiteKCastle = map.WhiteKCastle
                 WhiteQCastle = map.WhiteQCastle
@@ -36,5 +36,5 @@ type RevertMove =
         end
     
 module RevertMove =
-    let FromBitBoardMap(map:byref<BitBoardMap>) =
+    let FromBitBoardMap(map:byref<BoardRec>) =
         RevertMove(map)

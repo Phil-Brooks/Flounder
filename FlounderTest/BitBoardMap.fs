@@ -5,7 +5,7 @@ open FlounderLib
 
 module BitBoardMap =
 
-    let Map = BitBoardMap("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR", "w", "KQkq", "-")
+    let Map = BitBoardMap.FromParts("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR", "w", "KQkq", "-")
     
     [<SetUp>]
     let Setup () =
@@ -45,40 +45,40 @@ module BitBoardMap =
 
     [<Test>]
     let MoveWhitePawn() =
-        let mutable useMap = BitBoardMap("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR", "w", "KQkq", "-")
+        let mutable useMap = BitBoardMap.FromParts("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR", "w", "KQkq", "-")
         BitBoardMap.Move(&useMap, A2, A4)
         WhitePawn |> should equal (useMap.Squares[A4])
 
     [<Test>]
     let MoveWhitePawnInEnemy() =
-        let mutable useMap = BitBoardMap("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR", "w", "KQkq", "-")
+        let mutable useMap = BitBoardMap.FromParts("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR", "w", "KQkq", "-")
         BitBoardMap.Move(&useMap, A2, A7)
         WhitePawn |> should equal (useMap.Squares[A7])
         Bits.Count(useMap.Pieces[BlackPawn]) |> should equal 7
 
     [<Test>]
     let RemoveWhitePawn() =
-        let useMap = BitBoardMap("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR", "w", "KQkq", "-")
-        useMap.Empty(A2)
+        let mutable useMap = BitBoardMap.FromParts("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR", "w", "KQkq", "-")
+        BitBoardMap.Empty(&useMap, A2)
         EmptyColPc  |> should equal (useMap.Squares[A2])
-        let fen = useMap.GenerateBoardFen()
+        let fen = BitBoardMap.GenerateBoardFen(useMap)
         fen |> should equal "rnbqkbnr/pppppppp/8/8/8/8/1PPPPPPP/RNBQKBNR"
 
     [<Test>]
     let MoveKnightToA3() =
-        let mutable useMap = BitBoardMap("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR", "w", "KQkq", "-")
+        let mutable useMap = BitBoardMap.FromParts("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR", "w", "KQkq", "-")
         BitBoardMap.Move(&useMap, B1, A3)
         WhiteKnight |> should equal (useMap.Squares[A3])
 
     [<Test>]
     let AddWhitePawn() =
-        let useMap = BitBoardMap("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR", "w", "KQkq", "-")
-        useMap.InsertPiece(WhitePawn,A4)
+        let mutable useMap = BitBoardMap.FromParts("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR", "w", "KQkq", "-")
+        BitBoardMap.InsertPiece(&useMap, WhitePawn,A4)
         WhitePawn |> should equal (useMap.Squares[A4])
 
     [<Test>]
     let ConfirmBoardState() =
-        let fen = Map.GenerateBoardFen()
+        let fen = BitBoardMap.GenerateBoardFen(Map)
         fen |> should equal "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR"
 
     [<Test>]

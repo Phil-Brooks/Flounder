@@ -5,7 +5,7 @@ open FlounderLib
 
 module Zobrist =
 
-    let mutable Map = BitBoardMap("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR", "w", "KQkq", "-")
+    let mutable Map = BitBoardMap.FromParts("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR", "w", "KQkq", "-")
     
     [<SetUp>]
     let Setup () =
@@ -13,4 +13,4 @@ module Zobrist =
 
     [<Test>]
     let Hash() =
-        BitBoardMap.Hash(Map) |> should equal 2506267901269816621UL
+        Zobrist.Hash(Map) |> should equal 2506267901269816621UL

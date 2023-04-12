@@ -141,7 +141,7 @@ module NNUEb =
                 regs.[i] <- regs.[i] + NNUEin.InputWeights.[o2 + i]
             for i = 0 to 15 do
                 Accumulators.[AccIndex].AccValues.[view].[unrollOffset+i] <- regs.[i]
-    let ApplyUpdates(map:BitBoardMap, move:RevertMove, view:int) =
+    let ApplyUpdates(map:BoardRec, move:RevertMove, view:int) =
         let captured = 
             if move.EnPassant then (if not map.IsWtm then BlackPawn else WhitePawn)
             else ColPiece.FromPcCol(move.CapturedPiece,move.CapturedColor)
@@ -186,7 +186,7 @@ module NNUEb =
                     regs.[i] <- regs.[i] + NNUEin.InputWeights.[offset + i]
             for i = 0 to 15 do
                 Accumulators.[AccIndex].AccValues.[perspective].[unrollOffset+i] <- regs.[i]
-    let ResetAccumulator(map:BitBoardMap,perspective:int) =
+    let ResetAccumulator(map:BoardRec,perspective:int) =
         let delta= Delta.Default()
         let kingSq = Bits.ToInt(if perspective = White then map.Pieces[WhiteKing] else map.Pieces[BlackKing])
         let occupied = map.Both
@@ -197,7 +197,7 @@ module NNUEb =
             delta.a <- delta.a + 1
         let src = Array.copy NNUEin.InputBiases
         ApplyDelta(src,delta,perspective)
-    let RefreshAccumulator(map:BitBoardMap,perspective:int) =
+    let RefreshAccumulator(map:BoardRec,perspective:int) =
         let delta = Delta.Default()
         let kingSq = Bits.ToInt(if perspective = White then map.Pieces[WhiteKing] else map.Pieces[BlackKing])
         let pBucket = if perspective = 0 then 0 else 32
@@ -221,7 +221,7 @@ module NNUEb =
             state.Pcs.[int(pc)] <- curr
         ApplyDelta(state.AccKsValues, delta, perspective)
         RefreshTable.[pBucket + kingBucket] <- {state with AccKsValues = Array.copy Accumulators.[AccIndex].AccValues.[int(perspective)]}
-    let DoUpdate(map:BitBoardMap, move:RevertMove) =
+    let DoUpdate(map:BoardRec, move:RevertMove) =
         let stm = if map.IsWtm then 0 else 1
         let xstm = if map.IsWtm then 1 else 0
         let from = 

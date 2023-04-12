@@ -29,3 +29,13 @@ module Zobrist =
         zobristHash <- zobristHash ^^^ ZobristCastleKeys[wk ||| wq ||| bk ||| bq]
     let FlipTurnInHash(zobristHash:byref<uint64>) =
         zobristHash <- zobristHash ^^^ ZobristSideKey
+    let Hash(map:BoardRec) =
+        let mutable zobristHash = 0UL
+        for cpc = WhitePawn to BlackKing do
+            let psbb = map.Pieces[cpc]
+            let sqarr = Bits.ToArray(psbb)
+            Array.iter (fun sq -> zobristHash <- zobristHash ^^^ ZobristPieces[cpc][sq]) sqarr
+        if not map.IsWtm then zobristHash <- zobristHash ^^^ ZobristSideKey
+        if map.EnPassantTarget <> Na then zobristHash <- zobristHash ^^^ ZobristEpKeys[map.EnPassantTarget]
+        zobristHash <- zobristHash ^^^ ZobristCastleKeys[map.WhiteKCastle ||| map.WhiteQCastle ||| map.BlackKCastle ||| map.BlackQCastle]
+        zobristHash
