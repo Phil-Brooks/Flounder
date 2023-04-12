@@ -141,13 +141,13 @@ module NNUEb =
                 regs.[i] <- regs.[i] + NNUEin.InputWeights.[o2 + i]
             for i = 0 to 15 do
                 Accumulators.[AccIndex].AccValues.[view].[unrollOffset+i] <- regs.[i]
-    let ApplyUpdates(map:BoardRec, move:RevertMove, view:int) =
+    let ApplyUpdates(map:BoardRec, move:MoveRec, view:int) =
         let captured = 
             if move.EnPassant then (if not map.IsWtm then BlackPawn else WhitePawn)
-            else ColPiece.FromPcCol(move.CapturedPiece,move.CapturedColor)
+            else move.CapturedPiece
         let prev = Accumulators.[AccIndex-1].AccValues.[int(view)]
         let king = Bits.ToInt(if view= White then map.Pieces[WhiteKing] else map.Pieces[BlackKing])
-        let movingSide = move.ColorToMove
+        let movingSide = if map.IsWtm then 1 else 0
         let colpcto = map.Squares[move.To]
         let colpcfrom =
             if move.Promotion then ColPiece.FromPcCol(Pawn,movingSide)
@@ -163,7 +163,7 @@ module NNUEb =
         //IsCap
         elif captured <> EmptyColPc then
             let capSq = 
-                if move.EnPassant && movingSide=0 then move.To + 8
+                if move.EnPassant && movingSide = White then move.To + 8
                 elif move.EnPassant then move.To - 8
                 else move.To
             let capturedTo = FeatureIdx(captured, capSq, king, view)
@@ -221,7 +221,7 @@ module NNUEb =
             state.Pcs.[int(pc)] <- curr
         ApplyDelta(state.AccKsValues, delta, perspective)
         RefreshTable.[pBucket + kingBucket] <- {state with AccKsValues = Array.copy Accumulators.[AccIndex].AccValues.[int(perspective)]}
-    let DoUpdate(map:BoardRec, move:RevertMove) =
+    let DoUpdate(map:BoardRec, move:MoveRec) =
         let stm = if map.IsWtm then 0 else 1
         let xstm = if map.IsWtm then 1 else 0
         let from = 

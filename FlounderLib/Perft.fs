@@ -44,7 +44,7 @@ module Perft =
                     // If our king is safe, that move is legal and we can calculate moves at lesser
                     // depth recursively, but we shouldn't divide at lesser depth.
                     let mutable nextCount = 0uL
-                    if (rv.Promotion) then
+                    if rv.Promotion then
                         // Undo original pawn move without promotion.
                         board.UndoMove(&rv)
                         for pr = PromKnight to PromQueen do 

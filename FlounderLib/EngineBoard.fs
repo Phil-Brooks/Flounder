@@ -40,13 +40,13 @@ type EngineBoard =
         this.Brd.Map.IsWtm <- not this.Brd.Map.IsWtm
         Zobrist.FlipTurnInHash(&this.Brd.Map.ZobristHash)
     member this.Move(move:byref<OrderedMoveEntry>) =
-        let rv:RevertMove =
+        let rv:MoveRec =
             NNUEb.AccIndex<-NNUEb.AccIndex+1
             this.Brd.Move(move.From, move.To, move.Promotion)
         NNUEb.DoUpdate(this.Brd.Map,rv)
         this.RepHist.Append(this.Brd.ZobristHash)
         rv
-    member this.UndoMove(rv:byref<RevertMove>) =
+    member this.UndoMove(rv:byref<MoveRec>) =
         this.Brd.UndoMove(&rv)
         NNUEb.AccIndex<-NNUEb.AccIndex-1
         this.RepHist.RemoveLast()

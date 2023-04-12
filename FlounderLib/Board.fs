@@ -31,12 +31,11 @@ type Board =
         let pieceF, colorF = ColPiece.ToPcCol(cpcF)
         let pieceT, colorT = ColPiece.ToPcCol(cpcT)
         // Generate a revert move before the map has been altered.
-        let mutable rv = RevertMove.FromBitBoardMap(&this.Map)
+        let mutable rv = BitBoardMap.ToMove(&this.Map)
         if pieceT <> EmptyPc then
             // If piece we're moving to isn't an empty one, we will be capturing.
             // Thus, we need to set it in revert move to ensure we can properly revert it.
-            rv.CapturedPiece <- pieceT
-            rv.CapturedColor <- int(colorT)
+            rv.CapturedPiece <- cpcT
         if (this.EnPassantTarget = mto && pieceF = Pawn) then
             // If the attack is an EP attack, we must empty the piece affected by EP.
             let epPieceSq = if colorF = 0 then this.EnPassantTarget + 8 else this.EnPassantTarget - 8
@@ -46,7 +45,7 @@ type Board =
             // Set it in revert move.
             rv.EnPassant <- true
             // We only need to reference the color.
-            rv.CapturedColor <- oppositeColor
+            rv.CapturedPiece <- oppositeColor
         // Update Zobrist.
         if this.EnPassantTarget<> Na then Zobrist.HashEp(&this.Map.ZobristHash, this.Map.EnPassantTarget)
         if (pieceF = Pawn && Math.Abs(int(mto) - int(from)) = 16) then
@@ -59,7 +58,7 @@ type Board =
         BitBoardMap.Move(&this.Map, from, mto)
         if promotion <> PromNone then
             BitBoardMap.Empty(&this.Map, mto)
-            let prompc = int(promotion)*2 + int(colorF)
+            let prompc = promotion*2 + colorF
             BitBoardMap.InsertPiece(&this.Map, prompc, mto)
             rv.Promotion <- true
         // Update revert move.
@@ -74,11 +73,11 @@ type Board =
         // If our rook moved, we must update castling rights.
         if pieceF = Rook then
             if colorF = 0 then
-                if int(from) % 8 = 0 then this.Map.WhiteQCastle <- 0x0
-                if int(from) % 8 = 7 then this.Map.WhiteKCastle <- 0x0
+                if from % 8 = 0 then this.Map.WhiteQCastle <- 0x0
+                if from % 8 = 7 then this.Map.WhiteKCastle <- 0x0
             elif colorF = 1 then
-                if int(from) % 8 = 0 then this.Map.BlackQCastle <- 0x0
-                if int(from) % 8 = 7 then this.Map.BlackKCastle <- 0x0
+                if from % 8 = 0 then this.Map.BlackQCastle <- 0x0
+                if from % 8 = 7 then this.Map.BlackKCastle <- 0x0
             else
                 raise (InvalidOperationException("Rook cannot have no color."))
         // If our king moved, we also must update castling rights.
@@ -124,7 +123,7 @@ type Board =
         // Update Zobrist.
         Zobrist.FlipTurnInHash(&this.Map.ZobristHash)
         rv
-    member this.UndoMove(rv:byref<RevertMove>)=
+    member this.UndoMove(rv:byref<MoveRec>)=
         // Remove castling rights from hash to allow easy update.
         Zobrist.HashCastlingRights(
             &this.Map.ZobristHash, 
@@ -153,7 +152,7 @@ type Board =
         // Revert to previous turn.
         this.Map.IsWtm <- not this.Map.IsWtm  
         Zobrist.FlipTurnInHash(&this.Map.ZobristHash)
-        if (rv.Promotion) then
+        if rv.Promotion then
             let color = this.Map.Squares.[rv.To]%2
             BitBoardMap.Empty(&this.Map, rv.To)
             BitBoardMap.InsertPiece(&this.Map, color, rv.To)
@@ -161,15 +160,15 @@ type Board =
         let pT = this.Map.Squares[rv.From]
         // Undo the move by moving the piece back.
         BitBoardMap.Move(&this.Map, rv.To, rv.From)
-        if (rv.EnPassant) then
+        if rv.EnPassant then
             // If it was an EP attack, we must insert a pawn at the affected square.
-            let insertion = if rv.CapturedColor = 0 then rv.To - 8 else rv.To + 8
-            BitBoardMap.InsertPiece(&this.Map, rv.CapturedColor, insertion)
-        elif rv.CapturedPiece <> EmptyPc then
+            let insertion = if rv.CapturedPiece = WhitePawn then rv.To - 8 else rv.To + 8
+            BitBoardMap.InsertPiece(&this.Map, rv.CapturedPiece, insertion)
+        elif rv.CapturedPiece <> EmptyColPc then
             // If a capture happened, we must insert the piece at the relevant square.
-            BitBoardMap.InsertPiece(&this.Map, rv.CapturedPiece*2 + rv.CapturedColor, rv.To)
+            BitBoardMap.InsertPiece(&this.Map, rv.CapturedPiece, rv.To)
         // If there was a secondary move (castling), revert the secondary move.
-        elif rv.SecondaryFrom <> Na then BitBoardMap.Move(&this.Map, rv.SecondaryTo, rv.SecondaryFrom)  //this.Map.Move(rv.SecondaryTo, rv.SecondaryFrom)
+        elif rv.SecondaryFrom <> Na then BitBoardMap.Move(&this.Map, rv.SecondaryTo, rv.SecondaryFrom) 
     // Insert/Remove
     member this.InsertPiece(cpc, sq) = 
         BitBoardMap.InsertPiece(&this.Map, cpc, sq)

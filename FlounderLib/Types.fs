@@ -2,7 +2,7 @@
 
 [<AutoOpen>]
 module Types =
-    let VersionNo = "0.4.2.3"
+    let VersionNo = "0.4.2.4"
 
     // The type of piece.
     let WhitePawn = 0
@@ -125,6 +125,23 @@ module Types =
             mutable BlackQCastle:int
             mutable EnPassantTarget:int
             mutable ZobristHash:uint64
+        }
+
+    [<Struct>]
+    type MoveRec =
+        {
+            WhiteKCastle:int
+            WhiteQCastle:int
+            BlackKCastle:int
+            BlackQCastle:int
+            EnPassantTarget:int
+            mutable Promotion:bool
+            mutable EnPassant:bool
+            mutable From:int
+            mutable To:int
+            mutable CapturedPiece:int
+            mutable SecondaryFrom:int
+            mutable SecondaryTo:int
         }
 
     type TranTableType =

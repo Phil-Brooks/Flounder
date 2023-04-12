@@ -1,4 +1,4 @@
-﻿namespace rec FlounderLib
+﻿namespace FlounderLib
 open System.IO
 open System
 
@@ -89,6 +89,21 @@ module BitBoardMap =
             }
         ans.ZobristHash <- Zobrist.Hash(ans)
         ans
+    let ToMove(map:byref<BoardRec>) =
+        {
+            WhiteKCastle = map.WhiteKCastle
+            WhiteQCastle = map.WhiteQCastle
+            BlackKCastle = map.BlackKCastle
+            BlackQCastle = map.BlackQCastle
+            EnPassantTarget = map.EnPassantTarget
+            Promotion = false
+            EnPassant = false
+            From = Na
+            To = Na
+            CapturedPiece = EmptyColPc
+            SecondaryFrom = Na
+            SecondaryTo = Na
+        }
     let Move(map:byref<BoardRec>, from:int, mto:int) =
         let pF = map.Squares[from]
         let pT = map.Squares[mto]
