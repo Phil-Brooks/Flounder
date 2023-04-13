@@ -159,16 +159,16 @@ module MoveList =
                     // If we do EP here, our king can be attacked by rook.
                     // This is known as being pinned through a piece and only happens for EP, thus we must actually EP and see
                     // if our king is under attacked.
-                    board.RemovePiece(color, from)
-                    board.RemovePiece(oppositeColor, epPieceSq)
-                    board.InsertPiece(color, board.Map.EnPassantTarget)
+                    BitBoardMap.Empty(&board.Map, from)
+                    BitBoardMap.Empty(&board.Map, epPieceSq)
+                    BitBoardMap.InsertPiece(&board.Map, color, board.Map.EnPassantTarget)
                     let kingSq = if color = White then board.Map.WhiteKingLoc else board.Map.BlackKingLoc
                     // If our king is under attack, it means the pawn was pinned through a piece and the removal of that piece
                     // caused a discovered pin. Thus, we must remove it from our legal moves.
                     if (UnderAttack(board, kingSq, oppositeColor)) then moves <- moves &&& ~~~(1UL <<< board.Map.EnPassantTarget)
-                    board.InsertPiece(color, from)
-                    board.InsertPiece(oppositeColor, epPieceSq)
-                    board.RemovePiece(color, board.Map.EnPassantTarget)
+                    BitBoardMap.InsertPiece(&board.Map, color, from)
+                    BitBoardMap.InsertPiece(&board.Map, oppositeColor, epPieceSq)
+                    BitBoardMap.Empty(&board.Map, board.Map.EnPassantTarget)
                     // In the case that the EP piece isn't in our checks during a check, we shouldn't EP.
                     if Bits.IsSet(moves, board.Map.EnPassantTarget) && not (Bits.IsSet(c, epPieceSq)) then moves <- moves &&& ~~~(1UL <<< board.Map.EnPassantTarget)
                     moves,promotion
@@ -235,16 +235,16 @@ module MoveList =
                     // If we do EP here, our king can be attacked by rook.
                     // This is known as being pinned through a piece and only happens for EP, thus we must actually EP and see
                     // if our king is under attacked.
-                    board.RemovePiece(color, from)
-                    board.RemovePiece(oppositeColor, epPieceSq)
-                    board.InsertPiece(color, board.Map.EnPassantTarget)
+                    BitBoardMap.Empty(&board.Map, from)
+                    BitBoardMap.Empty(&board.Map, epPieceSq)
+                    BitBoardMap.InsertPiece(&board.Map, color, board.Map.EnPassantTarget)
                     let kingSq = if color = White then board.Map.WhiteKingLoc else board.Map.BlackKingLoc
                     // If our king is under attack, it means the pawn was pinned through a piece and the removal of that piece
                     // caused a discovered pin. Thus, we must remove it from our legal moves.
                     if (UnderAttack(board, kingSq, oppositeColor)) then moves <- moves &&& ~~~(1UL <<< board.Map.EnPassantTarget)
-                    board.InsertPiece(color, from)
-                    board.InsertPiece(oppositeColor, epPieceSq)
-                    board.RemovePiece(color, board.Map.EnPassantTarget)
+                    BitBoardMap.InsertPiece(&board.Map, color, from)
+                    BitBoardMap.InsertPiece(&board.Map, oppositeColor, epPieceSq)
+                    BitBoardMap.Empty(&board.Map, board.Map.EnPassantTarget)
                     // In the case that the EP piece isn't in our checks during a check, we shouldn't EP.
                     if Bits.IsSet(moves, board.Map.EnPassantTarget) && not (Bits.IsSet(c, epPieceSq)) then moves <- moves &&& ~~~(1UL <<< board.Map.EnPassantTarget)
                     moves,promotion
@@ -296,10 +296,10 @@ module MoveList =
             moves
         else
             let ioppositeColor = color^^^1
-            board.RemovePiece((if color=0 then WhiteKing else BlackKing), from)
+            BitBoardMap.Empty(&board.Map, from)
             let movearr = Bits.ToArray(kingMoves)
             Array.iter (fun move -> if (UnderAttack(board, move, ioppositeColor)) then Bits.PopBit(&kingMoves, move)) movearr
-            board.InsertPiece((if color=0 then WhiteKing else BlackKing), from)
+            BitBoardMap.InsertPiece(&board.Map, (if color=0 then WhiteKing else BlackKing), from)
             moves <- moves ||| kingMoves
             // Castling
             // If enemy is attacking our king, we cannot castle.

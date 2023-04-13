@@ -6,12 +6,12 @@ open System.Diagnostics
 open FlounderLib
 
 module Program =
-    let RunPerft(board:Board, depth:int) =
+    let RunPerft(board:byref<Board>, depth:int) =
         Console.WriteLine("Running PERFT @ depth " + depth.ToString() + ": ")
         let watch = Stopwatch()
         let mutable result = 0uL
         watch.Start()
-        result <- Perft.MoveGeneration(board, depth)
+        result <- Perft.MoveGeneration(&board, depth)
         watch.Stop()
         let output = "Searched " + result.ToString("N0") + " nodes (" + watch.ElapsedMilliseconds.ToString() + " ms)."
         Console.WriteLine(output)
@@ -83,7 +83,7 @@ module UniversalChessInterface =
         if (args.[0].ToLower().Equals("go")) then
             if (input.ToLower().Contains("perft")) then
                 // Just run PERFT.
-                Program.RunPerft(EngBrd.Brd, int(args.[2]))
+                Program.RunPerft(&EngBrd.Brd, int(args.[2]))
             else
                 let maxTime = 999_999_999
                 let maxDepth = 63

@@ -8,8 +8,8 @@ module Perft =
     let D5 = 4865609uL
     let D6 = 119060324uL
     let D7 = 3195901860uL
-    let Board = Board.Default()
-    let rec MoveGeneration(board:Board, depth) =
+    let mutable board = Board.Default()
+    let rec MoveGeneration(board:byref<Board>, depth) =
         // Get all squares occupied by our color.
         let stm = board.Map.Stm
         let xstm = board.Map.Xstm
@@ -21,48 +21,47 @@ module Perft =
         // Generate all pseudo-legal moves for our square iteration.
         if depth = 1 then
             // If depth is 1, then we don't need to do any further recursion and can just do +1 to the count.
+            let mutable tot = 0UL
             let sqs = Bits.ToArray(colored)
-            let dosq sq =
+            for sq in sqs do
                 let piece, pieceColor = ColPiece.ToPcCol(board.Map.Squares[sq])
                 let moveList = MoveList(board, sq, piece, int(pieceColor), hv, d, checks, doubleChecked)
-                if moveList.Promotion then uint64(moveList.Count * 4) else uint64(moveList.Count)
-            sqs|>Array.map dosq|>Array.sum
+                tot <- tot + if moveList.Promotion then uint64(moveList.Count * 4) else uint64(moveList.Count)
+            tot
         else
             // If depth is > 1, then we need to do recursion at depth = depth - 1.
             // Pre-figure our next depth to avoid calculations inside loop.
             let nextDepth = depth - 1
+            let mutable tot = 0UL
             let sqs = Bits.ToArray(colored)
-            let dosq sq =
+            for sq in sqs do
                 // Generate all pseudo-legal moves for our square iteration.
                 let (piece, pieceColor) = ColPiece.ToPcCol(board.Map.Squares[sq])
                 let moveList = MoveList(board, sq, piece, pieceColor, hv, d, checks, doubleChecked)
                 let mvs = Bits.ToArray(moveList.Moves)
-                let domv mv =
+                for mv in mvs do
                    // Make our move iteration for our square iteration. Save the revert move for reverting
                     // in future.
-                    let mutable rv = board.Move(sq, mv)
+                    let mutable rv = Board.Move(&board, sq, mv, PromNone)
                     // If our king is safe, that move is legal and we can calculate moves at lesser
                     // depth recursively, but we shouldn't divide at lesser depth.
-                    let mutable nextCount = 0uL
                     if rv.Promotion then
                         // Undo original pawn move without promotion.
-                        board.UndoMove(&rv)
+                        Board.UndoMove(&board, &rv)
                         for pr = PromKnight to PromQueen do 
-                            rv <- board.Move(sq, mv, pr)
-                            nextCount <- nextCount + (MoveGeneration(board, nextDepth))
-                            board.UndoMove(&rv)
+                            rv <- Board.Move(&board, sq, mv, pr)
+                            tot <- tot + (MoveGeneration(&board, nextDepth))
+                            Board.UndoMove(&board, &rv)
                         // Don't undo the final move as it's done outside.
                     else 
-                        nextCount <- MoveGeneration(board, nextDepth)
-                        board.UndoMove(&rv)
-                    nextCount
-                mvs|>Array.map domv|>Array.sum
-            sqs|>Array.map dosq|>Array.sum
+                        tot <- tot + MoveGeneration(&board, nextDepth)
+                        Board.UndoMove(&board, &rv)
+            tot
  
-    let Depth1() = (D1, MoveGeneration(Board,1))
-    let Depth2() = (D2, MoveGeneration(Board,2))
-    let Depth3() = (D3, MoveGeneration(Board,3))
-    let Depth4() = (D4, MoveGeneration(Board,4))
-    let Depth5() = (D5, MoveGeneration(Board,5))
-    let Depth6() = (D6, MoveGeneration(Board,6))
-    let Depth7() = (D7, MoveGeneration(Board,7))
+    let Depth1() = (D1, MoveGeneration(&board,1))
+    let Depth2() = (D2, MoveGeneration(&board,2))
+    let Depth3() = (D3, MoveGeneration(&board,3))
+    let Depth4() = (D4, MoveGeneration(&board,4))
+    let Depth5() = (D5, MoveGeneration(&board,5))
+    let Depth6() = (D6, MoveGeneration(&board,6))
+    let Depth7() = (D7, MoveGeneration(&board,7))

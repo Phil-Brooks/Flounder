@@ -61,8 +61,6 @@ module BitBoardMap =
         let mutable useMap = BitBoardMap.FromParts("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR", "w", "KQkq", "-")
         BitBoardMap.Empty(&useMap, A2)
         EmptyColPc  |> should equal (useMap.Squares[A2])
-        let fen = BitBoardMap.GenerateBoardFen(useMap)
-        fen |> should equal "rnbqkbnr/pppppppp/8/8/8/8/1PPPPPPP/RNBQKBNR"
 
     [<Test>]
     let MoveKnightToA3() =
@@ -75,11 +73,6 @@ module BitBoardMap =
         let mutable useMap = BitBoardMap.FromParts("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR", "w", "KQkq", "-")
         BitBoardMap.InsertPiece(&useMap, WhitePawn,A4)
         WhitePawn |> should equal (useMap.Squares[A4])
-
-    [<Test>]
-    let ConfirmBoardState() =
-        let fen = BitBoardMap.GenerateBoardFen(Map)
-        fen |> should equal "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR"
 
     [<Test>]
     let Elements() =

@@ -24,7 +24,7 @@ type EngineBoard =
         if not(Bits.IsSet(moveList.Moves, mto)) then raise (InvalidOperationException("Invalid move provided by GUI."))
         if (promotion <> PromNone && not moveList.Promotion) then
             raise (InvalidOperationException("Invalid move provided by GUI."))
-        let rv = this.Brd.Move(from, mto, promotion)
+        let rv = Board.Move(&this.Brd, from, mto, promotion)
         this.RepHist.Append(this.Brd.Map.ZobristHash)
     member this.NullMove() =
         let rv = this.Brd.Map.EnPassantTarget
@@ -46,12 +46,12 @@ type EngineBoard =
     member this.Move(move:byref<OrderedMoveEntry>) =
         let rv:MoveRec =
             NNUEb.AccIndex<-NNUEb.AccIndex+1
-            this.Brd.Move(move.From, move.To, move.Promotion)
+            Board.Move(&this.Brd, move.From, move.To, move.Promotion)
         NNUEb.DoUpdate(this.Brd.Map,rv)
         this.RepHist.Append(this.Brd.Map.ZobristHash)
         rv
     member this.UndoMove(rv:byref<MoveRec>) =
-        this.Brd.UndoMove(&rv)
+        Board.UndoMove(&this.Brd, &rv)
         NNUEb.AccIndex<-NNUEb.AccIndex-1
         this.RepHist.RemoveLast()
 module EngineBoard =

@@ -92,7 +92,7 @@ module NNUEb =
     [<Test>]
     let RefreshAccumulator() =
         let fen = "r1bqkbnr/pppp1ppp/2n5/4p3/Q1P5/8/PP1PPPPP/RNB1KBNR w KQkq - 0 3"
-        let board = Board.FromFen(fen)
+        let mutable board = Board.FromFen(fen)
         NNUEb.ResetAccumulator(board.Map,0)
         NNUEb.ResetAccumulator(board.Map,1)
         NNUEb.ResetRefreshTable()
@@ -110,7 +110,7 @@ module NNUEb =
         mLast |> should equal -41s
         let mLast = NNUEb.Accumulators.[NNUEb.AccIndex].[1].[last]
         mLast |> should equal 39s
-        let rv = board.Move(E1,D1)
+        let res = Board.Move(&board, E1, D1, PromNone)
         NNUEb.AccIndex<-NNUEb.AccIndex+1
         NNUEb.RefreshAccumulator(board.Map,0)
         let m0 = NNUEb.Accumulators.[NNUEb.AccIndex].[0].[0]
@@ -135,11 +135,11 @@ module NNUEb =
     [<Test>]
     let ApplyUpdates() =
         let fen = "r1bqkbnr/pppp1ppp/2n5/4p3/Q1P5/8/PP1PPPPP/RNB1KBNR w KQkq - 0 3"
-        let board = Board.FromFen(fen)
+        let mutable board = Board.FromFen(fen)
         NNUEb.ResetAccumulator(board.Map,0)
         NNUEb.ResetAccumulator(board.Map,1)
         NNUEb.ResetRefreshTable()
-        let rv = board.Move(E1,D1)
+        let rv = Board.Move(&board, E1, D1, PromNone)
         NNUEb.AccIndex<-NNUEb.AccIndex+1
         NNUEb.ApplyUpdates(board.Map,rv,1)
         let m0 = NNUEb.Accumulators.[NNUEb.AccIndex].[1].[0]
@@ -152,11 +152,11 @@ module NNUEb =
     [<Test>]
     let ApplyUpdatesCap() =
         let fen = "rnbqkbnr/pppp1ppp/8/4p3/4PP2/8/PPPP2PP/RNBQKBNR b KQkq - 0 2"
-        let board = Board.FromFen(fen)
+        let mutable board = Board.FromFen(fen)
         NNUEb.ResetAccumulator(board.Map,0)
         NNUEb.ResetAccumulator(board.Map,1)
         NNUEb.ResetRefreshTable()
-        let rv = board.Move(E5,F4)
+        let rv = Board.Move(&board, E5, F4, PromNone)
         NNUEb.AccIndex<-NNUEb.AccIndex+1
         NNUEb.ApplyUpdates(board.Map,rv,0)
         let m0 = NNUEb.Accumulators.[NNUEb.AccIndex].[0].[0]
@@ -169,11 +169,11 @@ module NNUEb =
     [<Test>]
     let ApplyUpdatesCas() =
         let fen = "r1bqk1nr/pppp1ppp/2n5/2b1p3/2B1P3/5N2/PPPP1PPP/RNBQK2R w KQkq - 0 4"
-        let board = Board.FromFen(fen)
+        let mutable board = Board.FromFen(fen)
         NNUEb.ResetAccumulator(board.Map,0)
         NNUEb.ResetAccumulator(board.Map,1)
         NNUEb.ResetRefreshTable()
-        let rv = board.Move(E1,G1)
+        let rv = Board.Move(&board, E1, G1, PromNone)
         NNUEb.AccIndex<-NNUEb.AccIndex+1
         NNUEb.ApplyUpdates(board.Map,rv,1)
         let m0 = NNUEb.Accumulators.[NNUEb.AccIndex].[1].[0]
@@ -197,11 +197,11 @@ module NNUEb =
     [<Test>]
     let DoUpdate() =
         let fen = "r1bqkbnr/pppp1ppp/2n5/4p3/Q1P5/8/PP1PPPPP/RNB1KBNR w KQkq - 0 3"
-        let board = Board.FromFen(fen)
+        let mutable board = Board.FromFen(fen)
         NNUEb.ResetAccumulator(board.Map,0)
         NNUEb.ResetAccumulator(board.Map,1)
         NNUEb.ResetRefreshTable()
-        let rv = board.Move(E1,D1)
+        let rv = Board.Move(&board, E1, D1, PromNone)
         NNUEb.AccIndex<-NNUEb.AccIndex+1
         NNUEb.DoUpdate(board.Map,rv)
         let m0 = NNUEb.Accumulators.[NNUEb.AccIndex].[1].[0]

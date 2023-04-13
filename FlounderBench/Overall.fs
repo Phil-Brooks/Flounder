@@ -6,7 +6,7 @@ open System.IO
 
 type Overall() =
 
-    let Default = Board.Default()
+    let mutable Default = Board.Default()
     
     [<GlobalSetup>]
     member _.Setup() =
@@ -15,7 +15,7 @@ type Overall() =
      
     [<Benchmark>]
     member _.Overall() = 
-        FlounderLib.Perft.MoveGeneration(Default, 4)|>ignore
+        FlounderLib.Perft.MoveGeneration(&Default, 4)|>ignore
         NNUEb.ResetAccumulator(Default.Map,0)
         NNUEb.ResetAccumulator(Default.Map,1)
         NNUEb.OutputLayer(Default.Map)|>ignore
