@@ -10,7 +10,7 @@ type Board =
         {
             Map = map
         }
-    member this.All(piece, color) = this.Map.Pieces[piece*2 + color]
+//    member this.All(piece, color) = this.Map.Pieces[piece*2 + color]
     member this.KingLoc(color:int) = if color= White then this.Map.Pieces[WhiteKing] else this.Map.Pieces[BlackKing]
     member this.EnptyAt(sq:int) = 
         let pc = this.Map.Squares[sq]

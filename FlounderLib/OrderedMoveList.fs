@@ -80,7 +80,7 @@ type OrderedMoveList =
                 // We can only do this if we're not double checked.
                 // In case of double-checked (discovered + normal), only the king can move so we should skip this.
                 // Generate all pawn moves.
-                let fromarr = Bits.ToArray(board.All(Pawn, stm))
+                let fromarr = Bits.ToArray(board.Map.Pieces[stm])
                 for from in fromarr do
                     let moveList = MoveList(board, from, Pawn, stm, hv, d, checks)
                     let movearr = Bits.ToArray(moveList.Moves)
@@ -96,7 +96,7 @@ type OrderedMoveList =
                             i<-i+1
                 // Generate moves for rook, knight, bishop, and queen.
                 for piece in [Rook;Knight;Bishop;Queen] do
-                    let fromarr = Bits.ToArray(board.All(piece, stm))
+                    let fromarr = Bits.ToArray(board.Map.Pieces[piece*2 + stm])
                     for from in fromarr do
                         let moveList = MoveList(board, from, piece, stm, hv, d, checks)
                         let movearr = Bits.ToArray(moveList.Moves)
@@ -105,7 +105,7 @@ type OrderedMoveList =
                             this.Internal.[i].Score <- this.ScoreMove(piece, board, this.Internal.[i], transpositionMove)
                             i<-i+1
             // Generate all king moves.
-            let fromarr = Bits.ToArray(board.All(King, stm))
+            let fromarr = Bits.ToArray(board.Map.Pieces[King*2 + stm])
             for from in fromarr do
                 let moveList = MoveList(board, from, King, stm, hv, d, checks)
                 let movearr = Bits.ToArray(moveList.Moves)
@@ -129,7 +129,7 @@ type OrderedMoveList =
                 // We can only do this if we're not double checked.
                 // In case of double-checked (discovered + normal), only the king can move so we should skip this.
                 // Generate all pawn moves.
-                let fromarr = Bits.ToArray(board.All(Pawn, stm))
+                let fromarr = Bits.ToArray(board.Map.Pieces[stm])
                 for from in fromarr do
                     let moveList = MoveList(board, from, hv, d, checks)
                     let movearr = Bits.ToArray(moveList.Moves)
@@ -145,7 +145,7 @@ type OrderedMoveList =
                             i<-i+1
                 // Generate moves for rook, knight, bishop, and queen.
                 for piece in [Rook;Knight;Bishop;Queen] do
-                    let fromarr = Bits.ToArray(board.All(piece, stm))
+                    let fromarr = Bits.ToArray(board.Map.Pieces[piece*2 + stm])
                     for from in fromarr do
                         let moveList = MoveList(board, from, piece, stm, hv, d, checks)
                         let movearr = Bits.ToArray((moveList.Moves &&& opposite))
@@ -154,7 +154,7 @@ type OrderedMoveList =
                             this.Internal.[i].Score <- this.ScoreMove(piece, board, this.Internal.[i], transpositionMove)
                             i<-i+1
             // Generate all king moves.
-            let fromarr = Bits.ToArray(board.All(King, stm))
+            let fromarr = Bits.ToArray(board.Map.Pieces[King*2 + stm])
             for from in fromarr do
                 let moveList = MoveList(board, from, King, stm, hv, d, checks)
                 let movearr = Bits.ToArray((moveList.Moves &&& opposite))

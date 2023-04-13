@@ -181,11 +181,11 @@ type MoveSearch =
                     // If only the kings are left, it's a draw.
                     if allPiecesCount = 2 then ans <- 0|>Some
                     else
-                        let knightLeft = board.Brd.All(Knight, 0) <> 0UL || board.Brd.All(Knight, 1) <> 0UL
+                        let knightLeft = board.Brd.Map.Pieces[WhiteKnight] <> 0UL || board.Brd.Map.Pieces[BlackKnight] <> 0UL
                         // If only the kings and one knight is left, it's a draw.
                         if (allPiecesCount = 3 && knightLeft) then ans <- 0|>Some
                         else
-                            let bishopLeft = board.Brd.All(Bishop, 0) <> 0UL || board.Brd.All(Bishop, 1) <> 0UL
+                            let bishopLeft = board.Brd.Map.Pieces[WhiteBishop] <> 0UL || board.Brd.Map.Pieces[BlackBishop] <> 0UL
                             // If only the kings and one bishop is left, it's a draw.
                             if allPiecesCount = 3 && bishopLeft then ans <- 0|>Some
                             else
