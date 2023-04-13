@@ -118,7 +118,7 @@ type OrderedMoveList =
             // If we only want capture moves, we should also define our opposite board.
             let stm = if board.Map.IsWtm then 0 else 1 
             let xstm = if board.Map.IsWtm then 1 else 0 
-            let opposite = board.All(xstm)
+            let opposite = if board.Map.IsWtm then board.Map.Black else board.Map.White
             // Generate pins and check bitboards.
             let kingSq = Bits.ToInt(board.KingLoc(stm))
             let (hv, d) = MoveList.PinBitBoards(board, kingSq, stm, xstm)

@@ -18,14 +18,14 @@ type EngineBoard =
     member this.Clone() = EngineBoard(this)
     member this.PieceOnly(sq:int) = this.Brd.Map.Squares.[sq]/2
     member this.IsRepetition() = 
-        this.RepHist.Count(this.Brd.ZobristHash) > 1
+        this.RepHist.Count(this.Brd.Map.ZobristHash) > 1
     member this.GuiMove(from:int, mto:int, promotion:int) =
         let moveList = MoveList(this.Brd, from)
         if not(Bits.IsSet(moveList.Moves, mto)) then raise (InvalidOperationException("Invalid move provided by GUI."))
         if (promotion <> PromNone && not moveList.Promotion) then
             raise (InvalidOperationException("Invalid move provided by GUI."))
         let rv = this.Brd.Move(from, mto, promotion)
-        this.RepHist.Append(this.Brd.ZobristHash)
+        this.RepHist.Append(this.Brd.Map.ZobristHash)
     member this.NullMove() =
         let rv = this.Brd.Map.EnPassantTarget
         if this.Brd.Map.EnPassantTarget <> Na then Zobrist.HashEp(&this.Brd.Map.ZobristHash, this.Brd.Map.EnPassantTarget)
@@ -48,7 +48,7 @@ type EngineBoard =
             NNUEb.AccIndex<-NNUEb.AccIndex+1
             this.Brd.Move(move.From, move.To, move.Promotion)
         NNUEb.DoUpdate(this.Brd.Map,rv)
-        this.RepHist.Append(this.Brd.ZobristHash)
+        this.RepHist.Append(this.Brd.Map.ZobristHash)
         rv
     member this.UndoMove(rv:byref<MoveRec>) =
         this.Brd.UndoMove(&rv)

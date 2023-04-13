@@ -13,17 +13,17 @@ module Perft =
         // Get all squares occupied by our color.
         let stm = board.Map.Stm
         let xstm = board.Map.Xstm
-        let colored = board.All(stm)
+        let colored = if board.Map.IsWtm then board.Map.White else board.Map.Black
         // Generate pins and check bitboards.
         let kingSq = Bits.ToInt(board.KingLoc(stm))
         let (hv, d) = MoveList.PinBitBoards(board, kingSq, stm, xstm)
         let (checks, doubleChecked) = MoveList.CheckBitBoard(board, kingSq, xstm)
         // Generate all pseudo-legal moves for our square iteration.
-        if (depth = 1) then
+        if depth = 1 then
             // If depth is 1, then we don't need to do any further recursion and can just do +1 to the count.
             let sqs = Bits.ToArray(colored)
             let dosq sq =
-                let piece, pieceColor = ColPiece.ToPcCol(board.At(sq))
+                let piece, pieceColor = ColPiece.ToPcCol(board.Map.Squares[sq])
                 let moveList = MoveList(board, sq, piece, int(pieceColor), hv, d, checks, doubleChecked)
                 if moveList.Promotion then uint64(moveList.Count * 4) else uint64(moveList.Count)
             sqs|>Array.map dosq|>Array.sum
@@ -34,7 +34,7 @@ module Perft =
             let sqs = Bits.ToArray(colored)
             let dosq sq =
                 // Generate all pseudo-legal moves for our square iteration.
-                let (piece, pieceColor) = ColPiece.ToPcCol(board.At(sq))
+                let (piece, pieceColor) = ColPiece.ToPcCol(board.Map.Squares[sq])
                 let moveList = MoveList(board, sq, piece, pieceColor, hv, d, checks, doubleChecked)
                 let mvs = Bits.ToArray(moveList.Moves)
                 let domv mv =

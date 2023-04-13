@@ -10,14 +10,6 @@ type Board =
         {
             Map = map
         }
-    member this.EnPassantTarget = this.Map.EnPassantTarget
-    member this.ZobristHash = this.Map.ZobristHash
-    // Readonly Properties
-    member this.CastlingRight(color) = 
-        if color = 0 then (this.Map.WhiteQCastle, this.Map.WhiteKCastle) else (this.Map.BlackQCastle, this.Map.BlackKCastle)
-    member this.At(sq:int) = this.Map.Squares[sq]
-    member this.All() = this.Map.Both
-    member this.All(color:int) = if color = 0 then this.Map.White else this.Map.Black
     member this.All(piece, color) = this.Map.Pieces[piece*2 + color]
     member this.KingLoc(color:int) = if color= White then this.Map.Pieces[WhiteKing] else this.Map.Pieces[BlackKing]
     member this.EnptyAt(sq:int) = 
@@ -36,9 +28,9 @@ type Board =
             // If piece we're moving to isn't an empty one, we will be capturing.
             // Thus, we need to set it in revert move to ensure we can properly revert it.
             rv.CapturedPiece <- cpcT
-        if (this.EnPassantTarget = mto && pieceF = Pawn) then
+        if (this.Map.EnPassantTarget = mto && pieceF = Pawn) then
             // If the attack is an EP attack, we must empty the piece affected by EP.
-            let epPieceSq = if colorF = 0 then this.EnPassantTarget + 8 else this.EnPassantTarget - 8
+            let epPieceSq = if colorF = 0 then this.Map.EnPassantTarget + 8 else this.Map.EnPassantTarget - 8
             let oppositeColor = colorF^^^1
             let eppc = if colorF=0 then BlackPawn else WhitePawn
             BitBoardMap.Empty(&this.Map, epPieceSq)
@@ -47,7 +39,7 @@ type Board =
             // We only need to reference the color.
             rv.CapturedPiece <- oppositeColor
         // Update Zobrist.
-        if this.EnPassantTarget<> Na then Zobrist.HashEp(&this.Map.ZobristHash, this.Map.EnPassantTarget)
+        if this.Map.EnPassantTarget<> Na then Zobrist.HashEp(&this.Map.ZobristHash, this.Map.EnPassantTarget)
         if (pieceF = Pawn && Math.Abs(int(mto) - int(from)) = 16) then
             // If the pawn push is a 2-push, the square behind it will be EP target.
             this.Map.EnPassantTarget <- if colorF = 0 then from - 8 else from + 8
@@ -192,8 +184,8 @@ type Board =
             if (this.Map.BlackKCastle <> 0x0) then castlingRight <- castlingRight + "k"
             if (this.Map.BlackQCastle <> 0x0) then castlingRight <- castlingRight + "q"
         let mutable enPassantTarget = "-"
-        if this.EnPassantTarget <> Na then
-            enPassantTarget <- this.EnPassantTarget.ToString().ToLower()
+        if this.Map.EnPassantTarget <> Na then
+            enPassantTarget <- this.Map.EnPassantTarget.ToString().ToLower()
         let fen = [| boardData; turnData; castlingRight; enPassantTarget |]
         fen|>Array.reduce (fun a b -> a + " " + b)
 module Board =

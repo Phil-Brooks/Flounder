@@ -93,8 +93,8 @@ type MoveSearch =
         if isPvNode then this.SelectiveDepth <- Math.Max(this.SelectiveDepth, plyFromRoot)
         let mutable ans = None 
         if not isPvNode then
-            let storedEntry = this.MvTrnTbl.[board.Brd.ZobristHash]
-            if (storedEntry.ZobristHash = board.Brd.ZobristHash &&
+            let storedEntry = this.MvTrnTbl.[board.Brd.Map.ZobristHash]
+            if (storedEntry.ZobristHash = board.Brd.Map.ZobristHash &&
                 (storedEntry.Type = Exact ||
                 storedEntry.Type = BetaCutoff &&
                 storedEntry.BestMove.Score >= beta ||
@@ -177,7 +177,7 @@ type MoveSearch =
                 // We had a three-fold repetition, so return earlier.
                 if board.IsRepetition() then ans <- 0|>Some
                 else
-                    let allPiecesCount = Bits.Count(board.Brd.All())
+                    let allPiecesCount = Bits.Count(board.Brd.Map.Both)
                     // If only the kings are left, it's a draw.
                     if allPiecesCount = 2 then ans <- 0|>Some
                     else
@@ -198,12 +198,12 @@ type MoveSearch =
         if ans.IsSome then 
             ans.Value
         else
-            let storedEntry = this.MvTrnTbl.[board.Brd.ZobristHash]
+            let storedEntry = this.MvTrnTbl.[board.Brd.Map.ZobristHash]
             let valid = storedEntry.Type <> Invalid
             let mutable transpositionMove = OrderedMoveEntry.Default
             let mutable transpositionHit = false
 
-            if valid && storedEntry.ZobristHash = board.Brd.ZobristHash then
+            if valid && storedEntry.ZobristHash = board.Brd.Map.ZobristHash then
                 // We had a transposition table hit. However, at this point, we don't know if this is a trustworthy
                 // transposition hit or not.
                 transpositionMove <- storedEntry.BestMove
@@ -316,7 +316,8 @@ type MoveSearch =
                             moveList.SortNext(i, moveCount)
                             let previousNodeCount = this.TotalNodeSearchCount
                             let mutable move = moveList.[i]
-                            let quietMove = not (Bits.IsSet(board.Brd.All(ioppositeColor), move.To))
+                            let oppBoard = if ioppositeColor = White then board.Brd.Map.White else board.Brd.Map.Black
+                            let quietMove = not (Bits.IsSet(oppBoard, move.To))
                             if quietMove then quietMoveCounter <- quietMoveCounter + 1
                             //Late Move Pruning
                                 // If we are past a certain threshold and we have searched the required quiet moves for this depth for
@@ -351,8 +352,8 @@ type MoveSearch =
                                 i <- i + 1
                         
                         bestMoveSoFar.Score <- bestEvaluation
-                        let mutable entry = MoveTranspositionTableEntry(board.Brd.ZobristHash, transpositionTableEntryType, bestMoveSoFar, depth)
-                        this.MvTrnTbl.InsertEntry(board.Brd.ZobristHash, &entry)
+                        let mutable entry = MoveTranspositionTableEntry(board.Brd.Map.ZobristHash, transpositionTableEntryType, bestMoveSoFar, depth)
+                        this.MvTrnTbl.InsertEntry(board.Brd.Map.ZobristHash, &entry)
 
                         bestEvaluation
     member this.AspirationSearch(board:EngineBoard, depth:int, previousEvaluation:int) =
