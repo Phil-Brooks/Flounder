@@ -245,7 +245,7 @@ type MoveSearch =
                 // Determine whether we should prune moves.
                 let icolor = if board.Brd.Map.IsWtm then 0 else 1
                 let ioppositeColor = if board.Brd.Map.IsWtm then 1 else 0
-                let kingSq = Bits.ToInt(board.Brd.KingLoc(icolor))
+                let kingSq = if icolor = White then board.Brd.Map.WhiteKingLoc else board.Brd.Map.BlackKingLoc
                 let mutable inCheck = MoveList.UnderAttack(board.Brd, kingSq, ioppositeColor)
                 let mutable improving = false
                 // We should use the evaluation from our transposition table if we had a hit.

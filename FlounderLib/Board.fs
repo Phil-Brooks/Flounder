@@ -10,12 +10,6 @@ type Board =
         {
             Map = map
         }
-//    member this.All(piece, color) = this.Map.Pieces[piece*2 + color]
-    member this.KingLoc(color:int) = if color= White then this.Map.Pieces[WhiteKing] else this.Map.Pieces[BlackKing]
-    member this.EnptyAt(sq:int) = 
-        let pc = this.Map.Squares[sq]
-        pc = EmptyColPc
-    // Move
     member this.Move(from:int, mto:int, ?promotion0:int) =
         let promotion = defaultArg promotion0 PromNone
         let cpcF = this.Map.Squares[from]
@@ -81,9 +75,9 @@ type Board =
                 this.Map.BlackQCastle <- 0x0
                 this.Map.BlackKCastle <- 0x0
             else
-                raise (InvalidOperationException("King cannot have no color."))
+                failwith "King cannot have no color."
             let d = abs(mto - from)
-            if (d = 2) then
+            if d = 2 then
                 // In the case the king moved to castle, we must also move the rook accordingly,
                 // making a secondary move. To ensure proper reverting, we must also update our revert move.
                 if (mto > from) then // King-side
@@ -170,8 +164,6 @@ type Board =
         BitBoardMap.InsertPiece(&this.Map, cpc, sq)
     member this.RemovePiece(cpc, sq) =
         BitBoardMap.Empty(&this.Map, sq)
-    override this.ToString() =
-        "FEN: " + this.GenerateFen() + "\nHash: " + $"{this.Map.ZobristHash:X}" + "\n"
     member this.GenerateFen() =
         let boardData =  BitBoardMap.GenerateBoardFen(this.Map)
         let turnData = if this.Map.IsWtm then "w" else "b"

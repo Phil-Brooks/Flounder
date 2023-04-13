@@ -15,7 +15,7 @@ module Perft =
         let xstm = board.Map.Xstm
         let colored = if board.Map.IsWtm then board.Map.White else board.Map.Black
         // Generate pins and check bitboards.
-        let kingSq = Bits.ToInt(board.KingLoc(stm))
+        let kingSq = if stm = White then board.Map.WhiteKingLoc else board.Map.BlackKingLoc
         let (hv, d) = MoveList.PinBitBoards(board, kingSq, stm, xstm)
         let (checks, doubleChecked) = MoveList.CheckBitBoard(board, kingSq, xstm)
         // Generate all pseudo-legal moves for our square iteration.

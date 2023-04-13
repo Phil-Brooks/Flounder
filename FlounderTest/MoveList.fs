@@ -116,7 +116,7 @@ module MoveList =
         // Generate pins and check bitboards.
         let stm = if board.Map.IsWtm then 0 else 1
         let xstm = if board.Map.IsWtm then 1 else 0
-        let kingSq = Bits.ToInt(board.KingLoc(stm))
+        let kingSq = if stm = White then board.Map.WhiteKingLoc else board.Map.BlackKingLoc
         let (hv, d) = MoveList.PinBitBoards(board, kingSq, stm, xstm)
         let (checks, doubleChecked) = MoveList.CheckBitBoard(board, kingSq, xstm)
         let moveList = MoveList(board, B6, hv, d, checks)

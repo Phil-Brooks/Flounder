@@ -68,8 +68,8 @@ type OrderedMoveList =
         member this.NormalMoveGeneration(board:Board, transpositionMove:OrderedMoveEntry) =
             // Generate pins and check bitboards.
             let stm = if board.Map.IsWtm then 0 else 1 
-            let xstm = if board.Map.IsWtm then 1 else 0 
-            let kingSq = Bits.ToInt(board.KingLoc(stm))
+            let xstm = if board.Map.IsWtm then 1 else 0
+            let kingSq = if stm = White then board.Map.WhiteKingLoc else board.Map.BlackKingLoc
             let (hv, d) = MoveList.PinBitBoards(board, kingSq, stm, xstm)
             let checks, doubleChecked = MoveList.CheckBitBoard(board, kingSq, xstm)
             // Define the list.
@@ -120,7 +120,7 @@ type OrderedMoveList =
             let xstm = if board.Map.IsWtm then 1 else 0 
             let opposite = if board.Map.IsWtm then board.Map.Black else board.Map.White
             // Generate pins and check bitboards.
-            let kingSq = Bits.ToInt(board.KingLoc(stm))
+            let kingSq = if stm = White then board.Map.WhiteKingLoc else board.Map.BlackKingLoc
             let (hv, d) = MoveList.PinBitBoards(board, kingSq, stm, xstm)
             let (checks, doubleChecked) = MoveList.CheckBitBoard(board, kingSq, xstm)
             // Define the list.

@@ -162,7 +162,7 @@ module MoveList =
                     board.RemovePiece(color, from)
                     board.RemovePiece(oppositeColor, epPieceSq)
                     board.InsertPiece(color, board.Map.EnPassantTarget)
-                    let kingSq = Bits.ToInt(board.KingLoc(color))
+                    let kingSq = if color = White then board.Map.WhiteKingLoc else board.Map.BlackKingLoc
                     // If our king is under attack, it means the pawn was pinned through a piece and the removal of that piece
                     // caused a discovered pin. Thus, we must remove it from our legal moves.
                     if (UnderAttack(board, kingSq, oppositeColor)) then moves <- moves &&& ~~~(1UL <<< board.Map.EnPassantTarget)
@@ -238,7 +238,7 @@ module MoveList =
                     board.RemovePiece(color, from)
                     board.RemovePiece(oppositeColor, epPieceSq)
                     board.InsertPiece(color, board.Map.EnPassantTarget)
-                    let kingSq = Bits.ToInt(board.KingLoc(color))
+                    let kingSq = if color = White then board.Map.WhiteKingLoc else board.Map.BlackKingLoc
                     // If our king is under attack, it means the pawn was pinned through a piece and the removal of that piece
                     // caused a discovered pin. Thus, we must remove it from our legal moves.
                     if (UnderAttack(board, kingSq, oppositeColor)) then moves <- moves &&& ~~~(1UL <<< board.Map.EnPassantTarget)
@@ -350,12 +350,11 @@ type MoveList =
             }
         new(board:Board, from:int) =
             let piece, color = ColPiece.ToPcCol(board.Map.Squares[from])
-            let icolor = color
-            let ioppositeColor = icolor^^^1
-            let kingSq = Bits.ToInt(board.KingLoc(icolor))
-            let (horizontalVertical, diagonal) = MoveList.PinBitBoards(board, kingSq, icolor, ioppositeColor)
-            let (checks, doubleChecked) = MoveList.CheckBitBoard(board, kingSq, ioppositeColor)
-            new MoveList(board, from, piece, icolor, horizontalVertical, diagonal, checks, doubleChecked)
+            let oppositeColor = color ^^^ 1
+            let kingSq = if color = White then board.Map.WhiteKingLoc else board.Map.BlackKingLoc
+            let (horizontalVertical, diagonal) = MoveList.PinBitBoards(board, kingSq, color, oppositeColor)
+            let (checks, doubleChecked) = MoveList.CheckBitBoard(board, kingSq, oppositeColor)
+            new MoveList(board, from, piece, color, horizontalVertical, diagonal, checks, doubleChecked)
         new(board:Board, from:int, piece:int, color:int, horizontalVertical:uint64, diagonal:uint64, checks:uint64, doubleChecked:bool) =
             let mutable promotion = false
             // If we're double-checked (discovered check + normal check), only the king can move. Thus, we can return

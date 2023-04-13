@@ -2,7 +2,7 @@
 
 [<AutoOpen>]
 module Types =
-    let VersionNo = "0.4.2.9"
+    let VersionNo = "0.4.3.0"
 
     // The type of piece.
     let WhitePawn = 0
@@ -117,6 +117,8 @@ module Types =
             mutable Xstm:int
             Pieces:uint64 array
             Squares:int array
+            mutable WhiteKingLoc:int
+            mutable BlackKingLoc:int
             mutable White:uint64
             mutable Black:uint64
             mutable Both:uint64

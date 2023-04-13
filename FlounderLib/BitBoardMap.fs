@@ -10,7 +10,9 @@ module BitBoardMap =
             squares[i] <- EmptyColPc
         let expandedBoardData = boardFen.Split("/")
         if expandedBoardData.Length <> 8 then 
-            raise (InvalidDataException("Wrong board data provided: " + boardFen))
+            failwith ("Wrong board data provided: " + boardFen)
+        let mutable wkloc = -1
+        let mutable bkloc = -1
         for v = 0 to 7 do
             let rankData = expandedBoardData[v]
             let mutable h = 0
@@ -37,6 +39,7 @@ module BitBoardMap =
                         elif p = 'K' then
                             Bits.SetBit(&pieces[WhiteKing], v * 8 + h)
                             squares[v * 8 + h] <- WhiteKing
+                            wkloc <- v * 8 + h 
                     else
                         if p = 'p' then
                             Bits.SetBit(&pieces[BlackPawn], v * 8 + h)
@@ -56,6 +59,7 @@ module BitBoardMap =
                         elif p = 'k' then
                             Bits.SetBit(&pieces[BlackKing], v * 8 + h)
                             squares[v * 8 + h] <- BlackKing
+                            bkloc <- v * 8 + h 
                     h <- h + 1
         let white = pieces[WhitePawn] ||| pieces[WhiteKnight] ||| 
                     pieces[WhiteBishop] ||| pieces[WhiteRook] ||| 
@@ -81,6 +85,8 @@ module BitBoardMap =
                 Xstm = xstm
                 Pieces = pieces
                 Squares = squares
+                WhiteKingLoc = wkloc
+                BlackKingLoc = bkloc
                 White = white
                 Black = black
                 Both = both
@@ -131,6 +137,9 @@ module BitBoardMap =
         // Make sure to update the pieces and colors.
         map.Squares[mto] <- map.Squares[from]
         map.Squares[from] <- EmptyColPc
+        //update king locations
+        if map.Squares[mto] = WhiteKing then map.WhiteKingLoc <- mto
+        if map.Squares[mto] = BlackKing then map.BlackKingLoc <- mto
         // Update color bitboards.
         if cF = White then
             Bits.PopBit(&map.White, from)
@@ -170,6 +179,8 @@ module BitBoardMap =
         Bits.SetBit(&map.Both, sq)
         // Set piece in pieces and colors.
         map.Squares[sq] <- cpc
+        if map.Squares[sq] = WhiteKing then map.WhiteKingLoc <- sq
+        if map.Squares[sq] = BlackKing then map.BlackKingLoc <- sq
         // Update Zobrist.
         Zobrist.HashPiece(&map.ZobristHash, cpc, sq)
     let GenerateBoardFen(map:BoardRec) =
