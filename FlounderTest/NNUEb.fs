@@ -68,25 +68,25 @@ module NNUEb =
     [<Test>]
     let ResetAccumulatorWhite() =
         NNUEb.ResetAccumulator(board.Map,0)
-        let m0 = NNUEb.Accumulators.[NNUEb.AccIndex].AccValues.[0].[0]
+        let m0 = NNUEb.Accumulators.[NNUEb.AccIndex].[0].[0]
         m0 |> should equal -110s
-        let m100 = NNUEb.Accumulators.[NNUEb.AccIndex].AccValues.[0].[100]
+        let m100 = NNUEb.Accumulators.[NNUEb.AccIndex].[0].[100]
         m100 |> should equal -1031s
-        let last = NNUEb.Accumulators.[NNUEb.AccIndex].AccValues.[0].Length - 1
+        let last = NNUEb.Accumulators.[NNUEb.AccIndex].[0].Length - 1
         last |> should equal 767
-        let mLast = NNUEb.Accumulators.[NNUEb.AccIndex].AccValues.[0].[last]
+        let mLast = NNUEb.Accumulators.[NNUEb.AccIndex].[0].[last]
         mLast |> should equal 16s
 
     [<Test>]
     let ResetAccumulatorBlack() =
         NNUEb.ResetAccumulator(board.Map,1)
-        let m0 = NNUEb.Accumulators.[NNUEb.AccIndex].AccValues.[1].[0]
+        let m0 = NNUEb.Accumulators.[NNUEb.AccIndex].[1].[0]
         m0 |> should equal -110s
-        let m100 = NNUEb.Accumulators.[NNUEb.AccIndex].AccValues.[1].[100]
+        let m100 = NNUEb.Accumulators.[NNUEb.AccIndex].[1].[100]
         m100 |> should equal -1031s
-        let last = NNUEb.Accumulators.[NNUEb.AccIndex].AccValues.[1].Length - 1
+        let last = NNUEb.Accumulators.[NNUEb.AccIndex].[1].Length - 1
         last |> should equal 767
-        let mLast = NNUEb.Accumulators.[NNUEb.AccIndex].AccValues.[1].[last]
+        let mLast = NNUEb.Accumulators.[NNUEb.AccIndex].[1].[last]
         mLast |> should equal 16s
 
     [<Test>]
@@ -96,28 +96,28 @@ module NNUEb =
         NNUEb.ResetAccumulator(board.Map,0)
         NNUEb.ResetAccumulator(board.Map,1)
         NNUEb.ResetRefreshTable()
-        let m0 = NNUEb.Accumulators.[NNUEb.AccIndex].AccValues.[0].[0]
+        let m0 = NNUEb.Accumulators.[NNUEb.AccIndex].[0].[0]
         m0 |> should equal -495s
-        let m0 = NNUEb.Accumulators.[NNUEb.AccIndex].AccValues.[1].[0]
+        let m0 = NNUEb.Accumulators.[NNUEb.AccIndex].[1].[0]
         m0 |> should equal -165s
-        let m100 = NNUEb.Accumulators.[NNUEb.AccIndex].AccValues.[0].[100]
+        let m100 = NNUEb.Accumulators.[NNUEb.AccIndex].[0].[100]
         m100 |> should equal -767s
-        let m100 = NNUEb.Accumulators.[NNUEb.AccIndex].AccValues.[1].[100]
+        let m100 = NNUEb.Accumulators.[NNUEb.AccIndex].[1].[100]
         m100 |> should equal -978s
-        let last = NNUEb.Accumulators.[NNUEb.AccIndex].AccValues.[1].Length - 1
+        let last = NNUEb.Accumulators.[NNUEb.AccIndex].[1].Length - 1
         last |> should equal 767
-        let mLast = NNUEb.Accumulators.[NNUEb.AccIndex].AccValues.[0].[last]
+        let mLast = NNUEb.Accumulators.[NNUEb.AccIndex].[0].[last]
         mLast |> should equal -41s
-        let mLast = NNUEb.Accumulators.[NNUEb.AccIndex].AccValues.[1].[last]
+        let mLast = NNUEb.Accumulators.[NNUEb.AccIndex].[1].[last]
         mLast |> should equal 39s
         let rv = board.Move(E1,D1)
         NNUEb.AccIndex<-NNUEb.AccIndex+1
         NNUEb.RefreshAccumulator(board.Map,0)
-        let m0 = NNUEb.Accumulators.[NNUEb.AccIndex].AccValues.[0].[0]
+        let m0 = NNUEb.Accumulators.[NNUEb.AccIndex].[0].[0]
         m0 |> should equal -443s
-        let m100 = NNUEb.Accumulators.[NNUEb.AccIndex].AccValues.[0].[100]
+        let m100 = NNUEb.Accumulators.[NNUEb.AccIndex].[0].[100]
         m100 |> should equal -1007s
-        let mLast = NNUEb.Accumulators.[NNUEb.AccIndex].AccValues.[0].[767]
+        let mLast = NNUEb.Accumulators.[NNUEb.AccIndex].[0].[767]
         mLast |> should equal -433s
 
     [<Test>]
@@ -142,11 +142,11 @@ module NNUEb =
         let rv = board.Move(E1,D1)
         NNUEb.AccIndex<-NNUEb.AccIndex+1
         NNUEb.ApplyUpdates(board.Map,rv,1)
-        let m0 = NNUEb.Accumulators.[NNUEb.AccIndex].AccValues.[1].[0]
+        let m0 = NNUEb.Accumulators.[NNUEb.AccIndex].[1].[0]
         m0 |> should equal -127s
-        let m100 = NNUEb.Accumulators.[NNUEb.AccIndex].AccValues.[1].[100]
+        let m100 = NNUEb.Accumulators.[NNUEb.AccIndex].[1].[100]
         m100 |> should equal -921s
-        let mLast = NNUEb.Accumulators.[NNUEb.AccIndex].AccValues.[1].[767]
+        let mLast = NNUEb.Accumulators.[NNUEb.AccIndex].[1].[767]
         mLast |> should equal 52s
 
     [<Test>]
@@ -159,11 +159,11 @@ module NNUEb =
         let rv = board.Move(E5,F4)
         NNUEb.AccIndex<-NNUEb.AccIndex+1
         NNUEb.ApplyUpdates(board.Map,rv,0)
-        let m0 = NNUEb.Accumulators.[NNUEb.AccIndex].AccValues.[0].[0]
+        let m0 = NNUEb.Accumulators.[NNUEb.AccIndex].[0].[0]
         m0 |> should equal 14s
-        let m100 = NNUEb.Accumulators.[NNUEb.AccIndex].AccValues.[0].[100]
+        let m100 = NNUEb.Accumulators.[NNUEb.AccIndex].[0].[100]
         m100 |> should equal -935s
-        let mLast = NNUEb.Accumulators.[NNUEb.AccIndex].AccValues.[0].[767]
+        let mLast = NNUEb.Accumulators.[NNUEb.AccIndex].[0].[767]
         mLast |> should equal -87s
 
     [<Test>]
@@ -176,11 +176,11 @@ module NNUEb =
         let rv = board.Move(E1,G1)
         NNUEb.AccIndex<-NNUEb.AccIndex+1
         NNUEb.ApplyUpdates(board.Map,rv,1)
-        let m0 = NNUEb.Accumulators.[NNUEb.AccIndex].AccValues.[1].[0]
+        let m0 = NNUEb.Accumulators.[NNUEb.AccIndex].[1].[0]
         m0 |> should equal -93s
-        let m100 = NNUEb.Accumulators.[NNUEb.AccIndex].AccValues.[1].[100]
+        let m100 = NNUEb.Accumulators.[NNUEb.AccIndex].[1].[100]
         m100 |> should equal -873s
-        let mLast = NNUEb.Accumulators.[NNUEb.AccIndex].AccValues.[1].[767]
+        let mLast = NNUEb.Accumulators.[NNUEb.AccIndex].[1].[767]
         mLast |> should equal 26s
 
     [<Test>]
@@ -189,7 +189,7 @@ module NNUEb =
         NNUEb.ResetAccumulator(board.Map,0)
         NNUEb.ResetAccumulator(board.Map,1)
         NNUEb.ResetRefreshTable()
-        let m0 = NNUEb.Accumulators.[NNUEb.AccIndex].AccValues.[0].[0]
+        let m0 = NNUEb.Accumulators.[NNUEb.AccIndex].[0].[0]
         m0 |> should equal -110s
         let ans = NNUEb.OutputLayer(board.Map)
         ans|>should equal 101        
@@ -204,11 +204,11 @@ module NNUEb =
         let rv = board.Move(E1,D1)
         NNUEb.AccIndex<-NNUEb.AccIndex+1
         NNUEb.DoUpdate(board.Map,rv)
-        let m0 = NNUEb.Accumulators.[NNUEb.AccIndex].AccValues.[1].[0]
+        let m0 = NNUEb.Accumulators.[NNUEb.AccIndex].[1].[0]
         m0 |> should equal -127s
-        let m100 = NNUEb.Accumulators.[NNUEb.AccIndex].AccValues.[1].[100]
+        let m100 = NNUEb.Accumulators.[NNUEb.AccIndex].[1].[100]
         m100 |> should equal -921s
-        let mLast = NNUEb.Accumulators.[NNUEb.AccIndex].AccValues.[1].[767]
+        let mLast = NNUEb.Accumulators.[NNUEb.AccIndex].[1].[767]
         mLast |> should equal 52s
 
     [<Test>]

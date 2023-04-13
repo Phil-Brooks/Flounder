@@ -3,22 +3,6 @@ open System.Reflection
 open System.IO
 open System
 
-type NNUEinB =
-    {
-        InputWeights:int16 array
-        InputBiases:int16 array
-        OutputWeights:int16 array
-        OutputBias:int
-    }
-type Accumulator =
-    {
-        AccValues:int16 array array
-    }
-type AccumulatorKingState =
-    {
-        AccKsValues:int16 array
-        Pcs:uint64 array
-    }
 module NNUEb =
     let NNUEin = 
         let NNUE_FILE = "FlounderLib.berserk"
@@ -29,15 +13,15 @@ module NNUEb =
         let iwlen = 9437184
         let iw = Array.zeroCreate iwlen
         for i = 0 to iwlen-1 do
-            iw.[i] <- reader.ReadInt16()
+            iw.[i] <- int(reader.ReadInt16())
         let iblen = 768
         let ib = Array.zeroCreate iblen
         for i = 0 to iblen-1 do
-            ib.[i] <- reader.ReadInt16()
+            ib.[i] <- int(reader.ReadInt16())
         let owlen = 1536
         let ow = Array.zeroCreate owlen
         for i = 0 to owlen-1 do
-            ow.[i] <- reader.ReadInt16()
+            ow.[i] <- int(reader.ReadInt16())
         let ob = reader.ReadInt32()
         let nnue =
             {
@@ -47,17 +31,13 @@ module NNUEb =
                 OutputBias = ob
             }
         nnue
-    let Accumulators:Accumulator array =
+    let Accumulators:int array array array =
         let ans = Array.zeroCreate 252
         for i = 0 to 251 do
             let accs = 
                 let ans = Array.zeroCreate 2
                 ans|>Array.map (fun a -> Array.zeroCreate 768)
-            let acci =
-                {
-                    AccValues = accs
-                }
-            ans.[i] <- acci
+            ans.[i] <- accs
         ans
     let mutable AccIndex = 0
     let RefreshTable:AccumulatorKingState array =
@@ -86,12 +66,12 @@ module NNUEb =
         elif (from &&& 4) <> (mto &&& 4) then true
         else KING_BUCKETS.[from]<>KING_BUCKETS.[mto]
     let FeatureIdx(colpc:int, sq:int, kingsq:int, view:int) =
-        let oP = 6 * ((int(colpc) ^^^ view) &&& 0x1) + int(colpc)/2
-        let oK = (7 * if (int(kingsq) &&& 4) = 0 then 1 else 0) ^^^ (56 * view) ^^^ int(kingsq)
-        let oSq = (7 * if (int(kingsq) &&& 4) = 0 then 1 else 0) ^^^ (56 * view) ^^^ int(sq)
+        let oP = 6 * ((colpc ^^^ view) &&& 0x1) + colpc/2
+        let oK = (7 * if (kingsq &&& 4) = 0 then 1 else 0) ^^^ (56 * view) ^^^ kingsq
+        let oSq = (7 * if (kingsq &&& 4) = 0 then 1 else 0) ^^^ (56 * view) ^^^ sq
         KING_BUCKETS.[oK] * 12 * 64 + oP * 64 + oSq
-    let ApplySubSubAddAdd(src:int16 array, f1:int, f2:int, f3:int, f4:int, view:int) =
-        let regs:int16 array = Array.zeroCreate 16
+    let ApplySubSubAddAdd(src:int array, f1:int, f2:int, f3:int, f4:int, view:int) =
+        let regs:int array = Array.zeroCreate 16
         for c = 0 to 768/16-1 do
             let unrollOffset = c * 16
             for i = 0 to 15 do
@@ -109,9 +89,9 @@ module NNUEb =
             for i = 0 to 15 do
                 regs.[i] <- regs.[i] + NNUEin.InputWeights.[o4 + i]
             for i = 0 to 15 do
-                Accumulators.[AccIndex].AccValues.[view].[unrollOffset+i] <- regs.[i]
-    let ApplySubSubAdd(src:int16 array, f1:int, f2:int, f3:int, view:int) =
-        let regs:int16 array = Array.zeroCreate 16
+                Accumulators.[AccIndex].[view].[unrollOffset+i] <- regs.[i]
+    let ApplySubSubAdd(src:int array, f1:int, f2:int, f3:int, view:int) =
+        let regs:int array = Array.zeroCreate 16
         for c = 0 to 768/16-1 do
             let unrollOffset = c * 16
             for i = 0 to 15 do
@@ -126,9 +106,9 @@ module NNUEb =
             for i = 0 to 15 do
                 regs.[i] <- regs.[i] + NNUEin.InputWeights.[o3 + i]
             for i = 0 to 15 do
-                Accumulators.[AccIndex].AccValues.[view].[unrollOffset+i] <- regs.[i]
-    let ApplySubAdd(src:int16 array, f1:int, f2:int, view:int) =
-        let regs:int16 array = Array.zeroCreate 16
+                Accumulators.[AccIndex].[view].[unrollOffset+i] <- regs.[i]
+    let ApplySubAdd(src:int array, f1:int, f2:int, view:int) =
+        let regs:int array = Array.zeroCreate 16
         for c = 0 to 768/16-1 do
             let unrollOffset = c * 16
             for i = 0 to 15 do
@@ -140,12 +120,12 @@ module NNUEb =
             for i = 0 to 15 do
                 regs.[i] <- regs.[i] + NNUEin.InputWeights.[o2 + i]
             for i = 0 to 15 do
-                Accumulators.[AccIndex].AccValues.[view].[unrollOffset+i] <- regs.[i]
+                Accumulators.[AccIndex].[view].[unrollOffset+i] <- regs.[i]
     let ApplyUpdates(map:BoardRec, move:MoveRec, view:int) =
         let captured = 
             if move.EnPassant then (if not map.IsWtm then BlackPawn else WhitePawn)
             else move.CapturedPiece
-        let prev = Accumulators.[AccIndex-1].AccValues.[int(view)]
+        let prev = Accumulators.[AccIndex-1].[view]
         let king = Bits.ToInt(if view= White then map.Pieces[WhiteKing] else map.Pieces[BlackKing])
         let movingSide = if map.IsWtm then 1 else 0
         let colpcto = map.Squares[move.To]
@@ -170,8 +150,8 @@ module NNUEb =
             ApplySubSubAdd(prev, from, capturedTo, mto, view)
         else
             ApplySubAdd(prev, from, mto, view)    
-    let ApplyDelta(src:int16 array, delta:DeltaRec, perspective:int) =
-        let regs:int16 array = Array.zeroCreate 16
+    let ApplyDelta(src:int array, delta:DeltaRec, perspective:int) =
+        let regs:int array = Array.zeroCreate 16
         for c = 0 to 768/16-1 do
             let unrollOffset = c * 16
             for i = 0 to 15 do
@@ -185,9 +165,9 @@ module NNUEb =
                 for i = 0 to 15 do
                     regs.[i] <- regs.[i] + NNUEin.InputWeights.[offset + i]
             for i = 0 to 15 do
-                Accumulators.[AccIndex].AccValues.[perspective].[unrollOffset+i] <- regs.[i]
+                Accumulators.[AccIndex].[perspective].[unrollOffset+i] <- regs.[i]
     let ResetAccumulator(map:BoardRec,perspective:int) =
-        let delta= Delta.Default()
+        let mutable delta= Delta.Default()
         let kingSq = Bits.ToInt(if perspective = White then map.Pieces[WhiteKing] else map.Pieces[BlackKing])
         let occupied = map.Both
         let sqarr = Bits.ToArray(occupied)
@@ -198,10 +178,10 @@ module NNUEb =
         let src = Array.copy NNUEin.InputBiases
         ApplyDelta(src,delta,perspective)
     let RefreshAccumulator(map:BoardRec,perspective:int) =
-        let delta = Delta.Default()
+        let mutable delta = Delta.Default()
         let kingSq = Bits.ToInt(if perspective = White then map.Pieces[WhiteKing] else map.Pieces[BlackKing])
         let pBucket = if perspective = 0 then 0 else 32
-        let kingBucket = KING_BUCKETS.[int(kingSq) ^^^ (56 * perspective)] + (if Square.ToFile(kingSq) > 3 then 16 else 0)
+        let kingBucket = KING_BUCKETS.[kingSq ^^^ (56 * perspective)] + (if Square.ToFile(kingSq) > 3 then 16 else 0)
         let state = RefreshTable.[pBucket + kingBucket]
         for pc = WhitePawn to BlackKing do
             let curr = map.Pieces.[pc]
@@ -218,18 +198,18 @@ module NNUEb =
                 delta.add.[delta.a] <- FeatureIdx(pc,sq,kingSq,perspective)
                 delta.a <- delta.a + 1
             Array.iter dosq sqarr
-            state.Pcs.[int(pc)] <- curr
+            state.Pcs.[pc] <- curr
         ApplyDelta(state.AccKsValues, delta, perspective)
-        RefreshTable.[pBucket + kingBucket] <- {state with AccKsValues = Array.copy Accumulators.[AccIndex].AccValues.[int(perspective)]}
+        RefreshTable.[pBucket + kingBucket] <- {state with AccKsValues = Array.copy Accumulators.[AccIndex].[perspective]}
     let DoUpdate(map:BoardRec, move:MoveRec) =
         let stm = if map.IsWtm then 0 else 1
         let xstm = if map.IsWtm then 1 else 0
         let from = 
-            if not map.IsWtm then int(move.From)
-            else int(move.From)^^^56
+            if not map.IsWtm then move.From
+            else move.From ^^^ 56
         let mto = 
-            if not map.IsWtm then int(move.To)
-            else int(move.To)^^^56
+            if not map.IsWtm then move.To
+            else move.To ^^^ 56
         let colpcto = map.Squares[move.To]
         let colpcfrom =
             if move.Promotion then ColPiece.FromPcCol(Pawn,xstm)
@@ -245,8 +225,8 @@ module NNUEb =
         let stm = if iswtm then 0 else 1
         let mutable result = NNUEin.OutputBias
         for c = 0 to 767 do
-           result <- result + Math.Max(int(Accumulators.[AccIndex].AccValues.[stm].[c]), 0) * int(NNUEin.OutputWeights.[c])
+           result <- result + Math.Max(Accumulators.[AccIndex].[stm].[c], 0) * NNUEin.OutputWeights.[c]
         let xstm = stm^^^1
         for c = 0 to 767 do
-           result <- result + Math.Max(int(Accumulators.[AccIndex].AccValues.[xstm].[c]), 0) * int(NNUEin.OutputWeights.[c + 768])
+           result <- result + Math.Max(Accumulators.[AccIndex].[xstm].[c], 0) * NNUEin.OutputWeights.[c + 768]
         result/8192

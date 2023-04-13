@@ -2,7 +2,7 @@
 
 [<AutoOpen>]
 module Types =
-    let VersionNo = "0.4.2.5"
+    let VersionNo = "0.4.2.6"
 
     // The type of piece.
     let WhitePawn = 0
@@ -110,7 +110,6 @@ module Types =
     let PromQueen = 4
     let PromChars = ".nbrq."
     
-    [<Struct>]
     type BoardRec =
         {
             mutable IsWtm:bool
@@ -129,7 +128,6 @@ module Types =
             mutable ZobristHash:uint64
         }
 
-    [<Struct>]
     type MoveRec =
         {
             WhiteKCastle:int
@@ -146,18 +144,19 @@ module Types =
             mutable SecondaryTo:int
         }
 
-    //type NNUEinB =
-    //    {
-    //        InputWeights:int array
-    //        InputBiases:int array
-    //        OutputWeights:int array
-    //        OutputBias:int
-    //    }
-    //type AccumulatorKingState =
-    //    {
-    //        AccKsValues:int array
-    //        Pcs:uint64 array
-    //    }
+    type NNUEinB =
+        {
+            InputWeights:int array
+            InputBiases:int array
+            OutputWeights:int array
+            OutputBias:int
+        }
+
+    type AccumulatorKingState =
+        {
+            AccKsValues:int array
+            Pcs:uint64 array
+        }
 
     let KING_BUCKETS = 
         [|
