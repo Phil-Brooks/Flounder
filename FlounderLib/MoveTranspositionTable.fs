@@ -18,7 +18,7 @@ type MoveTranspositionTable =
                 i <- (i <<< 1) ||| 0x1
             let mutable intnal = Array.zeroCreate (hashFilter + 1)
             for j = 0 to hashFilter do
-                intnal.[j] <- new MoveTranspositionTableEntry(0UL, Invalid, OrderedMoveEntry(Na, Na, PromNone), 0)
+                intnal.[j] <- new MoveTranspositionTableEntry(0UL, Invalid, OrderedMoveEntry.Default, 0)
     #if DEBUG
             System.Console.WriteLine("Allocated " + (hashFilter * Unsafe.SizeOf<MoveTranspositionTableEntry>()).ToString() + 
                               " bytes for " + hashFilter.ToString() + " TT entries.");

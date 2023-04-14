@@ -1,24 +1,22 @@
 ﻿namespace FlounderLib
 
-type OrderedMoveEntry =
-    struct
-        val From: int
-        val To: int
-        val Promotion: int
-        val mutable Score: int
-        new(from, mto, promotion) =
-            {
-                From = from
-                To = mto
-                Promotion = promotion
-                Score = 0
-            }
-        override this.ToString() =
-            let from = Square.ToStr(this.From)
-            let mto = Square.ToStr(this.To)
-            let promotion = if this.Promotion <> PromNone then Promotion.ToStr(this.Promotion) else ""
-            from + mto + promotion
-            
-    end
 module OrderedMoveEntry =
-    let Default = OrderedMoveEntry(Na, Na, PromNone)
+    let Default = 
+        {
+            From = Na
+            To = Na
+            Promotion = PromNone
+            Score = 0
+        }
+    let Create(from, mto, prom) =
+        {
+            From = from
+            To = mto
+            Promotion = prom
+            Score = 0
+        }
+    let ToStr(ome:OrderedMoveEntry) =
+        let from = Square.ToStr(ome.From)
+        let mto = Square.ToStr(ome.To)
+        let promotion = if ome.Promotion <> PromNone then Promotion.ToStr(ome.Promotion) else ""
+        from + mto + promotion

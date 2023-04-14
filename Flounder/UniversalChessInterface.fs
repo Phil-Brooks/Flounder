@@ -138,7 +138,7 @@ module UniversalChessInterface =
                     Busy <- true
                     let bestMove = Search.Value.IterativeDeepening(depth)
                     Busy <- false
-                    Console.WriteLine("bestmove " + bestMove.ToString())
+                    Console.WriteLine("bestmove " + OrderedMoveEntry.ToStr(bestMove))
         #if DEBUG
                     Console.WriteLine("TT Count: " +  Search.Value.TableCutoffCount.ToString())
         #endif

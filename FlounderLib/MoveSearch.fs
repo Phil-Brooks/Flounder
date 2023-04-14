@@ -300,7 +300,7 @@ type MoveSearch =
                         if inCheck then -99999999 + plyFromRoot else 0
                     else
                         let mutable bestEvaluation = -100000000
-                        let mutable bestMoveSoFar = OrderedMoveEntry(Na, Na, PromNone)
+                        let mutable bestMoveSoFar = OrderedMoveEntry.Default
                         let mutable transpositionTableEntryType = AlphaUnchanged
                         // Calculate next iteration variables before getting into the loop.
                         let nextDepth = depth - 1
@@ -431,7 +431,7 @@ type MoveSearch =
                     this.DepthSearchLog(curdepth, eval, stopwatch)
                     // In the case we are past a certain depth, and are really low on time, it's highly unlikely we'll
                     // finish the next depth in time. To save time, we should just exit the search early.
-                    if not (bm = bestMove.ToString()) then
+                    if not (bm = OrderedMoveEntry.ToStr(bestMove)) then
                         getbm eval (curdepth + 1)
             getbm -100000000 1                    
         with

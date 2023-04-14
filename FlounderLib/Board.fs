@@ -106,13 +106,13 @@ module Board =
     let Default() = 
         let DEFAULT_FEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
         FromFen(DEFAULT_FEN)
-    let ToMove(map:byref<BoardRec>) =
+    let ToMove(brd:byref<BoardRec>) =
         {
-            WhiteKCastle = map.WhiteKCastle
-            WhiteQCastle = map.WhiteQCastle
-            BlackKCastle = map.BlackKCastle
-            BlackQCastle = map.BlackQCastle
-            EnPassantTarget = map.EnPassantTarget
+            WhiteKCastle = brd.WhiteKCastle
+            WhiteQCastle = brd.WhiteQCastle
+            BlackKCastle = brd.BlackKCastle
+            BlackQCastle = brd.BlackQCastle
+            EnPassantTarget = brd.EnPassantTarget
             Promotion = false
             EnPassant = false
             From = Na
@@ -121,202 +121,152 @@ module Board =
             SecondaryFrom = Na
             SecondaryTo = Na
         }
-    let BaseMove(map:byref<BoardRec>, from:int, mto:int) =
-        let pF = map.Squares[from]
-        let pT = map.Squares[mto]
+    let BaseMove(brd:byref<BoardRec>, from:int, mto:int) =
+        let pF = brd.Squares[from]
+        let pT = brd.Squares[mto]
         let cT = pT%2
         let cF = pF%2
         if pT <> EmptyColPc then
-            // If moving to piece isn't empty, then we capture.
-            Bits.PopBit(&map.Pieces[pT], mto)
-            // Remove from color bitboards.
+            Bits.PopBit(&brd.Pieces[pT], mto)
             if cT = White then
-                Bits.PopBit(&map.White, mto)
+                Bits.PopBit(&brd.White, mto)
             else
-                Bits.PopBit(&map.Black, mto)
-            Bits.PopBit(&map.Both, mto)
-            // Update Zobrist.
-            Zobrist.HashPiece(&map.ZobristHash, pT, mto)
-        // We remove from original square.
-        Bits.PopBit(&map.Pieces[pF], from)
-        // Set at next square.
-        Bits.SetBit(&map.Pieces[pF], mto)
-        // Make sure to update the pieces and colors.
-        map.Squares[mto] <- map.Squares[from]
-        map.Squares[from] <- EmptyColPc
-        //update king locations
-        if map.Squares[mto] = WhiteKing then map.WhiteKingLoc <- mto
-        if map.Squares[mto] = BlackKing then map.BlackKingLoc <- mto
-        // Update color bitboards.
+                Bits.PopBit(&brd.Black, mto)
+            Bits.PopBit(&brd.Both, mto)
+            Zobrist.HashPiece(&brd.ZobristHash, pT, mto)
+        Bits.PopBit(&brd.Pieces[pF], from)
+        Bits.SetBit(&brd.Pieces[pF], mto)
+        brd.Squares[mto] <- brd.Squares[from]
+        brd.Squares[from] <- EmptyColPc
+        if brd.Squares[mto] = WhiteKing then brd.WhiteKingLoc <- mto
+        if brd.Squares[mto] = BlackKing then brd.BlackKingLoc <- mto
         if cF = White then
-            Bits.PopBit(&map.White, from)
-            Bits.SetBit(&map.White, mto)
+            Bits.PopBit(&brd.White, from)
+            Bits.SetBit(&brd.White, mto)
         else 
-            Bits.PopBit(&map.Black, from)
-            Bits.SetBit(&map.Black, mto)
-        Bits.PopBit(&map.Both, from)
-        Bits.SetBit(&map.Both, mto)
-        // Update Zobrist.
-        Zobrist.HashPiece(&map.ZobristHash, pF, from)
-        Zobrist.HashPiece(&map.ZobristHash, pF, mto)
-    let Empty(map:byref<BoardRec>, sq:int) =
-        let cpc = map.Squares[sq]
+            Bits.PopBit(&brd.Black, from)
+            Bits.SetBit(&brd.Black, mto)
+        Bits.PopBit(&brd.Both, from)
+        Bits.SetBit(&brd.Both, mto)
+        Zobrist.HashPiece(&brd.ZobristHash, pF, from)
+        Zobrist.HashPiece(&brd.ZobristHash, pF, mto)
+    let Empty(brd:byref<BoardRec>, sq:int) =
+        let cpc = brd.Squares[sq]
         let color = cpc%2
-        // Remove from square.
-        Bits.PopBit(&map.Pieces[cpc], sq)
-        // Set empty in pieces and colors.
-        map.Squares[sq] <- EmptyColPc
-        // Remove from color bitboards.
+        Bits.PopBit(&brd.Pieces[cpc], sq)
+        brd.Squares[sq] <- EmptyColPc
         if color = White then
-            Bits.PopBit(&map.White, sq)
+            Bits.PopBit(&brd.White, sq)
         else 
-            Bits.PopBit(&map.Black, sq)
-        Bits.PopBit(&map.Both, sq)
-        // Update Zobrist.
-        Zobrist.HashPiece(&map.ZobristHash, cpc, sq)
-    let InsertPiece(map:byref<BoardRec>, cpc:int, sq:int) =
+            Bits.PopBit(&brd.Black, sq)
+        Bits.PopBit(&brd.Both, sq)
+        Zobrist.HashPiece(&brd.ZobristHash, cpc, sq)
+    let InsertPiece(brd:byref<BoardRec>, cpc:int, sq:int) =
         let color = cpc%2
-        // Insert the piece at square.
-        Bits.SetBit(&map.Pieces[cpc], sq)
-        // Insert into color bitboards.
+        Bits.SetBit(&brd.Pieces[cpc], sq)
         if color = White then
-            Bits.SetBit(&map.White, sq)
+            Bits.SetBit(&brd.White, sq)
         else 
-            Bits.SetBit(&map.Black, sq)
-        Bits.SetBit(&map.Both, sq)
-        // Set piece in pieces and colors.
-        map.Squares[sq] <- cpc
-        if map.Squares[sq] = WhiteKing then map.WhiteKingLoc <- sq
-        if map.Squares[sq] = BlackKing then map.BlackKingLoc <- sq
-        // Update Zobrist.
-        Zobrist.HashPiece(&map.ZobristHash, cpc, sq)
+            Bits.SetBit(&brd.Black, sq)
+        Bits.SetBit(&brd.Both, sq)
+        brd.Squares[sq] <- cpc
+        if brd.Squares[sq] = WhiteKing then brd.WhiteKingLoc <- sq
+        if brd.Squares[sq] = BlackKing then brd.BlackKingLoc <- sq
+        Zobrist.HashPiece(&brd.ZobristHash, cpc, sq)
     let Move(brd:byref<BoardRec>, from:int, mto:int, promotion:int) =
         let cpcF = brd.Squares[from]
         let cpcT = brd.Squares[mto]
-        let pieceF, colorF = ColPiece.ToPcCol(cpcF)
-        let pieceT, colorT = ColPiece.ToPcCol(cpcT)
-        // Generate a revert move before the map has been altered.
+        let cF = cpcF%2
+        let cT = cpcT%2
+        let pF = cpcF/2
+        let pT = cpcT/2
         let mutable rv = ToMove(&brd)
-        if pieceT <> EmptyPc then
-            // If piece we're moving to isn't an empty one, we will be capturing.
-            // Thus, we need to set it in revert move to ensure we can properly revert it.
+        if cpcT <> EmptyColPc then
             rv.CapturedPiece <- cpcT
-        if (brd.EnPassantTarget = mto && pieceF = Pawn) then
-            // If the attack is an EP attack, we must empty the piece affected by EP.
-            let epPieceSq = if colorF = 0 then brd.EnPassantTarget + 8 else brd.EnPassantTarget - 8
-            let oppositeColor = colorF^^^1
-            let eppc = if colorF=0 then BlackPawn else WhitePawn
+        if brd.EnPassantTarget = mto && pF = Pawn then
+            let epPieceSq = if cF = White then brd.EnPassantTarget + 8 else brd.EnPassantTarget - 8
+            let oppositeColor = cF ^^^ 1
             Empty(&brd, epPieceSq)
-            // Set it in revert move.
             rv.EnPassant <- true
-            // We only need to reference the color.
             rv.CapturedPiece <- oppositeColor
-        // Update Zobrist.
         if brd.EnPassantTarget<> Na then Zobrist.HashEp(&brd.ZobristHash, brd.EnPassantTarget)
-        if (pieceF = Pawn && Math.Abs(int(mto) - int(from)) = 16) then
-            // If the pawn push is a 2-push, the square behind it will be EP target.
-            brd.EnPassantTarget <- if colorF = 0 then from - 8 else from + 8
-            // Update Zobrist.
+        if pF = Pawn && abs(mto - from) = 16 then
+            brd.EnPassantTarget <- if cF = White then from - 8 else from + 8
             Zobrist.HashEp(&brd.ZobristHash, brd.EnPassantTarget)
         else brd.EnPassantTarget <- Na
-        // Make the move.
         BaseMove(&brd, from, mto)
         if promotion <> PromNone then
             Empty(&brd, mto)
-            let prompc = promotion*2 + colorF
+            let prompc = promotion*2 + cF
             InsertPiece(&brd, prompc, mto)
             rv.Promotion <- true
-        // Update revert move.
         rv.From <- from
         rv.To <- mto
-        // Remove castling rights from hash to allow easy update.
         Zobrist.HashCastlingRights(
             &brd.ZobristHash, 
             brd.WhiteKCastle, brd.WhiteQCastle, 
             brd.BlackKCastle, brd.BlackQCastle
         )
-        // If our rook moved, we must update castling rights.
-        if pieceF = Rook then
-            if colorF = 0 then
+        if pF = Rook then
+            if cF = White then
                 if from % 8 = 0 then brd.WhiteQCastle <- 0x0
                 if from % 8 = 7 then brd.WhiteKCastle <- 0x0
-            elif colorF = 1 then
+            else
                 if from % 8 = 0 then brd.BlackQCastle <- 0x0
                 if from % 8 = 7 then brd.BlackKCastle <- 0x0
-            else
-                raise (InvalidOperationException("Rook cannot have no color."))
-        // If our king moved, we also must update castling rights.
-        if pieceF = King then
-            if colorF = 0 then
+        if pF = King then
+            if cF = White then
                 brd.WhiteQCastle <- 0x0
                 brd.WhiteKCastle <- 0x0
-            elif colorF = 1 then
+            else
                 brd.BlackQCastle <- 0x0
                 brd.BlackKCastle <- 0x0
-            else
-                failwith "King cannot have no color."
             let d = abs(mto - from)
             if d = 2 then
-                // In the case the king moved to castle, we must also move the rook accordingly,
-                // making a secondary move. To ensure proper reverting, we must also update our revert move.
-                if (mto > from) then // King-side
+                if mto > from then
                     rv.SecondaryFrom <- mto + 1
                     rv.SecondaryTo <- mto - 1
-                else // Queen-side
+                else
                     rv.SecondaryFrom <- mto - 2
                     rv.SecondaryTo <- mto + 1
-                // Make the secondary move.
                 BaseMove(&brd, rv.SecondaryFrom, rv.SecondaryTo)
-        // If our rook was captured, we must also update castling rights so we don't castle with enemy piece.
-        if pieceT = Rook then
-            if colorT = 0 then
+        if pT = Rook then
+            if cT = White then
                 if mto = A1 then brd.WhiteQCastle <- 0x0
                 if mto = H1 then brd.WhiteKCastle <- 0x0
-            elif colorT = 1 then
+            else
                 if mto = A8 then brd.BlackQCastle <- 0x0
                 if mto = H8 then brd.BlackKCastle <- 0x0
-            else
-                raise (InvalidOperationException("Rook cannot have no color."))
-        // Re-hash castling rights.
         Zobrist.HashCastlingRights(
             &brd.ZobristHash, 
             brd.WhiteKCastle, brd.WhiteQCastle, 
             brd.BlackKCastle, brd.BlackQCastle
         )
-        // Flip the turn.
         brd.IsWtm <- not brd.IsWtm  
         brd.Stm <- brd.Stm ^^^ 1  
         brd.Xstm <- brd.Xstm ^^^ 1  
-        // Update Zobrist.
         Zobrist.FlipTurnInHash(&brd.ZobristHash)
         rv
     let UndoMove(brd:byref<BoardRec>, rv:byref<MoveRec>)=
-        // Remove castling rights from hash to allow easy update.
         Zobrist.HashCastlingRights(
             &brd.ZobristHash, 
             brd.WhiteKCastle, brd.WhiteQCastle, 
             brd.BlackKCastle, brd.BlackQCastle
         )
-        // Revert to old castling rights.
         brd.WhiteKCastle <- rv.WhiteKCastle
         brd.WhiteQCastle <- rv.WhiteQCastle
         brd.BlackKCastle <- rv.BlackKCastle
         brd.BlackQCastle <- rv.BlackQCastle
-        // Re-hash castling rights.
         Zobrist.HashCastlingRights(
             &brd.ZobristHash, 
             brd.WhiteKCastle, brd.WhiteQCastle, 
             brd.BlackKCastle, brd.BlackQCastle
         )
-        // Update Zobrist.
         if brd.EnPassantTarget <> Na then
             Zobrist.HashEp(&brd.ZobristHash, brd.EnPassantTarget)
-        // Revert to the previous EP target.
         brd.EnPassantTarget <- rv.EnPassantTarget
         if brd.EnPassantTarget <> Na then 
-            // If we don't have an empty EP, we should hash it in.
             Zobrist.HashEp(&brd.ZobristHash, brd.EnPassantTarget)
-        // Revert to previous turn.
         brd.IsWtm <- not brd.IsWtm
         brd.Stm <- brd.Stm ^^^ 1  
         brd.Xstm <- brd.Xstm ^^^ 1  
@@ -327,16 +277,12 @@ module Board =
             InsertPiece(&brd, color, rv.To)
         let pF = brd.Squares[rv.To]
         let pT = brd.Squares[rv.From]
-        // Undo the move by moving the piece back.
         BaseMove(&brd, rv.To, rv.From)
         if rv.EnPassant then
-            // If it was an EP attack, we must insert a pawn at the affected square.
             let insertion = if rv.CapturedPiece = WhitePawn then rv.To - 8 else rv.To + 8
             InsertPiece(&brd, rv.CapturedPiece, insertion)
         elif rv.CapturedPiece <> EmptyColPc then
-            // If a capture happened, we must insert the piece at the relevant square.
             InsertPiece(&brd, rv.CapturedPiece, rv.To)
-        // If there was a secondary move (castling), revert the secondary move.
         elif rv.SecondaryFrom <> Na then BaseMove(&brd, rv.SecondaryTo, rv.SecondaryFrom) 
     let GenerateFen(brd:BoardRec) =
         let expandedBoardData:string array = Array.zeroCreate 8

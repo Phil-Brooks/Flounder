@@ -2,7 +2,7 @@
 
 [<AutoOpen>]
 module Types =
-    let VersionNo = "0.4.3.3"
+    let VersionNo = "0.4.3.4"
 
     // The type of piece.
     let WhitePawn = 0
@@ -178,6 +178,14 @@ module Types =
             mutable a:int
             rem:int array
             add:int array
+        }
+
+    type OrderedMoveEntry =
+        {
+            From: int
+            To: int
+            Promotion: int
+            mutable Score: int
         }
 
     type TranTableType =

@@ -245,8 +245,4 @@ module BitBoard =
         let ans = Bits.ToSeq(BlackB)
         ans|>Seq.head|>should equal A8
 
-    //[<Test>]
-    //let ToStr() =
-    //    let ans = BlackB.ToString().Substring(0,8)
-    //    ans|>should equal "1 1 1 1 "
-        
+       

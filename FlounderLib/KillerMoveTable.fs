@@ -5,7 +5,7 @@ type KillerMoveTable =
         val mutable Internal:OrderedMoveEntry array
         new(size) =
             {
-                Internal = Array.zeroCreate size
+                Internal = Array.create size OrderedMoveEntry.Default
             }
         member this.Item 
             with get(typ:int, ply:int) = this.Internal.[typ * 128 + ply]
