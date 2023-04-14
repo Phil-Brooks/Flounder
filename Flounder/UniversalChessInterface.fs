@@ -6,7 +6,7 @@ open System.Diagnostics
 open FlounderLib
 
 module Program =
-    let RunPerft(board:byref<Board>, depth:int) =
+    let RunPerft(board:byref<BoardRec>, depth:int) =
         Console.WriteLine("Running PERFT @ depth " + depth.ToString() + ": ")
         let watch = Stopwatch()
         let mutable result = 0uL
@@ -129,7 +129,7 @@ module UniversalChessInterface =
                             else
                                 getargs (argPosition+1)
                     getargs 1
-                    let stm = EngBrd.Brd.Map.Stm
+                    let stm = EngBrd.Brd.Stm
                     if (time = maxTime || timeSpecified) then TmCntrl <- TimeControl(time)
                     else TmCntrl <- TimeControl(movesToGo, timeForColor, timeIncForColor, stm, MvCount)
                 let factory = TaskFactory()

@@ -93,8 +93,8 @@ type MoveSearch =
         if isPvNode then this.SelectiveDepth <- Math.Max(this.SelectiveDepth, plyFromRoot)
         let mutable ans = None 
         if not isPvNode then
-            let storedEntry = this.MvTrnTbl.[board.Brd.Map.ZobristHash]
-            if (storedEntry.ZobristHash = board.Brd.Map.ZobristHash &&
+            let storedEntry = this.MvTrnTbl.[board.Brd.ZobristHash]
+            if (storedEntry.ZobristHash = board.Brd.ZobristHash &&
                 (storedEntry.Type = Exact ||
                 storedEntry.Type = BetaCutoff &&
                 storedEntry.BestMove.Score >= beta ||
@@ -109,7 +109,7 @@ type MoveSearch =
         if ans.IsSome then 
             ans.Value
         else
-            let earlyEval = NNUEb.OutputLayer(board.Brd.Map)
+            let earlyEval = NNUEb.OutputLayer(board.Brd)
 
             // In the rare case our evaluation is already too good, we don't need to further evaluate captures any further,
             // as this position is overwhelmingly winning.
@@ -123,7 +123,7 @@ type MoveSearch =
                 let moveSpanarr = Array.zeroCreate<OrderedMoveEntry>(OrderedMoveList.SIZE)//stackalloc OrderedMoveEntry[OrderedMoveList.SIZE];
                 let mutable moveSpan = new Span<OrderedMoveEntry>(moveSpanarr)
                 let moveList = OrderedMoveList(moveSpan, plyFromRoot, this.KillerMvTbl, this.HistTbl)
-                let moveCount = moveList.QSearchMoveGeneration(board.Brd, OrderedMoveEntry.Default)
+                let moveCount = moveList.QSearchMoveGeneration(&board.Brd, OrderedMoveEntry.Default)
                 let mutable bestEvaluation = earlyEval
                 // Calculate next iteration variables before getting into the loop.
                 let nextDepth = depth - 1
@@ -177,15 +177,15 @@ type MoveSearch =
                 // We had a three-fold repetition, so return earlier.
                 if board.IsRepetition() then ans <- 0|>Some
                 else
-                    let allPiecesCount = Bits.Count(board.Brd.Map.Both)
+                    let allPiecesCount = Bits.Count(board.Brd.Both)
                     // If only the kings are left, it's a draw.
                     if allPiecesCount = 2 then ans <- 0|>Some
                     else
-                        let knightLeft = board.Brd.Map.Pieces[WhiteKnight] <> 0UL || board.Brd.Map.Pieces[BlackKnight] <> 0UL
+                        let knightLeft = board.Brd.Pieces[WhiteKnight] <> 0UL || board.Brd.Pieces[BlackKnight] <> 0UL
                         // If only the kings and one knight is left, it's a draw.
                         if (allPiecesCount = 3 && knightLeft) then ans <- 0|>Some
                         else
-                            let bishopLeft = board.Brd.Map.Pieces[WhiteBishop] <> 0UL || board.Brd.Map.Pieces[BlackBishop] <> 0UL
+                            let bishopLeft = board.Brd.Pieces[WhiteBishop] <> 0UL || board.Brd.Pieces[BlackBishop] <> 0UL
                             // If only the kings and one bishop is left, it's a draw.
                             if allPiecesCount = 3 && bishopLeft then ans <- 0|>Some
                             else
@@ -198,12 +198,12 @@ type MoveSearch =
         if ans.IsSome then 
             ans.Value
         else
-            let storedEntry = this.MvTrnTbl.[board.Brd.Map.ZobristHash]
+            let storedEntry = this.MvTrnTbl.[board.Brd.ZobristHash]
             let valid = storedEntry.Type <> Invalid
             let mutable transpositionMove = OrderedMoveEntry.Default
             let mutable transpositionHit = false
 
-            if valid && storedEntry.ZobristHash = board.Brd.Map.ZobristHash then
+            if valid && storedEntry.ZobristHash = board.Brd.ZobristHash then
                 // We had a transposition table hit. However, at this point, we don't know if this is a trustworthy
                 // transposition hit or not.
                 transpositionMove <- storedEntry.BestMove
@@ -243,14 +243,14 @@ type MoveSearch =
                 // Calculate deeper ply.
                 let nextPlyFromRoot = plyFromRoot + 1
                 // Determine whether we should prune moves.
-                let icolor = if board.Brd.Map.IsWtm then 0 else 1
-                let ioppositeColor = if board.Brd.Map.IsWtm then 1 else 0
-                let kingSq = if icolor = White then board.Brd.Map.WhiteKingLoc else board.Brd.Map.BlackKingLoc
+                let icolor = if board.Brd.IsWtm then 0 else 1
+                let ioppositeColor = if board.Brd.IsWtm then 1 else 0
+                let kingSq = if icolor = White then board.Brd.WhiteKingLoc else board.Brd.BlackKingLoc
                 let mutable inCheck = MoveList.UnderAttack(board.Brd, kingSq, ioppositeColor)
                 let mutable improving = false
                 // We should use the evaluation from our transposition table if we had a hit.
                 // As that evaluation isn't truly static and may have been from a previous deep search.
-                let positionalEvaluation = if transpositionHit then transpositionMove.Score else NNUEb.OutputLayer(board.Brd.Map)
+                let positionalEvaluation = if transpositionHit then transpositionMove.Score else NNUEb.OutputLayer(board.Brd)
                 // Also store the evaluation to later check if it improved.
                 this.MvSrchStck.[plyFromRoot].PositionalEvaluation <- positionalEvaluation
         
@@ -291,7 +291,7 @@ type MoveSearch =
                     let moveSpanarr = Array.zeroCreate<OrderedMoveEntry>(OrderedMoveList.SIZE)
                     let mutable moveSpan = new Span<OrderedMoveEntry>(moveSpanarr)
                     let moveList = OrderedMoveList(moveSpan, plyFromRoot, this.KillerMvTbl, this.HistTbl)
-                    let moveCount = moveList.NormalMoveGeneration(board.Brd, transpositionMove)
+                    let moveCount = moveList.NormalMoveGeneration(&board.Brd, transpositionMove)
                     if moveCount = 0 then
                         // If we had no moves at this depth, we should check if our king is in check. If our king is in check, it
                         // means we lost as nothing can save the king anymore. Otherwise, it's a stalemate where we can't really do
@@ -316,7 +316,7 @@ type MoveSearch =
                             moveList.SortNext(i, moveCount)
                             let previousNodeCount = this.TotalNodeSearchCount
                             let mutable move = moveList.[i]
-                            let oppBoard = if ioppositeColor = White then board.Brd.Map.White else board.Brd.Map.Black
+                            let oppBoard = if ioppositeColor = White then board.Brd.White else board.Brd.Black
                             let quietMove = not (Bits.IsSet(oppBoard, move.To))
                             if quietMove then quietMoveCounter <- quietMoveCounter + 1
                             //Late Move Pruning
@@ -352,8 +352,8 @@ type MoveSearch =
                                 i <- i + 1
                         
                         bestMoveSoFar.Score <- bestEvaluation
-                        let mutable entry = MoveTranspositionTableEntry(board.Brd.Map.ZobristHash, transpositionTableEntryType, bestMoveSoFar, depth)
-                        this.MvTrnTbl.InsertEntry(board.Brd.Map.ZobristHash, &entry)
+                        let mutable entry = MoveTranspositionTableEntry(board.Brd.ZobristHash, transpositionTableEntryType, bestMoveSoFar, depth)
+                        this.MvTrnTbl.InsertEntry(board.Brd.ZobristHash, &entry)
 
                         bestEvaluation
     member this.AspirationSearch(board:EngineBoard, depth:int, previousEvaluation:int) =
@@ -520,7 +520,7 @@ type MoveSearch =
             this.KillerMvTbl.ReOrder(plyFromRoot)
             this.KillerMvTbl.[0, plyFromRoot] <- move
         // Increment the move that caused a beta cutoff to get a historical heuristic of best quiet moves.
-        let stm = if board.Brd.Map.IsWtm then 0 else 1 
+        let stm = if board.Brd.IsWtm then 0 else 1 
         this.HistTbl.[board.PieceOnly(move.From), stm, move.To] <- this.HistTbl.[board.PieceOnly(move.From), stm, move.To] + historyBonus
         // Decrement all other quiet moves to ensure a branch local history heuristic.
         for j = 1 to quietMoveCounter-1 do

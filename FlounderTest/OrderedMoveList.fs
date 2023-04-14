@@ -14,11 +14,11 @@ module OrderedMoveList =
         let plyFromRoot = 1
         let HistTbl = HistoryTable.Default
         let KillerMvTbl = KillerMoveTable.Default
-        let board = Board.Default()
+        let mutable board = Board.Default()
         let moveSpanarr = Array.zeroCreate<OrderedMoveEntry>(OrderedMoveList.SIZE)//stackalloc OrderedMoveEntry[OrderedMoveList.SIZE];
         let mutable moveSpan = new Span<OrderedMoveEntry>(moveSpanarr)
         let moveList = OrderedMoveList(moveSpan, plyFromRoot, KillerMvTbl, HistTbl)
-        let moveCount = moveList.NormalMoveGeneration(board, OrderedMoveEntry.Default)
+        let moveCount = moveList.NormalMoveGeneration(&board, OrderedMoveEntry.Default)
         moveCount |> should equal 20
         let ans = moveList.[19]
         ans.From |> should equal G1
