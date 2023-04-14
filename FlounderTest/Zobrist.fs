@@ -5,7 +5,7 @@ open FlounderLib
 
 module Zobrist =
 
-    let mutable Map = BitBoardMap.FromParts("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR", "w", "KQkq", "-")
+    let mutable Map = Board.Default()
     
     [<SetUp>]
     let Setup () =

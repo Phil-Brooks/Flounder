@@ -4,9 +4,9 @@ open System
 type EngineBoard =
     val mutable RepHist:RepetitionHistory
     val mutable Brd:BoardRec
-    new(boardData, turnData, castlingData, enPassantTargetData) as this = 
+    new(fen) as this = 
         {
-            Brd = BitBoardMap.FromParts(boardData, turnData, castlingData, enPassantTargetData)
+            Brd = Board.FromFen(fen)
             RepHist = RepetitionHistory.Default()
         } then NNUEb.AccIndex<-0;NNUEb.ResetAccumulator(this.Brd,0);NNUEb.ResetAccumulator(this.Brd,1)
         
@@ -56,8 +56,7 @@ type EngineBoard =
         this.RepHist.RemoveLast()
 module EngineBoard =
     let FromFen(fen:string) = 
-        let parts = fen.Split(" ")
-        EngineBoard(parts.[0], parts.[1], parts.[2], parts.[3])
+        EngineBoard(fen)
     let Default() = 
         let DEFAULT_FEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
         FromFen(DEFAULT_FEN)

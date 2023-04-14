@@ -15,7 +15,6 @@
     <Compile Include="Types.fs" />
     <Compile Include="Bits.fs" />
     <Compile Include="Zobrist.fs" />
-    <Compile Include="BitBoardMap.fs" />
     <Compile Include="NNUEb.fs" />
     <Compile Include="Board.fs" />
     <Compile Include="OrderedMoveEntry.fs" />
