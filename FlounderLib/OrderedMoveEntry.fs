@@ -15,7 +15,7 @@ module OrderedMoveEntry =
             Promotion = prom
             Score = 0
         }
-    let ToStr(ome:OrderedMoveEntry) =
+    let ToStr(ome:OrdMoveEntryRec) =
         let from = Square.ToStr(ome.From)
         let mto = Square.ToStr(ome.To)
         let promotion = if ome.Promotion <> PromNone then Promotion.ToStr(ome.Promotion) else ""

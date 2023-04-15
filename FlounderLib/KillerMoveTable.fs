@@ -2,7 +2,7 @@
 
 type KillerMoveTable =
     struct
-        val mutable Internal:OrderedMoveEntry array
+        val mutable Internal:OrdMoveEntryRec array
         new(size) =
             {
                 Internal = Array.create size OrderedMoveEntry.Default

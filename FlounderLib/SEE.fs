@@ -2,7 +2,7 @@
 
 module SEE =
     let Internal = [| 82;337;365;477;1025;0;0 |]
-    let inline Approximate(board:EngineBoard, move:OrderedMoveEntry) =
+    let inline Approximate(board:EngineBoard, move:OrdMoveEntryRec) =
         let from = board.PieceOnly(move.From)
         let mutable mto = board.PieceOnly(move.To)
         // In case of En Passant, we set the target piece to a pawn.

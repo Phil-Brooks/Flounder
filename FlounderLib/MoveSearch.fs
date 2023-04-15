@@ -15,11 +15,10 @@ type MoveSearch =
     val mutable SearchEffort:MoveSearchEffortTable
     val mutable PvTable:PrincipleVariationTable
     val mutable MvSrchStck:MoveSearchStack
-    val mutable ReducedTimeMove:OrderedMoveEntry
+    val mutable ReducedTimeMove:OrdMoveEntryRec
     val mutable EngBrd:EngineBoard 
     val mutable TimeCntrl:TimeControl
-    val mutable MvTrnTbl:MoveTranspositionTable
-    new(board:EngineBoard, table:MoveTranspositionTable, timeControl:TimeControl) =
+    new(board:EngineBoard, timeControl:TimeControl) =
         {
 #if DEBUG
             TableCutoffCount = 0
@@ -34,7 +33,6 @@ type MoveSearch =
             ReducedTimeMove = OrderedMoveEntry.Default
             EngBrd = board
             TimeCntrl = timeControl
-            MvTrnTbl = table
         }
     member this.Reset(board:EngineBoard, timeControl:TimeControl) =
 #if DEBUG
@@ -54,12 +52,12 @@ type MoveSearch =
         let pv = StringBuilder()
         let count = this.PvTable.Count()
         for i = 0 to count-1 do
-            let move:OrderedMoveEntry = this.PvTable.Get(i)
+            let move:OrdMoveEntryRec = this.PvTable.Get(i)
             pv.Append(Square.ToStr(move.From)).Append(Square.ToStr(move.To))|>ignore
             if move.Promotion <> PromNone then pv.Append(Promotion.ToStr(move.Promotion))|>ignore
             pv.Append(' ')|>ignore
         pv.ToString().ToLower()
-    member this.NodeCounting(depth:int, bestMove:OrderedMoveEntry, itimePreviouslyUpdated:bool) = 
+    member this.NodeCounting(depth:int, bestMove:OrdMoveEntryRec, itimePreviouslyUpdated:bool) = 
         let mutable timePreviouslyUpdated = itimePreviouslyUpdated
         // This idea is from the Koivisto Engine:
         // The branch being searched the most is likely the best branch as we're having to evaluate it very deeply
@@ -93,8 +91,8 @@ type MoveSearch =
         if isPvNode then this.SelectiveDepth <- Math.Max(this.SelectiveDepth, plyFromRoot)
         let mutable ans = None 
         if not isPvNode then
-            let storedEntry = this.MvTrnTbl.[board.Brd.ZobristHash]
-            if (storedEntry.ZobristHash = board.Brd.ZobristHash &&
+            let storedEntry = TranspositionTable.GetEntry(board.Brd.ZobristHash)
+            if (storedEntry.Hash = board.Brd.ZobristHash &&
                 (storedEntry.Type = Exact ||
                 storedEntry.Type = BetaCutoff &&
                 storedEntry.BestMove.Score >= beta ||
@@ -120,8 +118,8 @@ type MoveSearch =
                 // we don't skip over our already good move.
                 if earlyEval > alpha then alpha <- earlyEval
                 // Allocate memory on the stack to be used for our move-list.
-                let moveSpanarr = Array.zeroCreate<OrderedMoveEntry>(OrderedMoveList.SIZE)//stackalloc OrderedMoveEntry[OrderedMoveList.SIZE];
-                let mutable moveSpan = new Span<OrderedMoveEntry>(moveSpanarr)
+                let moveSpanarr = Array.zeroCreate<OrdMoveEntryRec>(OrderedMoveList.SIZE)//stackalloc OrdMoveEntryRec[OrderedMoveList.SIZE];
+                let mutable moveSpan = new Span<OrdMoveEntryRec>(moveSpanarr)
                 let moveList = OrderedMoveList(moveSpan, plyFromRoot, this.KillerMvTbl, this.HistTbl)
                 let moveCount = moveList.QSearchMoveGeneration(&board.Brd, OrderedMoveEntry.Default)
                 let mutable bestEvaluation = earlyEval
@@ -198,12 +196,12 @@ type MoveSearch =
         if ans.IsSome then 
             ans.Value
         else
-            let storedEntry = this.MvTrnTbl.[board.Brd.ZobristHash]
+            let storedEntry = TranspositionTable.GetEntry(board.Brd.ZobristHash)
             let valid = storedEntry.Type <> Invalid
             let mutable transpositionMove = OrderedMoveEntry.Default
             let mutable transpositionHit = false
 
-            if valid && storedEntry.ZobristHash = board.Brd.ZobristHash then
+            if valid && storedEntry.Hash = board.Brd.ZobristHash then
                 // We had a transposition table hit. However, at this point, we don't know if this is a trustworthy
                 // transposition hit or not.
                 transpositionMove <- storedEntry.BestMove
@@ -288,8 +286,8 @@ type MoveSearch =
                     // Reduce depth if there are no transposition hits and we're at a high enough depth to do it safely.
                     let depth = if (cdepth > 3 && not transpositionHit) then cdepth - 1 else cdepth
                     // Allocate memory on the stack to be used for our move-list.
-                    let moveSpanarr = Array.zeroCreate<OrderedMoveEntry>(OrderedMoveList.SIZE)
-                    let mutable moveSpan = new Span<OrderedMoveEntry>(moveSpanarr)
+                    let moveSpanarr = Array.zeroCreate<OrdMoveEntryRec>(OrderedMoveList.SIZE)
+                    let mutable moveSpan = new Span<OrdMoveEntryRec>(moveSpanarr)
                     let moveList = OrderedMoveList(moveSpan, plyFromRoot, this.KillerMvTbl, this.HistTbl)
                     let moveCount = moveList.NormalMoveGeneration(&board.Brd, transpositionMove)
                     if moveCount = 0 then
@@ -352,8 +350,8 @@ type MoveSearch =
                                 i <- i + 1
                         
                         bestMoveSoFar.Score <- bestEvaluation
-                        let mutable entry = MoveTranspositionTableEntry(board.Brd.ZobristHash, transpositionTableEntryType, bestMoveSoFar, depth)
-                        this.MvTrnTbl.InsertEntry(board.Brd.ZobristHash, &entry)
+                        let mutable entry = {Hash=board.Brd.ZobristHash;Type=transpositionTableEntryType;BestMove=bestMoveSoFar;Depth=depth}
+                        TranspositionTable.InsertEntry(board.Brd.ZobristHash, &entry)
 
                         bestEvaluation
     member this.AspirationSearch(board:EngineBoard, depth:int, previousEvaluation:int) =
@@ -482,7 +480,7 @@ type MoveSearch =
             // an unlikely path. Thus, we should evaluate it clearly using a full-window research.
             evaluation <- -this.AbSearch(true, board, nextPlyFromRoot, nextDepth, -beta, -alpha)
     [<MethodImpl(MethodImplOptions.AggressiveInlining)>]
-    member this.HandleEvaluation(evaluation:int, move:OrderedMoveEntry, bestEvaluation:byref<int>, bestMoveSoFar:byref<OrderedMoveEntry>, isPvNode:bool, plyFromRoot:int, alpha:byref<int>, beta:int, transpositionTableEntryType:byref<TranTableType>) =
+    member this.HandleEvaluation(evaluation:int, move:OrdMoveEntryRec, bestEvaluation:byref<int>, bestMoveSoFar:byref<OrdMoveEntryRec>, isPvNode:bool, plyFromRoot:int, alpha:byref<int>, beta:int, transpositionTableEntryType:byref<TranType>) =
         if (evaluation <= bestEvaluation) then true
         else
             // If our evaluation was better than our current best evaluation, we should update our evaluation
@@ -511,7 +509,7 @@ type MoveSearch =
                 // reason to evaluate it further.
                 evaluation < beta
     [<MethodImpl(MethodImplOptions.AggressiveInlining)>]
-    member this.DoQuiet(plyFromRoot:int, move:OrderedMoveEntry, board:EngineBoard,depth:int, quietMoveCounter, moveList:OrderedMoveList, i:int) =
+    member this.DoQuiet(plyFromRoot:int, move:OrdMoveEntryRec, board:EngineBoard,depth:int, quietMoveCounter, moveList:OrderedMoveList, i:int) =
         let historyBonus = depth * depth
         if this.KillerMvTbl.[0, plyFromRoot] <> move then
             // Given this move isn't a capture move (quiet move), we store it as a killer move (cutoff move)

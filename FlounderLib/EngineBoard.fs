@@ -43,7 +43,7 @@ type EngineBoard =
         this.Brd.Stm <- this.Brd.Stm ^^^ 1  
         this.Brd.Xstm <- this.Brd.Xstm ^^^ 1  
         Zobrist.FlipTurnInHash(&this.Brd.ZobristHash)
-    member this.Move(move:byref<OrderedMoveEntry>) =
+    member this.Move(move:byref<OrdMoveEntryRec>) =
         let rv:MoveRec =
             NNUEb.AccIndex<-NNUEb.AccIndex+1
             Board.Move(&this.Brd, move.From, move.To, move.Promotion)

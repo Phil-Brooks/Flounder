@@ -40,7 +40,7 @@ module NNUEb =
             ans[i] <- accs
         ans
     let mutable AccIndex = 0
-    let RefreshTable:AccumulatorKingState array =
+    let RefreshTable:AccKingStateRec array =
         let ans = Array.zeroCreate 64
         for i = 0 to 63 do
             let acci =

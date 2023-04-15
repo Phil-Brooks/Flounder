@@ -30,9 +30,8 @@ module Tester =
             "r2qkb1r/1ppb1ppp/p7/4p3/P1Q1P3/2P5/5PPP/R1B2KNR b kq - bm d7b5"
         |]
     let Test (argv:string array) =
-        let table = MoveTranspositionTable.GenerateTable(16)
         let timeControl = TimeControl(9999999)
-        let search = MoveSearch(EngineBoard.Default(), table, timeControl)
+        let search = MoveSearch(EngineBoard.Default(), timeControl)
         let stopwatch = new Stopwatch()
         stopwatch.Start()
         let fens =

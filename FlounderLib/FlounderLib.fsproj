@@ -18,8 +18,7 @@
     <Compile Include="NNUEb.fs" />
     <Compile Include="Board.fs" />
     <Compile Include="OrderedMoveEntry.fs" />
-    <Compile Include="MoveTranspositionTableEntry.fs" />
-    <Compile Include="MoveTranspositionTable.fs" />
+    <Compile Include="TranspositionTable.fs" />
     <Compile Include="RepetitionHistory.fs" />
     <Compile Include="AttackTable.fs" />
     <Compile Include="UtilityTable.fs" />

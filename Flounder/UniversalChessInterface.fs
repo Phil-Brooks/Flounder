@@ -18,8 +18,6 @@ module Program =
 module UniversalChessInterface =
     let NAME = "Flounder"
     let AUTHOR = "Phil Brooks"
-    let mutable MvTrnsTbl:MoveTranspositionTable option = None
-    let mutable MvTrnsTblMb = 16
     let mutable Search:MoveSearch option = None
     let mutable EngBrd:EngineBoard = EngineBoard.Default()
     let mutable Busy = false
@@ -29,19 +27,14 @@ module UniversalChessInterface =
         if (input.ToLower().Contains("setoption")) then
             let args = input.Split(" ")
             if (args.[2] = "Hash") then
-                MvTrnsTblMb <- int(args.[4])
                 Busy <- true
-                MvTrnsTbl.Value.FreeMemory()
-                MvTrnsTbl <- None
-                MvTrnsTbl <- Some(MoveTranspositionTable.GenerateTable(MvTrnsTblMb))
+                TranspositionTable.megabyteSize <- int(args.[4])
                 Busy <- false
     let HandleIsReady(input:string) =
         if (input.ToLower().Equals("isready")) then
             Console.WriteLine("readyok")
     let HandleQuit(thread:Thread, input:string) =
         if (input.ToLower().Equals("quit")) then
-            MvTrnsTbl.Value.FreeMemory()
-            MvTrnsTbl <- None
             UciStdInputThread.Running <- false
             thread.IsBackground <- true
             Environment.Exit(0)
@@ -158,8 +151,7 @@ module UniversalChessInterface =
         UciStdInputThread.CommandReceived.Add(fun (_ ,input) -> HandleStop(input))
     let LaunchUci() =
         // Initialize default UCI parameters.
-        MvTrnsTbl <- Some(MoveTranspositionTable.GenerateTable(MvTrnsTblMb))
-        Search <- Some(MoveSearch(EngineBoard.Default(), MvTrnsTbl.Value, TmCntrl))
+        Search <- Some(MoveSearch(EngineBoard.Default(), TmCntrl))
         // Provide identification information.
         Console.WriteLine("id name " + NAME)
         Console.WriteLine("id author " + AUTHOR)

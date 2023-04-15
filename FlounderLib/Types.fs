@@ -2,7 +2,7 @@
 
 [<AutoOpen>]
 module Types =
-    let VersionNo = "0.4.3.4"
+    let VersionNo = "0.4.3.5"
 
     // The type of piece.
     let WhitePawn = 0
@@ -146,7 +146,7 @@ module Types =
             mutable SecondaryTo:int
         }
 
-    type NNUEinB =
+    type NNUEinRec =
         {
             InputWeights:int array
             InputBiases:int array
@@ -154,7 +154,7 @@ module Types =
             OutputBias:int
         }
 
-    type AccumulatorKingState =
+    type AccKingStateRec =
         {
             AccKsValues:int array
             Pcs:uint64 array
@@ -180,7 +180,7 @@ module Types =
             add:int array
         }
 
-    type OrderedMoveEntry =
+    type OrdMoveEntryRec =
         {
             From: int
             To: int
@@ -188,11 +188,25 @@ module Types =
             mutable Score: int
         }
 
-    type TranTableType =
+    type TranType =
         | Exact
         | BetaCutoff
         | AlphaUnchanged
         | Invalid
+
+    type TranEntryRec =
+        {
+            Hash: uint64
+            Type: TranType
+            BestMove: OrdMoveEntryRec
+            Depth: int
+        }
+
+    type TranTableRec =
+        {
+            mutable HashFilter:int
+            mutable Internal:TranEntryRec array
+        }
 
 module Piece =
     let ToStr(pc:int) = PcChars[pc].ToString()

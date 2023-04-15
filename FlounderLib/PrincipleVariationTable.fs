@@ -3,14 +3,14 @@
 type PrincipleVariationTable =
     struct
         val mutable Length:int array
-        val mutable Internal:OrderedMoveEntry array
+        val mutable Internal:OrdMoveEntryRec array
         new(size) =
             {
                 Length = Array.zeroCreate size
                 Internal = Array.zeroCreate (size * size)
             }
         member this.InitializeLength(ply:int) = this.Length.[ply] <- ply
-        member this.Insert(ply:int, move:byref<OrderedMoveEntry>) = this.Internal.[ply * 128 + ply] <- move
+        member this.Insert(ply:int, move:byref<OrdMoveEntryRec>) = this.Internal.[ply * 128 + ply] <- move
         member this.Copy(currentPly:int, nextPly:int) =
             this.Internal.[currentPly * 128 + nextPly] <- this.Internal.[(currentPly + 1) * 128 + nextPly]
         member this.PlyInitialized(currentPly:int, nextPly:int) = nextPly < this.Length.[currentPly + 1]

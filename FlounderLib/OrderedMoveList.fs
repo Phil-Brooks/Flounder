@@ -19,13 +19,13 @@ module OrderedMoveList =
 type OrderedMoveList =
     struct
         val mutable PRIORITY:int
-        val mutable Internal:Span<OrderedMoveEntry>
-        val mutable KillerMoveOne:OrderedMoveEntry
-        val mutable KillerMoveTwo:OrderedMoveEntry
+        val mutable Internal:Span<OrdMoveEntryRec>
+        val mutable KillerMoveOne:OrdMoveEntryRec
+        val mutable KillerMoveTwo:OrdMoveEntryRec
         val mutable HistTbl:HistoryTable
         // Technically; there do exist positions where we'd have 218 legal moves.
         // However; they are so unlikely that 128 seems like an okay number.
-        new(memory:Span<OrderedMoveEntry>, ply:int, killerMoveTable:KillerMoveTable, historyTable:HistoryTable) =
+        new(memory:Span<OrdMoveEntryRec>, ply:int, killerMoveTable:KillerMoveTable, historyTable:HistoryTable) =
             {
                 PRIORITY = Int32.MaxValue
                 Internal = memory
@@ -33,7 +33,7 @@ type OrderedMoveList =
                 KillerMoveTwo =  killerMoveTable.[1, ply]
                 HistTbl =  historyTable
             }
-        member this.ScoreMove(pieceToMove:int, board:BoardRec, move:OrderedMoveEntry, tableMove:OrderedMoveEntry) =
+        member this.ScoreMove(pieceToMove:int, board:BoardRec, move:OrdMoveEntryRec, tableMove:OrdMoveEntryRec) =
             // Compare our move with the one found from transposition table. There's no guarantee the transposition move
             // is even legal, so this acts as a sort of legal verification for it too.
             // Regardless, if our move is equal to that (also proving that it is legal for this position), then give it
@@ -65,7 +65,7 @@ type OrderedMoveList =
                 elif move.From = this.KillerMoveTwo.From && move.To = this.KillerMoveTwo.To && move.Promotion = this.KillerMoveTwo.Promotion then 800000
                 // Return the updated history score for the move.
                 else this.HistTbl.[pieceToMove, (if board.IsWtm then 0 else 1), move.To]
-        member this.NormalMoveGeneration(board:byref<BoardRec>, transpositionMove:OrderedMoveEntry) =
+        member this.NormalMoveGeneration(board:byref<BoardRec>, transpositionMove:OrdMoveEntryRec) =
             // Generate pins and check bitboards.
             let stm = if board.IsWtm then 0 else 1 
             let xstm = if board.IsWtm then 1 else 0
@@ -114,7 +114,7 @@ type OrderedMoveList =
                     this.Internal.[i].Score <- this.ScoreMove(King, board, this.Internal.[i], transpositionMove)
                     i<-i+1
             i
-        member this.QSearchMoveGeneration(board:byref<BoardRec>, transpositionMove:OrderedMoveEntry) =
+        member this.QSearchMoveGeneration(board:byref<BoardRec>, transpositionMove:OrdMoveEntryRec) =
             // If we only want capture moves, we should also define our opposite board.
             let stm = if board.IsWtm then 0 else 1 
             let xstm = if board.IsWtm then 1 else 0 
@@ -163,7 +163,7 @@ type OrderedMoveList =
                     this.Internal.[i].Score <- this.ScoreMove(King, board, this.Internal.[i], transpositionMove)
                     i<-i+1                    
             i
-        member this.Item with get(i:int):byref<OrderedMoveEntry> = 
+        member this.Item with get(i:int):byref<OrdMoveEntryRec> = 
             &(this.Internal.[i])
         member this.SortNext(sorted:int, maxSelection:int) =
             let mutable index = sorted
