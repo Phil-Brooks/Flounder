@@ -204,8 +204,8 @@ module Types =
 
     type TranTableRec =
         {
-            mutable HashFilter:int
-            mutable Internal:TranEntryRec array
+            HashFilter:uint64
+            Internal:TranEntryRec array
         }
 
 module Piece =

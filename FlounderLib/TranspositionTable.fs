@@ -1,4 +1,5 @@
 ﻿namespace FlounderLib
+open System
 open System.Runtime.CompilerServices
 
 module TranspositionTable =
@@ -9,24 +10,27 @@ module TranspositionTable =
         let mutable i = 0x1
         while (byteSize >= (i + 1) * Unsafe.SizeOf<TranEntryRec>()) do 
             hashFilter <- i
+            //looking for hash filter as a series of 1s
             i <- (i <<< 1) ||| 0x1
         let mutable intnal = Array.zeroCreate (hashFilter + 1)
         for j = 0 to hashFilter do
-            intnal.[j] <- {Hash=0UL;Type=Invalid;BestMove=OrderedMoveEntry.Default;Depth=0}
+            intnal[j] <- {Hash=0UL;Type=Invalid;BestMove=OrderedMoveEntry.Default;Depth=0}
 #if DEBUG
-        System.Console.WriteLine("Allocated " + (hashFilter * Unsafe.SizeOf<TranEntryRec>()).ToString() + 
-                            " bytes for " + hashFilter.ToString() + " TT entries.");
+        Console.WriteLine("Allocated " + (hashFilter * Unsafe.SizeOf<TranEntryRec>()).ToString() + 
+                            " bytes for " + hashFilter.ToString() + " (Binary:" + Convert.ToString(hashFilter, 2) + ") TT entries.");
 #endif
-        {HashFilter=hashFilter;Internal=intnal}
+        {HashFilter=uint64(hashFilter);Internal=intnal}
     let mutable tt = GenerateTable()
-    let Reset() = tt <- GenerateTable()
+    let Reset() = 
+        for j = 0 to int(tt.HashFilter) do
+            tt.Internal[j] <- {Hash=0UL;Type=Invalid;BestMove=OrderedMoveEntry.Default;Depth=0}
+    let inline idx(hash:uint64) = int(hash &&& tt.HashFilter)
     let GetEntry(zobristHash:uint64) = 
-        let index = int(zobristHash) &&& tt.HashFilter
-        let ans = &(tt.Internal.[index])
-        ans
-    let InsertEntry(zobristHash:uint64, entry:byref<TranEntryRec>) =
+        let index = idx(zobristHash)
+        tt.Internal[index]
+    let InsertEntry(zobristHash:uint64, entry:TranEntryRec) =
         let REPLACEMENT_DEPTH_THRESHOLD = 3
-        let index = int(zobristHash) &&& tt.HashFilter
+        let index = idx(zobristHash)
         let oldEntry = &(tt.Internal.[index])
         if entry.Type = Exact || entry.Hash <> oldEntry.Hash then
             tt.Internal.[index] <- entry
