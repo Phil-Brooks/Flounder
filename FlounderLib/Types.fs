@@ -2,7 +2,7 @@
 
 [<AutoOpen>]
 module Types =
-    let VersionNo = "0.4.3.5"
+    let VersionNo = "0.4.3.6"
 
     // The type of piece.
     let WhitePawn = 0
@@ -200,13 +200,16 @@ module Types =
             Type: TranType
             BestMove: OrdMoveEntryRec
             Depth: int
+            Age : int
         }
 
     type TranTableRec =
         {
             HashFilter:uint64
-            Internal:TranEntryRec array
+            Internal:TranEntryRec array array
+            mutable Age:int
         }
+
 
 module Piece =
     let ToStr(pc:int) = PcChars[pc].ToString()
