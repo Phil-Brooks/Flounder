@@ -206,7 +206,7 @@ type MoveSearch =
                 // transposition hit or not.
                 transpositionMove <- storedEntry.BestMove
                 transpositionHit <- true
-                if not isPvNode && storedEntry.Depth >= idepth then
+                if not isPvNode && int(storedEntry.Depth) >= idepth then
                     // If it came from a higher depth search than our current depth, it means the results are definitely
                     // more trustworthy than the ones we could achieve at this depth.
                     if storedEntry.Type = Exact then
@@ -351,7 +351,7 @@ type MoveSearch =
                         
                         bestMoveSoFar.Score <- bestEvaluation
                         let mutable entry = {Hash=board.Brd.ZobristHash;Type=transpositionTableEntryType;BestMove=bestMoveSoFar;Depth=depth}
-                        TranspositionTable.InsertEntry(board.Brd.ZobristHash, entry)
+                        TranspositionTable.InsertEntry(board.Brd.ZobristHash, &entry)
 
                         bestEvaluation
     member this.AspirationSearch(board:EngineBoard, depth:int, previousEvaluation:int) =
