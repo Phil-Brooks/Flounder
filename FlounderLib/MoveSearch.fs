@@ -206,7 +206,7 @@ type MoveSearch =
                 // transposition hit or not.
                 transpositionMove <- storedEntry.BestMove
                 transpositionHit <- true
-                if not isPvNode && int(storedEntry.Depth) >= idepth then
+                if not isPvNode && storedEntry.Depth >= idepth then
                     // If it came from a higher depth search than our current depth, it means the results are definitely
                     // more trustworthy than the ones we could achieve at this depth.
                     if storedEntry.Type = Exact then
