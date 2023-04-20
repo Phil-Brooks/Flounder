@@ -350,7 +350,7 @@ type MoveSearch =
                                 i <- i + 1
                         
                         bestMoveSoFar.Score <- bestEvaluation
-                        let mutable entry = {Hash=board.Brd.ZobristHash;Type=transpositionTableEntryType;BestMove=bestMoveSoFar;Depth=depth}
+                        let mutable entry = {Hash=board.Brd.ZobristHash;Type=transpositionTableEntryType;BestMove=bestMoveSoFar;Depth=depth;Age=TranspositionTable.tt.Age}
                         TranspositionTable.InsertEntry(board.Brd.ZobristHash, entry)
 
                         bestEvaluation
