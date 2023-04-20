@@ -200,14 +200,12 @@ module Types =
             Type: TranType
             BestMove: OrdMoveEntryRec
             Depth: int
-            Age : int
         }
 
     type TranTableRec =
         {
             HashFilter:uint64
-            Internal:TranEntryRec array array
-            mutable Age:int
+            Internal:TranEntryRec array
         }
 
 

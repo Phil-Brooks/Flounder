@@ -68,7 +68,6 @@ module UniversalChessInterface =
                         if (args.[i].Length > 4) then
                             promotion <- Promotion.FromChar(args.[i].ToLower().[4])
                         EngBrd.GuiMove(from, mto, promotion)
-                TranspositionTable.UpdateAge()
                 Busy <- false
     let HandleDraw(input:string) =
         if (input.ToLower() = "draw" || input.ToLower() = "d") then
