@@ -46,7 +46,7 @@ module Tester =
             let board = EngineBoard.FromFen(fen)
             search.Reset(board, timeControl)
             let bestMove = search.DoTest(MaxDepth,ebm)
-            let bm = OrderedMoveEntry.ToStr(bestMove)
+            let bm = OrdMove.ToStr(bestMove)
             Console.WriteLine("bestmove " + bm)
             if bm <> ebm then failwith("Test " + (i + 1).ToString() + " failed with wrong best move: " + bm)
         Console.WriteLine(fens.Length.ToString() + " run successfully.")

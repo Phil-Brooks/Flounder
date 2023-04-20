@@ -87,11 +87,11 @@ type OrderedMoveList =
                     for move in movearr do
                         if (moveList.Promotion) then
                             for p = PromKnight to PromQueen do
-                                this.Internal.[i] <- OrderedMoveEntry.Create(from, move, p)
+                                this.Internal.[i] <- OrdMove.Create(from, move, p)
                                 this.Internal.[i].Score <- this.ScoreMove(Pawn, board, this.Internal.[i], transpositionMove)
                                 i<-i+1
                         else
-                            this.Internal.[i] <- OrderedMoveEntry.Create(from, move, PromNone)
+                            this.Internal.[i] <- OrdMove.Create(from, move, PromNone)
                             this.Internal.[i].Score <- this.ScoreMove(Pawn, board, this.Internal.[i], transpositionMove)
                             i<-i+1
                 // Generate moves for rook, knight, bishop, and queen.
@@ -101,7 +101,7 @@ type OrderedMoveList =
                         let moveList = MoveList(&board, from, piece, stm, hv, d, checks)
                         let movearr = Bits.ToArray(moveList.Moves)
                         for move in movearr do
-                            this.Internal.[i] <- OrderedMoveEntry.Create(from, move, PromNone)
+                            this.Internal.[i] <- OrdMove.Create(from, move, PromNone)
                             this.Internal.[i].Score <- this.ScoreMove(piece, board, this.Internal.[i], transpositionMove)
                             i<-i+1
             // Generate all king moves.
@@ -110,7 +110,7 @@ type OrderedMoveList =
                 let moveList = MoveList(&board, from, King, stm, hv, d, checks)
                 let movearr = Bits.ToArray(moveList.Moves)
                 for move in movearr do
-                    this.Internal.[i] <- OrderedMoveEntry.Create(from, move, PromNone)
+                    this.Internal.[i] <- OrdMove.Create(from, move, PromNone)
                     this.Internal.[i].Score <- this.ScoreMove(King, board, this.Internal.[i], transpositionMove)
                     i<-i+1
             i
@@ -136,11 +136,11 @@ type OrderedMoveList =
                     for move in movearr do
                         if moveList.Promotion then
                             for p = PromKnight to PromQueen do
-                                this.Internal.[i] <- OrderedMoveEntry.Create(from, move, p)
+                                this.Internal.[i] <- OrdMove.Create(from, move, p)
                                 this.Internal.[i].Score <- this.ScoreMove(Pawn, board, this.Internal.[i], transpositionMove)
                                 i<-i+1
                         else 
-                            this.Internal.[i] <- OrderedMoveEntry.Create(from, move, PromNone)
+                            this.Internal.[i] <- OrdMove.Create(from, move, PromNone)
                             this.Internal.[i].Score <- this.ScoreMove(Pawn, board, this.Internal.[i], transpositionMove)
                             i<-i+1
                 // Generate moves for rook, knight, bishop, and queen.
@@ -150,7 +150,7 @@ type OrderedMoveList =
                         let moveList = MoveList(&board, from, piece, stm, hv, d, checks)
                         let movearr = Bits.ToArray((moveList.Moves &&& opposite))
                         for move in movearr do
-                            this.Internal.[i] <- OrderedMoveEntry.Create(from, move, PromNone)
+                            this.Internal.[i] <- OrdMove.Create(from, move, PromNone)
                             this.Internal.[i].Score <- this.ScoreMove(piece, board, this.Internal.[i], transpositionMove)
                             i<-i+1
             // Generate all king moves.
@@ -159,7 +159,7 @@ type OrderedMoveList =
                 let moveList = MoveList(&board, from, King, stm, hv, d, checks)
                 let movearr = Bits.ToArray((moveList.Moves &&& opposite))
                 for move in movearr do
-                    this.Internal.[i] <- OrderedMoveEntry.Create(from, move, PromNone)
+                    this.Internal.[i] <- OrdMove.Create(from, move, PromNone)
                     this.Internal.[i].Score <- this.ScoreMove(King, board, this.Internal.[i], transpositionMove)
                     i<-i+1                    
             i

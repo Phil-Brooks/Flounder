@@ -30,7 +30,7 @@ type MoveSearch =
             SearchEffort = MoveSearchEffortTable.Default
             PvTable = PrincipleVariationTable.Default
             MvSrchStck = MoveSearchStack.Default
-            ReducedTimeMove = OrderedMoveEntry.Default
+            ReducedTimeMove = OrdMove.Default
             EngBrd = board
             TimeCntrl = timeControl
         }
@@ -45,7 +45,7 @@ type MoveSearch =
         this.SearchEffort.Clear()
         this.PvTable.Clear()
         this.MvSrchStck.Clear()
-        this.ReducedTimeMove <- OrderedMoveEntry.Default
+        this.ReducedTimeMove <- OrdMove.Default
         this.EngBrd <- board
         this.TimeCntrl <- timeControl
     member this.PvLine() = 
@@ -91,7 +91,7 @@ type MoveSearch =
         if isPvNode then this.SelectiveDepth <- Math.Max(this.SelectiveDepth, plyFromRoot)
         let mutable ans = None 
         if not isPvNode then
-            let storedEntry = TranspositionTable.GetEntry(board.Brd.ZobristHash)
+            let storedEntry = TranTable.GetEntry(board.Brd.ZobristHash)
             if (storedEntry.Hash = board.Brd.ZobristHash &&
                 (storedEntry.Type = Exact ||
                 storedEntry.Type = BetaCutoff &&
@@ -121,7 +121,7 @@ type MoveSearch =
                 let moveSpanarr = Array.zeroCreate<OrdMoveEntryRec>(OrderedMoveList.SIZE)//stackalloc OrdMoveEntryRec[OrderedMoveList.SIZE];
                 let mutable moveSpan = new Span<OrdMoveEntryRec>(moveSpanarr)
                 let moveList = OrderedMoveList(moveSpan, plyFromRoot, this.KillerMvTbl, this.HistTbl)
-                let moveCount = moveList.QSearchMoveGeneration(&board.Brd, OrderedMoveEntry.Default)
+                let moveCount = moveList.QSearchMoveGeneration(&board.Brd, OrdMove.Default)
                 let mutable bestEvaluation = earlyEval
                 // Calculate next iteration variables before getting into the loop.
                 let nextDepth = depth - 1
@@ -196,9 +196,9 @@ type MoveSearch =
         if ans.IsSome then 
             ans.Value
         else
-            let storedEntry = TranspositionTable.GetEntry(board.Brd.ZobristHash)
+            let storedEntry = TranTable.GetEntry(board.Brd.ZobristHash)
             let valid = storedEntry.Type <> Invalid
-            let mutable transpositionMove = OrderedMoveEntry.Default
+            let mutable transpositionMove = OrdMove.Default
             let mutable transpositionHit = false
 
             if valid && storedEntry.Hash = board.Brd.ZobristHash then
@@ -298,7 +298,7 @@ type MoveSearch =
                         if inCheck then -99999999 + plyFromRoot else 0
                     else
                         let mutable bestEvaluation = -100000000
-                        let mutable bestMoveSoFar = OrderedMoveEntry.Default
+                        let mutable bestMoveSoFar = OrdMove.Default
                         let mutable transpositionTableEntryType = AlphaUnchanged
                         // Calculate next iteration variables before getting into the loop.
                         let nextDepth = depth - 1
@@ -351,7 +351,7 @@ type MoveSearch =
                         
                         bestMoveSoFar.Score <- bestEvaluation
                         let mutable entry = {Hash=board.Brd.ZobristHash;Type=transpositionTableEntryType;BestMove=bestMoveSoFar;Depth=depth}
-                        TranspositionTable.InsertEntry(board.Brd.ZobristHash, &entry)
+                        TranTable.InsertEntry(board.Brd.ZobristHash, &entry)
 
                         bestEvaluation
     member this.AspirationSearch(board:EngineBoard, depth:int, previousEvaluation:int) =
@@ -395,7 +395,7 @@ type MoveSearch =
                 bestEvaluation
         geteval 0
     member this.IterativeDeepening(selectedDepth:int) =
-        let mutable bestMove = OrderedMoveEntry.Default
+        let mutable bestMove = OrdMove.Default
         try 
             let stopwatch = Stopwatch.StartNew()
             let mutable timePreviouslyUpdated = false
@@ -416,7 +416,7 @@ type MoveSearch =
         NNUEb.AccIndex<-0
         bestMove
     member this.DoTest(selectedDepth:int, bm:string) =
-        let mutable bestMove = OrderedMoveEntry.Default
+        let mutable bestMove = OrdMove.Default
         try 
             let stopwatch = Stopwatch.StartNew()
             let mutable timePreviouslyUpdated = false
@@ -429,7 +429,7 @@ type MoveSearch =
                     this.DepthSearchLog(curdepth, eval, stopwatch)
                     // In the case we are past a certain depth, and are really low on time, it's highly unlikely we'll
                     // finish the next depth in time. To save time, we should just exit the search early.
-                    if not (bm = OrderedMoveEntry.ToStr(bestMove)) then
+                    if not (bm = OrdMove.ToStr(bestMove)) then
                         getbm eval (curdepth + 1)
             getbm -100000000 1                    
         with

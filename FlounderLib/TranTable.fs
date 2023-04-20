@@ -1,7 +1,7 @@
 ﻿namespace FlounderLib
 open System.Runtime.CompilerServices
 
-module TranspositionTable =
+module TranTable =
     let mutable megabyteSize = 16
     let GenerateTable() = 
         let byteSize = megabyteSize * 1024 * 1024
@@ -12,7 +12,7 @@ module TranspositionTable =
             i <- (i <<< 1) ||| 0x1
         let mutable intnal = Array.zeroCreate (hashFilter + 1)
         for j = 0 to hashFilter do
-            intnal[j] <- {Hash=0UL;Type=Invalid;BestMove=OrderedMoveEntry.Default;Depth=0}
+            intnal[j] <- {Hash=0UL;Type=Invalid;BestMove=OrdMove.Default;Depth=0}
 #if DEBUG
         System.Console.WriteLine("Allocated " + (hashFilter * Unsafe.SizeOf<TranEntryRec>()).ToString() + 
                             " bytes for " + hashFilter.ToString() + " TT entries.");

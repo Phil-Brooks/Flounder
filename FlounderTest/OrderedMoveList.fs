@@ -19,7 +19,7 @@ module OrderedMoveList =
         let mutable moveSpan = new Span<OrdMoveEntryRec>(moveSpanarr)
         let moveList = OrderedMoveList(moveSpan, plyFromRoot, KillerMvTbl, HistTbl)
         BlackMagicBitBoardFactory.SetUp()
-        let moveCount = moveList.NormalMoveGeneration(&board, OrderedMoveEntry.Default)
+        let moveCount = moveList.NormalMoveGeneration(&board, OrdMove.Default)
         moveCount |> should equal 20
         let ans = moveList.[19]
         ans.From |> should equal G1

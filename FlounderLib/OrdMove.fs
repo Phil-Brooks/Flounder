@@ -1,6 +1,6 @@
 ﻿namespace FlounderLib
 
-module OrderedMoveEntry =
+module OrdMove =
     let Default = 
         {
             From = Na

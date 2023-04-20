@@ -17,9 +17,9 @@
     <Compile Include="Zobrist.fs" />
     <Compile Include="NNUEb.fs" />
     <Compile Include="Board.fs" />
-    <Compile Include="OrderedMoveEntry.fs" />
-    <Compile Include="TranspositionTable.fs" />
-    <Compile Include="RepetitionHistory.fs" />
+    <Compile Include="OrdMove.fs" />
+    <Compile Include="TranTable.fs" />
+    <Compile Include="RepHist.fs" />
     <Compile Include="AttackTable.fs" />
     <Compile Include="UtilityTable.fs" />
     <Compile Include="BlackMagicBitBoardFactory.fs" />

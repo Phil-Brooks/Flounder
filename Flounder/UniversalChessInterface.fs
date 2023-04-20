@@ -28,7 +28,7 @@ module UniversalChessInterface =
             let args = input.Split(" ")
             if (args.[2] = "Hash") then
                 Busy <- true
-                TranspositionTable.megabyteSize <- int(args.[4])
+                TranTable.megabyteSize <- int(args.[4])
                 Busy <- false
     let HandleIsReady(input:string) =
         if (input.ToLower().Equals("isready")) then
@@ -131,7 +131,7 @@ module UniversalChessInterface =
                     Busy <- true
                     let bestMove = Search.Value.IterativeDeepening(depth)
                     Busy <- false
-                    Console.WriteLine("bestmove " + OrderedMoveEntry.ToStr(bestMove))
+                    Console.WriteLine("bestmove " + OrdMove.ToStr(bestMove))
         #if DEBUG
                     Console.WriteLine("TT Count: " +  Search.Value.TableCutoffCount.ToString())
         #endif
