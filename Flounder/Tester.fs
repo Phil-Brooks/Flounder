@@ -44,7 +44,6 @@ module Tester =
             let ebm = bits.[1].Trim()
             Console.WriteLine("Position (" + (i + 1).ToString() + "/" + fens.Length.ToString() + "): " + fen)
             let board = EngineBoard.FromFen(fen)
-            TranspositionTable.Reset()
             search.Reset(board, timeControl)
             let bestMove = search.DoTest(MaxDepth,ebm)
             let bm = OrderedMoveEntry.ToStr(bestMove)
