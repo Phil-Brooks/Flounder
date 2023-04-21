@@ -12,7 +12,7 @@ module MoveList =
 
     [<SetUp>]
     let Setup () =
-        AttackTable1.SetUp()
+        ()
 
     [<Test>]
     let CountKnightMovesAtB1() =

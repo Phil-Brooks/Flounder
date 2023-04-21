@@ -18,7 +18,6 @@ module OrderedMoveList =
         let moveSpanarr = Array.zeroCreate<OrdMoveEntryRec>(OrderedMoveList.SIZE)//stackalloc OrdMoveEntryRec[OrderedMoveList.SIZE];
         let mutable moveSpan = new Span<OrdMoveEntryRec>(moveSpanarr)
         let moveList = OrderedMoveList(moveSpan, plyFromRoot, KillerMvTbl, HistTbl)
-        BlackMagicBitBoardFactory.SetUp()
         let moveCount = moveList.NormalMoveGeneration(&board, OrdMove.Default)
         moveCount |> should equal 20
         let ans = moveList.[19]

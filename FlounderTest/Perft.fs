@@ -6,7 +6,7 @@ module Perft =
 
     [<SetUp>]
     let Setup () =
-        AttackTable1.SetUp()
+        ()
 
     [<Test>]
     let Depth1() =

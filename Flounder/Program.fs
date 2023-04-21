@@ -5,7 +5,6 @@ open System.IO
 
 [<EntryPoint>]
 let main argv =
-    AttackTable1.SetUp()
     NNUEb.ResetRefreshTable()
     let command = Environment.CommandLine
     if (command.ToLower().Contains("test")) then

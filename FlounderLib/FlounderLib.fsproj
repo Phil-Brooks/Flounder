@@ -20,10 +20,7 @@
     <Compile Include="OrdMove.fs" />
     <Compile Include="TranTable.fs" />
     <Compile Include="RepHist.fs" />
-    <Compile Include="AttackTable.fs" />
-    <Compile Include="UtilityTable.fs" />
-    <Compile Include="BlackMagicBitBoardFactory.fs" />
-    <Compile Include="AttackTable1.fs" />
+    <Compile Include="Attacks.fs" />
     <Compile Include="MoveList.fs" />
     <Compile Include="EngineBoard.fs" />
     <Compile Include="KillerMoveTable.fs" />

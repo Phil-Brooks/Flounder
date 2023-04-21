@@ -11,12 +11,12 @@ module MoveList =
         // First, we check if the square is being attacked by pawns.
         // To do this, we generate a reverse attack mask, letting our square act as a pawn and seeing if opposing
         // pawns exist on the squares in the mask. If so, our square can be attacked by pawns.
-        let pawnAttack = if by = 0 then AttackTable.BlackPawnAttacks.[sq] else AttackTable.WhitePawnAttacks.[sq]
+        let pawnAttack = if by = 0 then Attacks.BlackPawnAttacks.[sq] else Attacks.WhitePawnAttacks.[sq]
         if (pawnAttack &&& board.Pieces[by]) <> 0UL then true
         // Then, we check if the square is being attacked by knights.
         // To do this, we generate a reverse attack mask, letting our square act as a knight and seeing if opposing
         // knights exist on the squares in the mask. If so, our square can be attacked by knights.
-        elif (AttackTable.KnightMoves.[sq] &&& board.Pieces[Knight*2 + by]) <> 0UL then true
+        elif (Attacks.KnightMoves.[sq] &&& board.Pieces[Knight*2 + by]) <> 0UL then true
         else
             // Next, we check if the square is being attacked by sliding pieces.
             // To do this, first we need to find all occupied squares (by our and opposing pieces).
@@ -25,38 +25,38 @@ module MoveList =
             let queen = board.Pieces[Queen*2 + by]
             // Generate a reverse attack mask for rook, letting our square act as a rook and seeing if opposing rook or
             // queen exist on the squares in the mask. If so, our square can be attacked by either rook or queen.
-            let mutable mIndex = BlackMagicBitBoardFactory.GetMagicIndex(Rook, occupied, sq)
-            if (AttackTable.SlidingMoves.[mIndex] &&& (queen ||| board.Pieces[Rook*2 + by])) <> 0UL then true
+            let mutable mIndex = Attacks.GetMagicIndex(Rook, occupied, sq)
+            if (Attacks.SlidingMoves.[mIndex] &&& (queen ||| board.Pieces[Rook*2 + by])) <> 0UL then true
             else
                 // Generate a reverse attack mask for bishop, letting our square act as a rook and seeing if opposing
                 // bishop or queen exist on the squares in the mask. If so, our square can be attacked by either bishop
                 // or queen.
-                mIndex <- BlackMagicBitBoardFactory.GetMagicIndex(Bishop, occupied, sq)
-                if (AttackTable.SlidingMoves.[mIndex] &&& (queen ||| board.Pieces[Bishop*2 + by])) <> 0UL then true
+                mIndex <- Attacks.GetMagicIndex(Bishop, occupied, sq)
+                if (Attacks.SlidingMoves.[mIndex] &&& (queen ||| board.Pieces[Bishop*2 + by])) <> 0UL then true
                 else
                     // Lastly, we check if our square is being attacked by a king.
                     // We generate a reverse attack mask, letting our square act as king and then check if there if opposing
                     // king exists on the squares in the mask. If so, our square can be attacked by king.
                     // Otherwise, this square is completely safe from all pieces.
-                     (AttackTable.KingMoves.[sq] &&& board.Pieces[King*2 + by]) <> 0UL
+                     (Attacks.KingMoves.[sq] &&& board.Pieces[King*2 + by]) <> 0UL
     let CheckBitBoard(board:BoardRec, sq:int, by:int) =
         let mutable count = 0
         let mutable checks = 0UL
         // First we generate a pawn check.
-        let pawnAttack = if by = 0 then AttackTable.BlackPawnAttacks.[sq] else AttackTable.WhitePawnAttacks.[sq]
+        let pawnAttack = if by = 0 then Attacks.BlackPawnAttacks.[sq] else Attacks.WhitePawnAttacks.[sq]
         let pawnCheck = pawnAttack &&& board.Pieces[by]
         // Next, we generate a knight check.
-        let knightCheck = AttackTable.KnightMoves.[sq] &&& board.Pieces[Knight*2 + by]
+        let knightCheck = Attacks.KnightMoves.[sq] &&& board.Pieces[Knight*2 + by]
         // For sliding pieces, we use a BitBoard of all pieces.
         let occupied = board.Both
         // We will reference the queen along with rooks and bishops for the checks.
         let queen = board.Pieces[Queen*2 + by]
         // Now, we generate a rook or queen (straight only) check.
-        let mutable mIndex = BlackMagicBitBoardFactory.GetMagicIndex(Rook, occupied, sq)
-        let rookQueenCheck = AttackTable.SlidingMoves.[mIndex] &&& (queen ||| board.Pieces[Rook*2 + by])
+        let mutable mIndex = Attacks.GetMagicIndex(Rook, occupied, sq)
+        let rookQueenCheck = Attacks.SlidingMoves.[mIndex] &&& (queen ||| board.Pieces[Rook*2 + by])
         // Next, we generate a bishop or queen (diagonal only) check.
-        mIndex <- BlackMagicBitBoardFactory.GetMagicIndex(Bishop, occupied, sq)
-        let bishopQueenCheck = AttackTable.SlidingMoves.[mIndex] &&& (queen ||| board.Pieces[Bishop*2 + by])
+        mIndex <- Attacks.GetMagicIndex(Bishop, occupied, sq)
+        let bishopQueenCheck = Attacks.SlidingMoves.[mIndex] &&& (queen ||| board.Pieces[Bishop*2 + by])
         if pawnCheck <> 0UL then
             // If there is a pawn check, we must add it to the checks and raise the check count.
             checks <- checks ||| pawnCheck
@@ -69,7 +69,7 @@ module MoveList =
             // If there is a rook-queen check hit, we must add in the checks as well as the path from square to
             // rook or queen.
             let rqSq = Bits.ToInt(rookQueenCheck)
-            checks <- checks ||| UtilityTable.Between.[sq].[int(rqSq)] ||| Bits.FromSq(rqSq)
+            checks <- checks ||| Attacks.Between.[sq].[int(rqSq)] ||| Bits.FromSq(rqSq)
             count<-count+1
             // In the case where pawn promotes to queen or rook, we have a secondary check as well.
             if Bits.Count(rookQueenCheck) > 1 then count<-count+1
@@ -77,7 +77,7 @@ module MoveList =
             // If there is a bishop-queen check hit, we must add in the checks as well as the path from square to
             // bishop or queen.
             let bqSq:int = Bits.ToInt(bishopQueenCheck)
-            checks <- checks ||| UtilityTable.Between.[sq].[int(bqSq)] ||| Bits.FromSq(bqSq)
+            checks <- checks ||| Attacks.Between.[sq].[int(bqSq)] ||| Bits.FromSq(bqSq)
             count<-count+1
         
         if checks = 0UL then checks <- UInt64.MaxValue
@@ -91,23 +91,23 @@ module MoveList =
         // We will reference the queen along with rooks and bishops for the checks.
         let queen = board.Pieces[Queen*2 + by]
         // First, we generate all rook / queen (straight only) attacks.
-        let mutable mIndex = BlackMagicBitBoardFactory.GetMagicIndex(Rook, byBoard, sq)
-        let rookQueenCheck = AttackTable.SlidingMoves.[mIndex] &&& (queen ||| board.Pieces[Rook*2 + by])
+        let mutable mIndex = Attacks.GetMagicIndex(Rook, byBoard, sq)
+        let rookQueenCheck = Attacks.SlidingMoves.[mIndex] &&& (queen ||| board.Pieces[Rook*2 + by])
         // Next, we generate all bishop / queen (diagonal only) attacks.
-        mIndex <- BlackMagicBitBoardFactory.GetMagicIndex(Bishop, byBoard, sq)
-        let bishopQueenCheck = AttackTable.SlidingMoves.[mIndex] &&& (queen ||| board.Pieces[Bishop*2 + by])
+        mIndex <- Attacks.GetMagicIndex(Bishop, byBoard, sq)
+        let bishopQueenCheck = Attacks.SlidingMoves.[mIndex] &&& (queen ||| board.Pieces[Bishop*2 + by])
         let mutable horizontalVerticalPin = 0UL
         let mutable diagonalPin = 0UL
         // Iterate over the rooks and queens (pinning straight).
         let rqSqarr = Bits.ToArray(rookQueenCheck)
         let dorqSq rqSq =
-            let possiblePin = UtilityTable.Between.[sq].[rqSq] ||| Bits.FromSq(rqSq)
+            let possiblePin = Attacks.Between.[sq].[rqSq] ||| Bits.FromSq(rqSq)
             if Bits.Count(possiblePin &&& usBoard) = 1 then horizontalVerticalPin <- horizontalVerticalPin ||| possiblePin
         Array.iter dorqSq rqSqarr
         // Iterate over the bishops and queens (pinning diagonally).
         let bqSqarr = Bits.ToArray(bishopQueenCheck)
         let dobqSq bqSq =
-            let possiblePin = UtilityTable.Between.[sq].[bqSq] ||| Bits.FromSq(bqSq)
+            let possiblePin = Attacks.Between.[sq].[bqSq] ||| Bits.FromSq(bqSq)
             if Bits.Count(possiblePin &&& usBoard) = 1 then diagonalPin <- diagonalPin ||| possiblePin
         Array.iter dobqSq bqSqarr
         (horizontalVerticalPin, diagonalPin)
@@ -138,12 +138,12 @@ module MoveList =
                 let epTargetPieceExists =  Bits.IsSet(board.Pieces[oppositeColor], epPieceSq)
                 // We need to check if a piece of ours exists to actually execute the EP.
                 // We do this by running a reverse pawn mask, to determine whether a piece of ours is on the corner.
-                let reverseCorner = if color = 0 then AttackTable.BlackPawnAttacks.[board.EnPassantTarget] else AttackTable.WhitePawnAttacks[board.EnPassantTarget]
+                let reverseCorner = if color = 0 then Attacks.BlackPawnAttacks.[board.EnPassantTarget] else Attacks.WhitePawnAttacks[board.EnPassantTarget]
                 if (epTargetPieceExists && Bits.IsSet(reverseCorner, from)) then
                     // If both the enemy EP piece and our piece that can theoretically EP exist...
                     moves <- moves ||| Bits.FromSq(board.EnPassantTarget)
             // Attack Moves.
-            let attack = if color = 0 then AttackTable.WhitePawnAttacks.[from] else AttackTable.BlackPawnAttacks.[from]
+            let attack = if color = 0 then Attacks.WhitePawnAttacks.[from] else Attacks.BlackPawnAttacks.[from]
             // Make sure attacks are only on opposite pieces (and not on empty squares or squares occupied by
             // our pieces).
             moves <- moves ||| (attack &&& opposite &&& c)
@@ -196,12 +196,12 @@ module MoveList =
             let epTargetPieceExists = Bits.IsSet(board.Pieces[oppositeColor], epPieceSq)
             // We need to check if a piece of ours exists to actually execute the EP.
             // We do this by running a reverse pawn mask, to determine whether a piece of ours is on the corner.
-            let reverseCorner = if color = 0 then AttackTable.BlackPawnAttacks.[board.EnPassantTarget] else AttackTable.WhitePawnAttacks[board.EnPassantTarget]
+            let reverseCorner = if color = 0 then Attacks.BlackPawnAttacks.[board.EnPassantTarget] else Attacks.WhitePawnAttacks[board.EnPassantTarget]
             if (epTargetPieceExists && Bits.IsSet(reverseCorner, from)) then
                 // If both the enemy EP piece and our piece that can theoretically EP exist...
                 moves <- moves ||| Bits.FromSq(board.EnPassantTarget)
         // Attack Moves.
-        let attack = if color = 0 then AttackTable.WhitePawnAttacks.[from] else AttackTable.BlackPawnAttacks.[from]
+        let attack = if color = 0 then Attacks.WhitePawnAttacks.[from] else Attacks.BlackPawnAttacks.[from]
        // Make sure attacks are only on opposite pieces (and not on empty squares or squares occupied by
         // our pieces).
         moves <- moves ||| (attack &&& opposite &&& c)
@@ -257,8 +257,8 @@ module MoveList =
         if Bits.IsSet(d, from) then moves
         else
             // Calculate pseudo-legal moves within check board.
-            let mIndex = BlackMagicBitBoardFactory.GetMagicIndex(Rook, board.Both, from)
-            moves <- moves ||| AttackTable.SlidingMoves.[mIndex] &&& ~~~(colBoard) &&& c
+            let mIndex = Attacks.GetMagicIndex(Rook, board.Both, from)
+            moves <- moves ||| Attacks.SlidingMoves.[mIndex] &&& ~~~(colBoard) &&& c
             // If rook is horizontally or vertically pinned, it can only move within the pin.
             if Bits.IsSet(hv, from) then moves <- moves &&& hv
             moves
@@ -267,7 +267,7 @@ module MoveList =
         let colBoard = if color = White then board.White else board.Black
         if Bits.IsSet(hv, from) || Bits.IsSet(d, from) then moves
         else
-            moves <- moves ||| AttackTable.KnightMoves.[from] &&& ~~~(colBoard) &&& c
+            moves <- moves ||| Attacks.KnightMoves.[from] &&& ~~~(colBoard) &&& c
             moves
     let LegalBishopMoves(color:int, board:BoardRec, from:int, hv:uint64, d:uint64, c:uint64) =
         let mutable moves = 0UL
@@ -276,8 +276,8 @@ module MoveList =
         if Bits.IsSet(hv, from) then moves
         else
             // Calculate pseudo-legal moves within check board.
-            let mIndex = BlackMagicBitBoardFactory.GetMagicIndex(Bishop, board.Both, from)
-            moves <- moves ||| AttackTable.SlidingMoves.[mIndex] &&& ~~~(colBoard) &&& c
+            let mIndex = Attacks.GetMagicIndex(Bishop, board.Both, from)
+            moves <- moves ||| Attacks.SlidingMoves.[mIndex] &&& ~~~(colBoard) &&& c
             // If bishop is diagonally pinned, it can only move within the pin.
             if Bits.IsSet(d, from) then moves <- moves &&& d
             moves
@@ -288,7 +288,7 @@ module MoveList =
         let mutable moves = 0UL
         let colBoard = if color = White then board.White else board.Black
         // Normal
-        let mutable kingMoves = AttackTable.KingMoves.[from]
+        let mutable kingMoves = Attacks.KingMoves.[from]
         kingMoves <- kingMoves &&& ~~~(colBoard)
         // If we have no king moves, we can return earlier and avoiding having to check if the moves are legal
         // or not by removing the king.

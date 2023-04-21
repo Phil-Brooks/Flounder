@@ -1,8 +1,6 @@
 ﻿namespace FlounderBench
 open FlounderLib
 open BenchmarkDotNet.Attributes
-open System
-open System.IO
 
 type Overall() =
 
@@ -10,8 +8,7 @@ type Overall() =
     
     [<GlobalSetup>]
     member _.Setup() =
-        AttackTable1.SetUp()
-        BlackMagicBitBoardFactory.SetUp()
+        ()
      
     [<Benchmark>]
     member _.Overall() = 
