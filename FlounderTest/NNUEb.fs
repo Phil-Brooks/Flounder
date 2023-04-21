@@ -224,11 +224,11 @@ module NNUEb =
     let TestBroken() =
     //Issue with King Move
         let fen = "rnb1kbnr/ppp2ppp/8/3qN3/3Pp3/8/PPP2PPP/RNBQKB1R b KQkq d3 0 5"
-        let engbrd = EngineBoard.FromFen(fen)
-        NNUEb.ResetAccumulator(engbrd.Brd,0)
-        NNUEb.ResetAccumulator(engbrd.Brd,1)
+        let mutable engbrd = Board.FromFen(fen)
+        NNUEb.ResetAccumulator(engbrd,0)
+        NNUEb.ResetAccumulator(engbrd,1)
         NNUEb.ResetRefreshTable()
         let mutable mv = OrdMove.Create(E4, D3, PromNone)
-        let mutable rv = engbrd.Move(&mv)
-        let ans = NNUEb.OutputLayer(engbrd.Brd)
+        let mutable rv = EngBoard.Move(&engbrd,&mv)
+        let ans = NNUEb.OutputLayer(engbrd)
         ans|>should equal -45

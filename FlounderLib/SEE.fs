@@ -2,11 +2,11 @@
 
 module SEE =
     let Internal = [| 82;337;365;477;1025;0;0 |]
-    let inline Approximate(board:EngineBoard, move:OrdMoveEntryRec) =
-        let from = board.PieceOnly(move.From)
-        let mutable mto = board.PieceOnly(move.To)
+    let inline Approximate(board:BoardRec, move:OrdMoveEntryRec) =
+        let from = EngBoard.PieceOnly(board,move.From)
+        let mutable mto = EngBoard.PieceOnly(board,move.To)
         // In case of En Passant, we set the target piece to a pawn.
-        if (from = Pawn && move.To = board.Brd.EnPassantTarget) then mto <- Pawn
+        if (from = Pawn && move.To = board.EnPassantTarget) then mto <- Pawn
         let mutable value = Internal.[mto]
         if move.Promotion <> PromNone then
             // In the case of a promotion, increment with the difference of the promotion and pawn.
