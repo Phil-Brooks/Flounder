@@ -82,7 +82,7 @@ type OrderedMoveList =
                 // Generate all pawn moves.
                 let fromarr = Bits.ToArray(board.Pieces[stm])
                 for from in fromarr do
-                    let moveList = MoveList(&board, from, Pawn, stm, hv, d, checks)
+                    let moveList = MoveList.NotDouble(&board, from, Pawn, hv, d, checks)
                     let movearr = Bits.ToArray(moveList.Moves)
                     for move in movearr do
                         if (moveList.Promotion) then
@@ -98,7 +98,7 @@ type OrderedMoveList =
                 for piece in [Rook;Knight;Bishop;Queen] do
                     let fromarr = Bits.ToArray(board.Pieces[piece*2 + stm])
                     for from in fromarr do
-                        let moveList = MoveList(&board, from, piece, stm, hv, d, checks)
+                        let moveList = MoveList.NotDouble(&board, from, piece, hv, d, checks)
                         let movearr = Bits.ToArray(moveList.Moves)
                         for move in movearr do
                             this.Internal.[i] <- OrdMove.Create(from, move, PromNone)
@@ -107,7 +107,7 @@ type OrderedMoveList =
             // Generate all king moves.
             let fromarr = Bits.ToArray(board.Pieces[King*2 + stm])
             for from in fromarr do
-                let moveList = MoveList(&board, from, King, stm, hv, d, checks)
+                let moveList = MoveList.NotDouble(&board, from, King, hv, d, checks)
                 let movearr = Bits.ToArray(moveList.Moves)
                 for move in movearr do
                     this.Internal.[i] <- OrdMove.Create(from, move, PromNone)
@@ -131,7 +131,7 @@ type OrderedMoveList =
                 // Generate all pawn moves.
                 let fromarr = Bits.ToArray(board.Pieces[stm])
                 for from in fromarr do
-                    let moveList = MoveList(&board, from, hv, d, checks)
+                    let moveList = MoveList.ForPawns(&board, from, hv, d, checks)
                     let movearr = Bits.ToArray(moveList.Moves)
                     for move in movearr do
                         if moveList.Promotion then
@@ -147,7 +147,7 @@ type OrderedMoveList =
                 for piece in [Rook;Knight;Bishop;Queen] do
                     let fromarr = Bits.ToArray(board.Pieces[piece*2 + stm])
                     for from in fromarr do
-                        let moveList = MoveList(&board, from, piece, stm, hv, d, checks)
+                        let moveList = MoveList.NotDouble(&board, from, piece, hv, d, checks)
                         let movearr = Bits.ToArray((moveList.Moves &&& opposite))
                         for move in movearr do
                             this.Internal.[i] <- OrdMove.Create(from, move, PromNone)
@@ -156,7 +156,7 @@ type OrderedMoveList =
             // Generate all king moves.
             let fromarr = Bits.ToArray(board.Pieces[King*2 + stm])
             for from in fromarr do
-                let moveList = MoveList(&board, from, King, stm, hv, d, checks)
+                let moveList = MoveList.NotDouble(&board, from, King, hv, d, checks)
                 let movearr = Bits.ToArray((moveList.Moves &&& opposite))
                 for move in movearr do
                     this.Internal.[i] <- OrdMove.Create(from, move, PromNone)

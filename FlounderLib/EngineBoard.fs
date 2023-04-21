@@ -17,7 +17,7 @@ type EngineBoard =
     member this.IsRepetition() = 
         RepHist.Count(this.Brd.ZobristHash) > 1
     member this.GuiMove(from:int, mto:int, promotion:int) =
-        let moveList = MoveList(&this.Brd, from)
+        let moveList = MoveList.ForSq(&this.Brd, from)
         if not(Bits.IsSet(moveList.Moves, mto)) then raise (InvalidOperationException("Invalid move provided by GUI."))
         if (promotion <> PromNone && not moveList.Promotion) then
             raise (InvalidOperationException("Invalid move provided by GUI."))

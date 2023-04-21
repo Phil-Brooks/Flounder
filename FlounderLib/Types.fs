@@ -2,7 +2,7 @@
 
 [<AutoOpen>]
 module Types =
-    let VersionNo = "0.4.3.8"
+    let VersionNo = "0.4.3.9"
 
     // The type of piece.
     let WhitePawn = 0
@@ -207,6 +207,19 @@ module Types =
             mutable HashFilter:int
             mutable Internal:TranEntryRec array
         }
+
+    type MoveListRec =
+        {
+            Board:BoardRec
+            From:int
+            Hv:uint64
+            D:uint64
+            C:uint64
+            Moves:uint64
+            Count:int
+            Promotion:bool
+        }
+
 
 module Piece =
     let ToStr(pc:int) = PcChars[pc].ToString()
