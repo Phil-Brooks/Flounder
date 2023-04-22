@@ -10,9 +10,7 @@ type MoveSearch =
 #endif
     val mutable TotalNodeSearchCount:int
     val mutable SelectiveDepth:int 
-    val mutable SearchEffort:MoveSearchEffortTable
     val mutable PvTable:PrincipleVariationTable
-    val mutable MvSrchStck:MoveSearchStack
     val mutable ReducedTimeMove:OrdMoveEntryRec
     val mutable TimeCntrl:TimeControl
     new(timeControl:TimeControl) =
@@ -22,9 +20,7 @@ type MoveSearch =
 #endif
             TotalNodeSearchCount = 0
             SelectiveDepth = 0
-            SearchEffort = MoveSearchEffortTable.Default
             PvTable = PrincipleVariationTable.Default
-            MvSrchStck = MoveSearchStack.Default
             ReducedTimeMove = OrdMove.Default
             TimeCntrl = timeControl
         }
@@ -36,9 +32,9 @@ type MoveSearch =
         this.SelectiveDepth <- 0
         Hist.Clear()
         KillMv.Clear()
-        this.SearchEffort.Clear()
+        SrchEff.Clear()
         this.PvTable.Clear()
-        this.MvSrchStck.Clear()
+        SrchStack.Clear()
         this.ReducedTimeMove <- OrdMove.Default
         this.TimeCntrl <- timeControl
     member this.PvLine() = 
@@ -58,7 +54,7 @@ type MoveSearch =
         // Check whether we're past the depth to start reducing our search time with node counting and make sure that
         // we're past the required effort threshold to do this move quickly.
         if depth >= 8 && this.TimeCntrl.TimeLeft() <> 0 && not timePreviouslyUpdated
-           && this.SearchEffort.[bestMove.From, bestMove.To] * 100 / this.TotalNodeSearchCount >= 95 then
+           && SrchEff.Get(bestMove.From, bestMove.To) * 100 / this.TotalNodeSearchCount >= 95 then
             timePreviouslyUpdated <- true
             this.TimeCntrl.ChangeTime(this.TimeCntrl.Time / 3)
             this.ReducedTimeMove <- bestMove
@@ -241,11 +237,11 @@ type MoveSearch =
                 // As that evaluation isn't truly static and may have been from a previous deep search.
                 let positionalEvaluation = if transpositionHit then transpositionMove.Score else NNUEb.OutputLayer()
                 // Also store the evaluation to later check if it improved.
-                this.MvSrchStck.[plyFromRoot].PositionalEvaluation <- positionalEvaluation
+                SrchStack.Set(plyFromRoot, positionalEvaluation)
         
                 if not isPvNode && not inCheck then
                     // Roughly estimate whether the deeper search improves the position or not.
-                    improving <- plyFromRoot >= 2 && positionalEvaluation >= this.MvSrchStck.[plyFromRoot - 2].PositionalEvaluation
+                    improving <- plyFromRoot >= 2 && positionalEvaluation >= SrchStack.Get(plyFromRoot - 2)
                     // If our depth is less than our threshold and our beta is less than mate on each end of the number
                     // line, then attempting reverse futility pruning is safe.
                     // We calculate margined positional evaluation as the difference between the current positional
@@ -335,7 +331,7 @@ type MoveSearch =
                                     // We had a beta cutoff, hence it's a beta cutoff entry.
                                     transpositionTableEntryType <- BetaCutoff
                                     keepgoing <- false
-                                if rootNode then this.SearchEffort.[move.From, move.To] <- this.TotalNodeSearchCount - previousNodeCount
+                                if rootNode then SrchEff.Set(move.From, move.To, this.TotalNodeSearchCount - previousNodeCount)
                                 i <- i + 1
                         
                         bestMoveSoFar.Score <- bestEvaluation
