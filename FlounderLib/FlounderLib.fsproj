@@ -29,8 +29,8 @@
     <Compile Include="OrdMoves.fs" />
     <Compile Include="SrchEff.fs" />
     <Compile Include="SrchStack.fs" />
-    <Compile Include="PrincipleVariationTable.fs" />
-    <Compile Include="TimeControl.fs" />
+    <Compile Include="PrincVars.fs" />
+    <Compile Include="TimeCntrl.fs" />
     <Compile Include="SEE.fs" />
     <Compile Include="MoveSearch.fs" />
     <Compile Include="Perft.fs" />

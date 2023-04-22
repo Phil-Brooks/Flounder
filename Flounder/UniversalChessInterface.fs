@@ -21,7 +21,7 @@ module UniversalChessInterface =
     let mutable Search:MoveSearch option = None
     EngBoard.Default()
     let mutable Busy = false
-    let mutable TmCntrl = TimeControl(9999999)
+    TimeCntrl.FromTime(9999999)
     let mutable MvCount = 0
     let HandleSetOption(input:string) =
         if (input.ToLower().Contains("setoption")) then
@@ -84,7 +84,7 @@ module UniversalChessInterface =
                 let mutable depth = maxDepth
                 let mutable movesToGo = -1
                 if (args.Length = 1) then
-                    TmCntrl <- TimeControl(time)
+                    TimeCntrl.FromTime(time)
                 else
                     let mutable timeSpecified = false
                     let timeForColor = Array.zeroCreate<int>(2)
@@ -123,11 +123,11 @@ module UniversalChessInterface =
                                 getargs (argPosition+1)
                     getargs 1
                     let stm = Brd.Stm
-                    if (time = maxTime || timeSpecified) then TmCntrl <- TimeControl(time)
-                    else TmCntrl <- TimeControl(movesToGo, timeForColor, timeIncForColor, stm, MvCount)
+                    if (time = maxTime || timeSpecified) then TimeCntrl.FromTime(time)
+                    else TimeCntrl.FromMoves(movesToGo, timeForColor, timeIncForColor, stm, MvCount)
                 let factory = TaskFactory()
                 let doSearch() =
-                    Search.Value.Reset(TmCntrl)
+                    Search.Value.Reset()
                     Busy <- true
                     let bestMove = Search.Value.IterativeDeepening(depth)
                     Busy <- false
@@ -136,10 +136,10 @@ module UniversalChessInterface =
                     Console.WriteLine("TT Count: " +  Search.Value.TableCutoffCount.ToString())
         #endif
                     MvCount <- MvCount + 1
-                factory.StartNew(doSearch, TmCntrl.Token)|>ignore
+                factory.StartNew(doSearch, Tc.Token)|>ignore
     let HandleStop(input:string) =
         if (input.ToLower().Equals("stop")) && Busy then
-            TmCntrl.ChangeTime(0)
+            TimeCntrl.ChangeTime(0)
     let Setup() =
         Busy <- false
         UciStdInputThread.CommandReceived.Add(fun (_ ,input) -> HandleSetOption(input))
@@ -151,7 +151,7 @@ module UniversalChessInterface =
         UciStdInputThread.CommandReceived.Add(fun (_ ,input) -> HandleStop(input))
     let LaunchUci() =
         // Initialize default UCI parameters.
-        Search <- Some(MoveSearch(TmCntrl))
+        Search <- Some(MoveSearch())
         // Provide identification information.
         Console.WriteLine("id name " + NAME)
         Console.WriteLine("id author " + AUTHOR)

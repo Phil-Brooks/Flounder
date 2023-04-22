@@ -1,4 +1,5 @@
 ﻿namespace FlounderLib
+open System.Threading
 
 [<AutoOpen>]
 module Globals =
@@ -20,4 +21,11 @@ module Globals =
             BlackQCastle = 0
             EnPassantTarget = 0
             ZobristHash = 0UL
+        }
+    let mutable Tc =
+        {
+            Source = new CancellationTokenSource()
+            Token = new CancellationToken()
+            StartTime = 0L
+            Time = 0
         }

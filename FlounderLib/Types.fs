@@ -1,8 +1,9 @@
 ﻿namespace FlounderLib
+open System.Threading
 
 [<AutoOpen>]
 module Types =
-    let VersionNo = "0.4.4.4"
+    let VersionNo = "0.4.4.5"
 
     // The type of piece.
     let WhitePawn = 0
@@ -226,6 +227,13 @@ module Types =
             mutable KillerMoveTwo:OrdMoveEntryRec
         }
 
+    type TimeControl =
+        {
+            mutable Source:CancellationTokenSource
+            mutable Token:CancellationToken
+            mutable StartTime:int64
+            mutable Time:int
+        }
 
 module Piece =
     let ToStr(pc:int) = PcChars[pc].ToString()

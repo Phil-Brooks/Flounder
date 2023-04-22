@@ -30,8 +30,8 @@ module Tester =
             "r2qkb1r/1ppb1ppp/p7/4p3/P1Q1P3/2P5/5PPP/R1B2KNR b kq - bm d7b5"
         |]
     let Test (argv:string array) =
-        let timeControl = TimeControl(9999999)
-        let search = MoveSearch(timeControl)
+        TimeCntrl.FromTime(9999999)
+        let search = MoveSearch()
         let stopwatch = new Stopwatch()
         stopwatch.Start()
         let fens =
@@ -44,7 +44,7 @@ module Tester =
             let ebm = bits.[1].Trim()
             Console.WriteLine("Position (" + (i + 1).ToString() + "/" + fens.Length.ToString() + "): " + fen)
             EngBoard.FromFen(fen)
-            search.Reset(timeControl)
+            search.Reset()
             let bestMove = search.DoTest(MaxDepth,ebm)
             let bm = OrdMove.ToStr(bestMove)
             Console.WriteLine("bestmove " + bm)

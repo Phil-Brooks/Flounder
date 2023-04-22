@@ -10,21 +10,17 @@ type MoveSearch =
 #endif
     val mutable TotalNodeSearchCount:int
     val mutable SelectiveDepth:int 
-    val mutable PvTable:PrincipleVariationTable
     val mutable ReducedTimeMove:OrdMoveEntryRec
-    val mutable TimeCntrl:TimeControl
-    new(timeControl:TimeControl) =
+    new() =
         {
 #if DEBUG
             TableCutoffCount = 0
 #endif
             TotalNodeSearchCount = 0
             SelectiveDepth = 0
-            PvTable = PrincipleVariationTable.Default
             ReducedTimeMove = OrdMove.Default
-            TimeCntrl = timeControl
         }
-    member this.Reset(timeControl:TimeControl) =
+    member this.Reset() =
 #if DEBUG
         this.TableCutoffCount <- 0
 #endif
@@ -33,15 +29,14 @@ type MoveSearch =
         Hist.Clear()
         KillMv.Clear()
         SrchEff.Clear()
-        this.PvTable.Clear()
+        PrincVars.Clear()
         SrchStack.Clear()
         this.ReducedTimeMove <- OrdMove.Default
-        this.TimeCntrl <- timeControl
     member this.PvLine() = 
         let pv = StringBuilder()
-        let count = this.PvTable.Count()
+        let count = PrincVars.Count()
         for i = 0 to count-1 do
-            let move:OrdMoveEntryRec = this.PvTable.Get(i)
+            let move:OrdMoveEntryRec = PrincVars.Get(i)
             pv.Append(Square.ToStr(move.From)).Append(Square.ToStr(move.To))|>ignore
             if move.Promotion <> PromNone then pv.Append(Promotion.ToStr(move.Promotion))|>ignore
             pv.Append(' ')|>ignore
@@ -53,15 +48,15 @@ type MoveSearch =
         // across depths. Thus it's reasonable to end the search earlier and make the move instantly.
         // Check whether we're past the depth to start reducing our search time with node counting and make sure that
         // we're past the required effort threshold to do this move quickly.
-        if depth >= 8 && this.TimeCntrl.TimeLeft() <> 0 && not timePreviouslyUpdated
+        if depth >= 8 && TimeCntrl.TimeLeft() <> 0 && not timePreviouslyUpdated
            && SrchEff.Get(bestMove.From, bestMove.To) * 100 / this.TotalNodeSearchCount >= 95 then
             timePreviouslyUpdated <- true
-            this.TimeCntrl.ChangeTime(this.TimeCntrl.Time / 3)
+            TimeCntrl.ChangeTime(Tc.Time / 3)
             this.ReducedTimeMove <- bestMove
         if timePreviouslyUpdated && bestMove <> this.ReducedTimeMove then
             // In the rare case that our previous node count guess was incorrect, give us a little bit more time
             // to see if we can find a better move.
-            this.TimeCntrl.ChangeTime(this.TimeCntrl.Time * 3)
+            TimeCntrl.ChangeTime(Tc.Time * 3)
         timePreviouslyUpdated
     member this.DepthSearchLog(depth:int, evaluation:int, stopwatch:Stopwatch) =
         let elapSec = float(stopwatch.ElapsedMilliseconds) / 1000.0
@@ -76,7 +71,7 @@ type MoveSearch =
         //// If we're out of time, we should exit the search as fast as possible.
         //// NOTE: Due to the nature of this exit (using exceptions to do it as fast as possible), the board state
         //// is not reverted. Thus, a cloned board must be provided.
-        if (this.TimeCntrl.Finished()) then raise (OperationCanceledException())
+        if (TimeCntrl.Finished()) then raise (OperationCanceledException())
         if isPvNode then this.SelectiveDepth <- Math.Max(this.SelectiveDepth, plyFromRoot)
         let mutable ans = None 
         if not isPvNode then
@@ -148,9 +143,9 @@ type MoveSearch =
         // If we're out of time, we should exit the search as fast as possible.
         // NOTE: Due to the nature of this exit (using exceptions to do it as fast as possible), the board state
         // is not reverted. Thus, a cloned board must be provided.
-        if (this.TimeCntrl.Finished()) then raise (OperationCanceledException())
+        if (TimeCntrl.Finished()) then raise (OperationCanceledException())
         if isPvNode then 
-            this.PvTable.InitializeLength(plyFromRoot)
+            PrincVars.InitializeLength(plyFromRoot)
             this.SelectiveDepth <- Math.Max(this.SelectiveDepth, plyFromRoot)
         // At depth 0 (or less in the case of reductions etc.), since we may be having a capture train, we should
         // jump into QSearch and evaluate even deeper. In the case of no captures available, QSearch will throw us
@@ -356,7 +351,7 @@ type MoveSearch =
             // If we're out of time, we should exit the search as fast as possible.
             // NOTE: Due to the nature of this exit (using exceptions to do it as fast as possible), the board state
             // is not reverted. Thus, a cloned board must be provided.
-            if this.TimeCntrl.Finished() then raise (OperationCanceledException())
+            if TimeCntrl.Finished() then raise (OperationCanceledException())
             // We should reset our window if it's too far gone because the gradual increase isn't working.
             // In the case our alpha is far below our aspiration bound, we should reset it to negative infinity for
             // our research.
@@ -385,15 +380,15 @@ type MoveSearch =
             let stopwatch = Stopwatch.StartNew()
             let mutable timePreviouslyUpdated = false
             let rec getbm cureval curdepth =
-                if not (this.TimeCntrl.Finished() || curdepth > selectedDepth) then
+                if not (TimeCntrl.Finished() || curdepth > selectedDepth) then
                     let eval = this.AspirationSearch(curdepth, cureval)
-                    bestMove <- this.PvTable.Get(0)
+                    bestMove <- PrincVars.Get(0)
                     // Try counting nodes to see if we can exit the search early.
                     timePreviouslyUpdated <- this.NodeCounting(curdepth, bestMove, timePreviouslyUpdated)
                     this.DepthSearchLog(curdepth, eval, stopwatch)
                     // In the case we are past a certain depth, and are really low on time, it's highly unlikely we'll
                     // finish the next depth in time. To save time, we should just exit the search early.
-                    if not (curdepth > 5 && float(this.TimeCntrl.TimeLeft()) <= float(this.TimeCntrl.Time) * 0.2) then
+                    if not (curdepth > 5 && float(TimeCntrl.TimeLeft()) <= float(Tc.Time) * 0.2) then
                         getbm eval (curdepth + 1)
             getbm -100000000 1                    
         with
@@ -406,9 +401,9 @@ type MoveSearch =
             let stopwatch = Stopwatch.StartNew()
             let mutable timePreviouslyUpdated = false
             let rec getbm cureval curdepth =
-                if not (this.TimeCntrl.Finished() || curdepth > selectedDepth) then
+                if not (TimeCntrl.Finished() || curdepth > selectedDepth) then
                     let eval = this.AspirationSearch(curdepth, cureval)
-                    bestMove <- this.PvTable.Get(0)
+                    bestMove <- PrincVars.Get(0)
                     // Try counting nodes to see if we can exit the search early.
                     timePreviouslyUpdated <- this.NodeCounting(curdepth, bestMove, timePreviouslyUpdated)
                     this.DepthSearchLog(curdepth, eval, stopwatch)
@@ -474,14 +469,14 @@ type MoveSearch =
             bestMoveSoFar <- move
             if isPvNode then
                 // Insert move into PV Table.
-                this.PvTable.Insert(plyFromRoot, &bestMoveSoFar)
+                PrincVars.Insert(plyFromRoot, &bestMoveSoFar)
                 // Copy moves from lesser ply to current ply PV Line.
                 let mutable nextPly = plyFromRoot + 1
-                while (this.PvTable.PlyInitialized(plyFromRoot, nextPly)) do
-                    this.PvTable.Copy(plyFromRoot, nextPly)
+                while (PrincVars.PlyInitialized(plyFromRoot, nextPly)) do
+                    PrincVars.Copy(plyFromRoot, nextPly)
                     nextPly <- nextPly+1
                 // Update our PV Length.
-                this.PvTable.UpdateLength(plyFromRoot)
+                PrincVars.UpdateLength(plyFromRoot)
             if evaluation <= alpha then true
             else
                 // If our evaluation was better than our alpha (best unavoidable evaluation so far), then we should
