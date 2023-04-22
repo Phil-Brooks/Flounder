@@ -110,11 +110,9 @@ type MoveSearch =
                 // In the case that our current evaluation is better than our alpha, we need to recalibrate alpha to make sure
                 // we don't skip over our already good move.
                 if earlyEval > alpha then alpha <- earlyEval
-                // Allocate memory on the stack to be used for our move-list.
-                let moveSpanarr = Array.zeroCreate<OrdMoveEntryRec>(OrderedMoveList.SIZE)//stackalloc OrdMoveEntryRec[OrderedMoveList.SIZE];
-                let mutable moveSpan = new Span<OrdMoveEntryRec>(moveSpanarr)
-                let moveList = OrderedMoveList(moveSpan, plyFromRoot)
-                let moveCount = moveList.QSearchMoveGeneration(OrdMove.Default)
+                let movearr:OrdMoveEntryRec array = Array.zeroCreate OrdMoves.SIZE
+                let moveList = OrdMoves.Create(movearr, plyFromRoot)
+                let moveCount = OrdMoves.QSearchMoveGeneration(moveList, OrdMove.Default)
                 let mutable bestEvaluation = earlyEval
                 // Calculate next iteration variables before getting into the loop.
                 let nextDepth = depth - 1
@@ -124,8 +122,8 @@ type MoveSearch =
                 while (keepgoing && i < moveCount) do
                     // We should being the move that's likely to be the best move at this depth to the top. This ensures
                     // that we are searching through the likely best moves first, allowing us to return early.
-                    moveList.SortNext(i, moveCount)
-                    let mutable move = moveList.[i]
+                    OrdMoves.SortNext(moveList, i, moveCount)
+                    let mutable move = OrdMoves.Get(moveList, i)
                     // Calculate approximation of SEE.
                     let see = SEE.Approximate(move)
                     // If SEE + the positional evaluation is greater than beta, then this capture is far too good, and hence
@@ -278,11 +276,9 @@ type MoveSearch =
                     let cdepth = if inCheck then idepth + 1 else idepth
                     // Reduce depth if there are no transposition hits and we're at a high enough depth to do it safely.
                     let depth = if (cdepth > 3 && not transpositionHit) then cdepth - 1 else cdepth
-                    // Allocate memory on the stack to be used for our move-list.
-                    let moveSpanarr = Array.zeroCreate<OrdMoveEntryRec>(OrderedMoveList.SIZE)
-                    let mutable moveSpan = new Span<OrdMoveEntryRec>(moveSpanarr)
-                    let moveList = OrderedMoveList(moveSpan, plyFromRoot)
-                    let moveCount = moveList.NormalMoveGeneration(transpositionMove)
+                    let movearr:OrdMoveEntryRec array = Array.zeroCreate OrdMoves.SIZE
+                    let moveList = OrdMoves.Create(movearr, plyFromRoot)
+                    let moveCount = OrdMoves.NormalMoveGeneration(moveList, transpositionMove)
                     if moveCount = 0 then
                         // If we had no moves at this depth, we should check if our king is in check. If our king is in check, it
                         // means we lost as nothing can save the king anymore. Otherwise, it's a stalemate where we can't really do
@@ -304,9 +300,9 @@ type MoveSearch =
                         while (i < moveCount && keepgoing) do
                             // We should being the move that's likely to be the best move at this depth to the top. This ensures
                             // that we are searching through the likely best moves first, allowing us to return early.
-                            moveList.SortNext(i, moveCount)
+                            OrdMoves.SortNext(moveList, i, moveCount)
                             let previousNodeCount = this.TotalNodeSearchCount
-                            let mutable move = moveList.[i]
+                            let mutable move = OrdMoves.Get(moveList, i)
                             let oppBoard = if ioppositeColor = White then Brd.White else Brd.Black
                             let quietMove = not (Bits.IsSet(oppBoard, move.To))
                             if quietMove then quietMoveCounter <- quietMoveCounter + 1
@@ -502,7 +498,7 @@ type MoveSearch =
                 // reason to evaluate it further.
                 evaluation < beta
     [<MethodImpl(MethodImplOptions.AggressiveInlining)>]
-    member this.DoQuiet(plyFromRoot:int, move:OrdMoveEntryRec, depth:int, quietMoveCounter, moveList:OrderedMoveList, i:int) =
+    member this.DoQuiet(plyFromRoot:int, move:OrdMoveEntryRec, depth:int, quietMoveCounter, moveList:OrdMovesRec, i:int) =
         let historyBonus = depth * depth
         if KillMv.Get(0, plyFromRoot) <> move then
             // Given this move isn't a capture move (quiet move), we store it as a killer move (cutoff move)
@@ -515,5 +511,5 @@ type MoveSearch =
         Hist.Set(EngBoard.PieceOnly(move.From), stm, move.To, Hist.Get(EngBoard.PieceOnly(move.From), stm, move.To) + historyBonus)
         // Decrement all other quiet moves to ensure a branch local history heuristic.
         for j = 1 to quietMoveCounter-1 do
-            let otherMove = moveList.[i - j]
+            let otherMove = OrdMoves.Get(moveList, i - j)
             Hist.Set(EngBoard.PieceOnly(otherMove.From), stm, otherMove.To, Hist.Get(EngBoard.PieceOnly(otherMove.From), stm, otherMove.To) - historyBonus)

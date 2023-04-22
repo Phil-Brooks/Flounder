@@ -15,11 +15,10 @@ module OrderedMoveList =
         Hist.Clear()
         KillMv.Clear()
         EngBoard.Default()
-        let moveSpanarr = Array.zeroCreate<OrdMoveEntryRec>(OrderedMoveList.SIZE)//stackalloc OrdMoveEntryRec[OrderedMoveList.SIZE];
-        let mutable moveSpan = new Span<OrdMoveEntryRec>(moveSpanarr)
-        let moveList = OrderedMoveList(moveSpan, plyFromRoot)
-        let moveCount = moveList.NormalMoveGeneration(OrdMove.Default)
+        let movearr = Array.zeroCreate OrdMoves.SIZE
+        let moveList = OrdMoves.Create(movearr, plyFromRoot)
+        let moveCount = OrdMoves.NormalMoveGeneration(moveList,OrdMove.Default)
         moveCount |> should equal 20
-        let ans = moveList.[19]
+        let ans = OrdMoves.Get(moveList, 19)
         ans.From |> should equal G1
         ans.Score |> should equal 0

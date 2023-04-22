@@ -1,8 +1,13 @@
 ﻿namespace FlounderLib
 open System
-open System.Runtime.CompilerServices
 
-module OrderedMoveList =
+module OrdMoves =
+    let Create(memory:OrdMoveEntryRec array, ply:int) =
+        {
+            Internal = memory
+            KillerMoveOne =  KillMv.Get(0, ply)
+            KillerMoveTwo =  KillMv.Get(1, ply)
+        }
     let SIZE = 128
     let MvvLvaTable =
         [|
@@ -14,163 +19,103 @@ module OrderedMoveList =
             [| 7005; 7004; 7003; 7002; 7001; 7000 |]
         |]
     let MvvLva(attacker:int, victim:int) = MvvLvaTable.[victim].[attacker]
-
-[<IsByRefLike>]
-type OrderedMoveList =
-    struct
-        val mutable PRIORITY:int
-        val mutable Internal:Span<OrdMoveEntryRec>
-        val mutable KillerMoveOne:OrdMoveEntryRec
-        val mutable KillerMoveTwo:OrdMoveEntryRec
-        // Technically; there do exist positions where we'd have 218 legal moves.
-        // However; they are so unlikely that 128 seems like an okay number.
-        new(memory:Span<OrdMoveEntryRec>, ply:int) =
-            {
-                PRIORITY = Int32.MaxValue
-                Internal = memory
-                KillerMoveOne =  KillMv.Get(0, ply)
-                KillerMoveTwo =  KillMv.Get(1, ply)
-            }
-        member this.ScoreMove(pieceToMove:int, move:OrdMoveEntryRec, tableMove:OrdMoveEntryRec) =
-            // Compare our move with the one found from transposition table. There's no guarantee the transposition move
-            // is even legal, so this acts as a sort of legal verification for it too.
-            // Regardless, if our move is equal to that (also proving that it is legal for this position), then give it
-            // highest priority, making it the first move we make.
-            if (move.From = tableMove.From && move.To = tableMove.To && move.Promotion = tableMove.Promotion) then this.PRIORITY - 1
-            // Score promotions based on the type of promotion it is. 
-            // Promotion | Score
-            // Queen     | PRIORITY - 4 (HIGHEST)
-            // Bishop    | PRIORITY - 5
-            // Knight    | PRIORITY - 6
-            // Rook      | PRIORITY - 7 (LOWEST)
-            elif move.Promotion <> PromNone then this.PRIORITY - 8 + move.Promotion
-            // Score captures based on the piece capturing and the piece being captured.
-            // The idea behind it is to give highest priority to captures that are capturing most valuable pieces
-            // with least valuable pieces.
-            else
-                let pto = Brd.Squares[move.To]/2
-                if (pto <> EmptyPc) then 
-                    let pfrom = Brd.Squares[move.From]/2
-                    OrderedMoveList.MvvLva(pfrom, pto) * 10000
-                // If the move is a quiet move (not capture / promotion), then we should check if it is a killer move or history
-                // move.
-                // Killer moves are moves that are very likely to cause a beta cutoff.
-                // History moves are moves that have been scored as most likely beta cutoff moves, depending on how many
-                // times the move has caused a beta cutoff (gave us a guaranteed best move).
-                // Check if move is a rank 1 killer move (extremely local, recently updated).
-                elif move.From = this.KillerMoveOne.From && move.To = this.KillerMoveOne.To && move.Promotion = this.KillerMoveOne.Promotion then 900000
-                // Check if move is a rank 2 killer move (less local, might've been updated long time ago).
-                elif move.From = this.KillerMoveTwo.From && move.To = this.KillerMoveTwo.To && move.Promotion = this.KillerMoveTwo.Promotion then 800000
-                // Return the updated history score for the move.
-                else Hist.Get(pieceToMove, (if Brd.IsWtm then 0 else 1), move.To)
-        member this.NormalMoveGeneration(transpositionMove:OrdMoveEntryRec) =
-            // Generate pins and check bitboards.
-            let stm = if Brd.IsWtm then 0 else 1 
-            let xstm = if Brd.IsWtm then 1 else 0
-            let kingSq = if stm = White then Brd.WhiteKingLoc else Brd.BlackKingLoc
-            let (hv, d) = MoveList.PinBitBoards(kingSq, stm, xstm)
-            let checks, doubleChecked = MoveList.CheckBitBoard(kingSq, xstm)
-            // Define the list.
-            let mutable i = 0
-            //BitBoardIterator fromIterator;
-            //Square from;
-            if not doubleChecked then
-                // We can only do this if we're not double checked.
-                // In case of double-checked (discovered + normal), only the king can move so we should skip this.
-                // Generate all pawn moves.
-                let fromarr = Bits.ToArray(Brd.Pieces[stm])
-                for from in fromarr do
-                    let moveList = MoveList.NotDouble(from, Pawn, hv, d, checks)
-                    let movearr = Bits.ToArray(moveList.Moves)
-                    for move in movearr do
-                        if (moveList.Promotion) then
-                            for p = PromKnight to PromQueen do
-                                this.Internal.[i] <- OrdMove.Create(from, move, p)
-                                this.Internal.[i].Score <- this.ScoreMove(Pawn, this.Internal.[i], transpositionMove)
-                                i<-i+1
-                        else
-                            this.Internal.[i] <- OrdMove.Create(from, move, PromNone)
-                            this.Internal.[i].Score <- this.ScoreMove(Pawn, this.Internal.[i], transpositionMove)
-                            i<-i+1
-                // Generate moves for rook, knight, bishop, and queen.
-                for piece in [Rook;Knight;Bishop;Queen] do
-                    let fromarr = Bits.ToArray(Brd.Pieces[piece*2 + stm])
-                    for from in fromarr do
-                        let moveList = MoveList.NotDouble(from, piece, hv, d, checks)
-                        let movearr = Bits.ToArray(moveList.Moves)
-                        for move in movearr do
-                            this.Internal.[i] <- OrdMove.Create(from, move, PromNone)
-                            this.Internal.[i].Score <- this.ScoreMove(piece, this.Internal.[i], transpositionMove)
-                            i<-i+1
-            // Generate all king moves.
-            let fromarr = Bits.ToArray(Brd.Pieces[King*2 + stm])
+    let ScoreMove(oms:OrdMovesRec, pieceToMove:int, move:OrdMoveEntryRec, tableMove:OrdMoveEntryRec) =
+        let PRIORITY = Int32.MaxValue
+        if (move.From = tableMove.From && move.To = tableMove.To && move.Promotion = tableMove.Promotion) then PRIORITY - 1
+        elif move.Promotion <> PromNone then PRIORITY - 8 + move.Promotion
+        else
+            let pto = Brd.Squares[move.To]/2
+            if (pto <> EmptyPc) then 
+                let pfrom = Brd.Squares[move.From]/2
+                MvvLva(pfrom, pto) * 10000
+            elif move.From = oms.KillerMoveOne.From && move.To = oms.KillerMoveOne.To && move.Promotion = oms.KillerMoveOne.Promotion then 900000
+            elif move.From = oms.KillerMoveTwo.From && move.To = oms.KillerMoveTwo.To && move.Promotion = oms.KillerMoveTwo.Promotion then 800000
+            else Hist.Get(pieceToMove, (if Brd.IsWtm then 0 else 1), move.To)
+    let NormalMoveGeneration(oms:OrdMovesRec, transpositionMove:OrdMoveEntryRec) =
+        let kingSq = if Brd.IsWtm then Brd.WhiteKingLoc else Brd.BlackKingLoc
+        let (hv, d) = MoveList.PinBitBoards(kingSq, Brd.Stm, Brd.Xstm)
+        let checks, doubleChecked = MoveList.CheckBitBoard(kingSq, Brd.Xstm)
+        let mutable i = 0
+        if not doubleChecked then
+            let fromarr = Bits.ToArray(Brd.Pieces[Brd.Stm])
             for from in fromarr do
-                let moveList = MoveList.NotDouble(from, King, hv, d, checks)
+                let moveList = MoveList.NotDouble(from, Pawn, hv, d, checks)
                 let movearr = Bits.ToArray(moveList.Moves)
                 for move in movearr do
-                    this.Internal.[i] <- OrdMove.Create(from, move, PromNone)
-                    this.Internal.[i].Score <- this.ScoreMove(King, this.Internal.[i], transpositionMove)
-                    i<-i+1
-            i
-        member this.QSearchMoveGeneration(transpositionMove:OrdMoveEntryRec) =
-            // If we only want capture moves, we should also define our opposite board.
-            let stm = if Brd.IsWtm then 0 else 1 
-            let xstm = if Brd.IsWtm then 1 else 0 
-            let opposite = if Brd.IsWtm then Brd.Black else Brd.White
-            // Generate pins and check bitboards.
-            let kingSq = if stm = White then Brd.WhiteKingLoc else Brd.BlackKingLoc
-            let (hv, d) = MoveList.PinBitBoards(kingSq, stm, xstm)
-            let (checks, doubleChecked) = MoveList.CheckBitBoard(kingSq, xstm)
-            // Define the list.
-            let mutable i = 0
-            if not doubleChecked then
-                // We can only do this if we're not double checked.
-                // In case of double-checked (discovered + normal), only the king can move so we should skip this.
-                // Generate all pawn moves.
-                let fromarr = Bits.ToArray(Brd.Pieces[stm])
+                    if (moveList.Promotion) then
+                        for p = PromKnight to PromQueen do
+                            oms.Internal[i] <- OrdMove.Create(from, move, p)
+                            oms.Internal[i].Score <- ScoreMove(oms, Pawn, oms.Internal[i], transpositionMove)
+                            i <- i + 1
+                    else
+                        oms.Internal[i] <- OrdMove.Create(from, move, PromNone)
+                        oms.Internal[i].Score <- ScoreMove(oms, Pawn, oms.Internal[i], transpositionMove)
+                        i <- i + 1
+            for piece in [|Rook;Knight;Bishop;Queen|] do
+                let fromarr = Bits.ToArray(Brd.Pieces[piece*2 + Brd.Stm])
                 for from in fromarr do
-                    let moveList = MoveList.ForPawns(from, hv, d, checks)
+                    let moveList = MoveList.NotDouble(from, piece, hv, d, checks)
                     let movearr = Bits.ToArray(moveList.Moves)
                     for move in movearr do
-                        if moveList.Promotion then
-                            for p = PromKnight to PromQueen do
-                                this.Internal.[i] <- OrdMove.Create(from, move, p)
-                                this.Internal.[i].Score <- this.ScoreMove(Pawn, this.Internal.[i], transpositionMove)
-                                i<-i+1
-                        else 
-                            this.Internal.[i] <- OrdMove.Create(from, move, PromNone)
-                            this.Internal.[i].Score <- this.ScoreMove(Pawn, this.Internal.[i], transpositionMove)
-                            i<-i+1
-                // Generate moves for rook, knight, bishop, and queen.
-                for piece in [Rook;Knight;Bishop;Queen] do
-                    let fromarr = Bits.ToArray(Brd.Pieces[piece*2 + stm])
-                    for from in fromarr do
-                        let moveList = MoveList.NotDouble(from, piece, hv, d, checks)
-                        let movearr = Bits.ToArray((moveList.Moves &&& opposite))
-                        for move in movearr do
-                            this.Internal.[i] <- OrdMove.Create(from, move, PromNone)
-                            this.Internal.[i].Score <- this.ScoreMove(piece, this.Internal.[i], transpositionMove)
-                            i<-i+1
-            // Generate all king moves.
-            let fromarr = Bits.ToArray(Brd.Pieces[King*2 + stm])
+                        oms.Internal[i] <- OrdMove.Create(from, move, PromNone)
+                        oms.Internal[i].Score <- ScoreMove(oms, piece, oms.Internal[i], transpositionMove)
+                        i <- i + 1
+        let fromarr = Bits.ToArray(Brd.Pieces[King*2 + Brd.Stm])
+        for from in fromarr do
+            let moveList = MoveList.NotDouble(from, King, hv, d, checks)
+            let movearr = Bits.ToArray(moveList.Moves)
+            for move in movearr do
+                oms.Internal[i] <- OrdMove.Create(from, move, PromNone)
+                oms.Internal[i].Score <- ScoreMove(oms, King, oms.Internal[i], transpositionMove)
+                i <- i + 1
+        i
+    let QSearchMoveGeneration(oms:OrdMovesRec, transpositionMove:OrdMoveEntryRec) =
+        let opposite = if Brd.IsWtm then Brd.Black else Brd.White
+        let kingSq = if Brd.IsWtm then Brd.WhiteKingLoc else Brd.BlackKingLoc
+        let (hv, d) = MoveList.PinBitBoards(kingSq, Brd.Stm, Brd.Xstm)
+        let (checks, doubleChecked) = MoveList.CheckBitBoard(kingSq, Brd.Xstm)
+        let mutable i = 0
+        if not doubleChecked then
+            let fromarr = Bits.ToArray(Brd.Pieces[Brd.Stm])
             for from in fromarr do
-                let moveList = MoveList.NotDouble(from, King, hv, d, checks)
-                let movearr = Bits.ToArray((moveList.Moves &&& opposite))
+                let moveList = MoveList.ForPawns(from, hv, d, checks)
+                let movearr = Bits.ToArray(moveList.Moves)
                 for move in movearr do
-                    this.Internal.[i] <- OrdMove.Create(from, move, PromNone)
-                    this.Internal.[i].Score <- this.ScoreMove(King, this.Internal.[i], transpositionMove)
-                    i<-i+1                    
-            i
-        member this.Item with get(i:int):byref<OrdMoveEntryRec> = 
-            &(this.Internal.[i])
-        member this.SortNext(sorted:int, maxSelection:int) =
-            let mutable index = sorted
-            for i = 1 + sorted to maxSelection - 1 do
-                if (this.Internal.[i].Score > this.Internal.[index].Score) then index <- i
-            this.Swap(index, sorted)
-        member this.Swap(firstIndex:int, secondIndex:int) = 
-            let nf = this.Internal.[secondIndex]
-            let ns = this.Internal.[firstIndex]
-            this.Internal.[firstIndex] <- nf
-            this.Internal.[secondIndex] <- ns
-    end
+                    if moveList.Promotion then
+                        for p = PromKnight to PromQueen do
+                            oms.Internal[i] <- OrdMove.Create(from, move, p)
+                            oms.Internal[i].Score <- ScoreMove(oms, Pawn, oms.Internal[i], transpositionMove)
+                            i <- i + 1
+                    else 
+                        oms.Internal[i] <- OrdMove.Create(from, move, PromNone)
+                        oms.Internal[i].Score <- ScoreMove(oms, Pawn, oms.Internal[i], transpositionMove)
+                        i <- i + 1
+            for piece in [|Rook;Knight;Bishop;Queen|] do
+                let fromarr = Bits.ToArray(Brd.Pieces[piece*2 + Brd.Stm])
+                for from in fromarr do
+                    let moveList = MoveList.NotDouble(from, piece, hv, d, checks)
+                    let movearr = Bits.ToArray((moveList.Moves &&& opposite))
+                    for move in movearr do
+                        oms.Internal[i] <- OrdMove.Create(from, move, PromNone)
+                        oms.Internal[i].Score <- ScoreMove(oms, piece, oms.Internal[i], transpositionMove)
+                        i <- i + 1
+        let fromarr = Bits.ToArray(Brd.Pieces[King*2 + Brd.Stm])
+        for from in fromarr do
+            let moveList = MoveList.NotDouble(from, King, hv, d, checks)
+            let movearr = Bits.ToArray((moveList.Moves &&& opposite))
+            for move in movearr do
+                oms.Internal[i] <- OrdMove.Create(from, move, PromNone)
+                oms.Internal[i].Score <- ScoreMove(oms, King, oms.Internal[i], transpositionMove)
+                i <- i + 1                    
+        i
+    let Get(oms:OrdMovesRec, i:int) = oms.Internal[i]
+    let Swap(oms:OrdMovesRec, firstIndex:int, secondIndex:int) = 
+        let nf = oms.Internal.[secondIndex]
+        let ns = oms.Internal.[firstIndex]
+        oms.Internal.[firstIndex] <- nf
+        oms.Internal.[secondIndex] <- ns
+    let SortNext(oms:OrdMovesRec, sorted:int, maxSelection:int) =
+        let mutable index = sorted
+        for i = 1 + sorted to maxSelection - 1 do
+            if oms.Internal[i].Score > oms.Internal[index].Score then index <- i
+        Swap(oms, index, sorted)

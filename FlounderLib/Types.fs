@@ -2,7 +2,7 @@
 
 [<AutoOpen>]
 module Types =
-    let VersionNo = "0.4.4.2"
+    let VersionNo = "0.4.4.3"
 
     // The type of piece.
     let WhitePawn = 0
@@ -217,6 +217,13 @@ module Types =
             Moves:uint64
             Count:int
             Promotion:bool
+        }
+
+    type OrdMovesRec =
+        {
+            mutable Internal:OrdMoveEntryRec array
+            mutable KillerMoveOne:OrdMoveEntryRec
+            mutable KillerMoveTwo:OrdMoveEntryRec
         }
 
 
