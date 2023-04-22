@@ -106,13 +106,13 @@ module Board =
     let Default() = 
         let DEFAULT_FEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
         FromFen(DEFAULT_FEN)
-    let ToMove(brd:byref<BoardRec>) =
+    let ToMove() =
         {
-            WhiteKCastle = brd.WhiteKCastle
-            WhiteQCastle = brd.WhiteQCastle
-            BlackKCastle = brd.BlackKCastle
-            BlackQCastle = brd.BlackQCastle
-            EnPassantTarget = brd.EnPassantTarget
+            WhiteKCastle = Brd.WhiteKCastle
+            WhiteQCastle = Brd.WhiteQCastle
+            BlackKCastle = Brd.BlackKCastle
+            BlackQCastle = Brd.BlackQCastle
+            EnPassantTarget = Brd.EnPassantTarget
             Promotion = false
             EnPassant = false
             From = Na
@@ -121,106 +121,106 @@ module Board =
             SecondaryFrom = Na
             SecondaryTo = Na
         }
-    let BaseMove(brd:byref<BoardRec>, from:int, mto:int) =
-        let pF = brd.Squares[from]
-        let pT = brd.Squares[mto]
+    let BaseMove(from:int, mto:int) =
+        let pF = Brd.Squares[from]
+        let pT = Brd.Squares[mto]
         let cT = pT%2
         let cF = pF%2
         if pT <> EmptyColPc then
-            Bits.PopBit(&brd.Pieces[pT], mto)
+            Bits.PopBit(&Brd.Pieces[pT], mto)
             if cT = White then
-                Bits.PopBit(&brd.White, mto)
+                Bits.PopBit(&Brd.White, mto)
             else
-                Bits.PopBit(&brd.Black, mto)
-            Bits.PopBit(&brd.Both, mto)
-            Zobrist.HashPiece(&brd.ZobristHash, pT, mto)
-        Bits.PopBit(&brd.Pieces[pF], from)
-        Bits.SetBit(&brd.Pieces[pF], mto)
-        brd.Squares[mto] <- brd.Squares[from]
-        brd.Squares[from] <- EmptyColPc
-        if brd.Squares[mto] = WhiteKing then brd.WhiteKingLoc <- mto
-        if brd.Squares[mto] = BlackKing then brd.BlackKingLoc <- mto
+                Bits.PopBit(&Brd.Black, mto)
+            Bits.PopBit(&Brd.Both, mto)
+            Zobrist.HashPiece(&Brd.ZobristHash, pT, mto)
+        Bits.PopBit(&Brd.Pieces[pF], from)
+        Bits.SetBit(&Brd.Pieces[pF], mto)
+        Brd.Squares[mto] <- Brd.Squares[from]
+        Brd.Squares[from] <- EmptyColPc
+        if Brd.Squares[mto] = WhiteKing then Brd.WhiteKingLoc <- mto
+        if Brd.Squares[mto] = BlackKing then Brd.BlackKingLoc <- mto
         if cF = White then
-            Bits.PopBit(&brd.White, from)
-            Bits.SetBit(&brd.White, mto)
+            Bits.PopBit(&Brd.White, from)
+            Bits.SetBit(&Brd.White, mto)
         else 
-            Bits.PopBit(&brd.Black, from)
-            Bits.SetBit(&brd.Black, mto)
-        Bits.PopBit(&brd.Both, from)
-        Bits.SetBit(&brd.Both, mto)
-        Zobrist.HashPiece(&brd.ZobristHash, pF, from)
-        Zobrist.HashPiece(&brd.ZobristHash, pF, mto)
-    let Empty(brd:byref<BoardRec>, sq:int) =
-        let cpc = brd.Squares[sq]
+            Bits.PopBit(&Brd.Black, from)
+            Bits.SetBit(&Brd.Black, mto)
+        Bits.PopBit(&Brd.Both, from)
+        Bits.SetBit(&Brd.Both, mto)
+        Zobrist.HashPiece(&Brd.ZobristHash, pF, from)
+        Zobrist.HashPiece(&Brd.ZobristHash, pF, mto)
+    let Empty(sq:int) =
+        let cpc = Brd.Squares[sq]
         let color = cpc%2
-        Bits.PopBit(&brd.Pieces[cpc], sq)
-        brd.Squares[sq] <- EmptyColPc
+        Bits.PopBit(&Brd.Pieces[cpc], sq)
+        Brd.Squares[sq] <- EmptyColPc
         if color = White then
-            Bits.PopBit(&brd.White, sq)
+            Bits.PopBit(&Brd.White, sq)
         else 
-            Bits.PopBit(&brd.Black, sq)
-        Bits.PopBit(&brd.Both, sq)
-        Zobrist.HashPiece(&brd.ZobristHash, cpc, sq)
-    let InsertPiece(brd:byref<BoardRec>, cpc:int, sq:int) =
+            Bits.PopBit(&Brd.Black, sq)
+        Bits.PopBit(&Brd.Both, sq)
+        Zobrist.HashPiece(&Brd.ZobristHash, cpc, sq)
+    let InsertPiece(cpc:int, sq:int) =
         let color = cpc%2
-        Bits.SetBit(&brd.Pieces[cpc], sq)
+        Bits.SetBit(&Brd.Pieces[cpc], sq)
         if color = White then
-            Bits.SetBit(&brd.White, sq)
+            Bits.SetBit(&Brd.White, sq)
         else 
-            Bits.SetBit(&brd.Black, sq)
-        Bits.SetBit(&brd.Both, sq)
-        brd.Squares[sq] <- cpc
-        if brd.Squares[sq] = WhiteKing then brd.WhiteKingLoc <- sq
-        if brd.Squares[sq] = BlackKing then brd.BlackKingLoc <- sq
-        Zobrist.HashPiece(&brd.ZobristHash, cpc, sq)
-    let Move(brd:byref<BoardRec>, from:int, mto:int, promotion:int) =
-        let cpcF = brd.Squares[from]
-        let cpcT = brd.Squares[mto]
+            Bits.SetBit(&Brd.Black, sq)
+        Bits.SetBit(&Brd.Both, sq)
+        Brd.Squares[sq] <- cpc
+        if Brd.Squares[sq] = WhiteKing then Brd.WhiteKingLoc <- sq
+        if Brd.Squares[sq] = BlackKing then Brd.BlackKingLoc <- sq
+        Zobrist.HashPiece(&Brd.ZobristHash, cpc, sq)
+    let Move(from:int, mto:int, promotion:int) =
+        let cpcF = Brd.Squares[from]
+        let cpcT = Brd.Squares[mto]
         let cF = cpcF%2
         let cT = cpcT%2
         let pF = cpcF/2
         let pT = cpcT/2
-        let mutable rv = ToMove(&brd)
+        let mutable rv = ToMove()
         if cpcT <> EmptyColPc then
             rv.CapturedPiece <- cpcT
-        if brd.EnPassantTarget = mto && pF = Pawn then
-            let epPieceSq = if cF = White then brd.EnPassantTarget + 8 else brd.EnPassantTarget - 8
+        if Brd.EnPassantTarget = mto && pF = Pawn then
+            let epPieceSq = if cF = White then Brd.EnPassantTarget + 8 else Brd.EnPassantTarget - 8
             let oppositeColor = cF ^^^ 1
-            Empty(&brd, epPieceSq)
+            Empty(epPieceSq)
             rv.EnPassant <- true
             rv.CapturedPiece <- oppositeColor
-        if brd.EnPassantTarget<> Na then Zobrist.HashEp(&brd.ZobristHash, brd.EnPassantTarget)
+        if Brd.EnPassantTarget<> Na then Zobrist.HashEp(&Brd.ZobristHash, Brd.EnPassantTarget)
         if pF = Pawn && abs(mto - from) = 16 then
-            brd.EnPassantTarget <- if cF = White then from - 8 else from + 8
-            Zobrist.HashEp(&brd.ZobristHash, brd.EnPassantTarget)
-        else brd.EnPassantTarget <- Na
-        BaseMove(&brd, from, mto)
+            Brd.EnPassantTarget <- if cF = White then from - 8 else from + 8
+            Zobrist.HashEp(&Brd.ZobristHash, Brd.EnPassantTarget)
+        else Brd.EnPassantTarget <- Na
+        BaseMove(from, mto)
         if promotion <> PromNone then
-            Empty(&brd, mto)
+            Empty(mto)
             let prompc = promotion*2 + cF
-            InsertPiece(&brd, prompc, mto)
+            InsertPiece(prompc, mto)
             rv.Promotion <- true
         rv.From <- from
         rv.To <- mto
         Zobrist.HashCastlingRights(
-            &brd.ZobristHash, 
-            brd.WhiteKCastle, brd.WhiteQCastle, 
-            brd.BlackKCastle, brd.BlackQCastle
+            &Brd.ZobristHash, 
+            Brd.WhiteKCastle, Brd.WhiteQCastle, 
+            Brd.BlackKCastle, Brd.BlackQCastle
         )
         if pF = Rook then
             if cF = White then
-                if from % 8 = 0 then brd.WhiteQCastle <- 0x0
-                if from % 8 = 7 then brd.WhiteKCastle <- 0x0
+                if from % 8 = 0 then Brd.WhiteQCastle <- 0x0
+                if from % 8 = 7 then Brd.WhiteKCastle <- 0x0
             else
-                if from % 8 = 0 then brd.BlackQCastle <- 0x0
-                if from % 8 = 7 then brd.BlackKCastle <- 0x0
+                if from % 8 = 0 then Brd.BlackQCastle <- 0x0
+                if from % 8 = 7 then Brd.BlackKCastle <- 0x0
         if pF = King then
             if cF = White then
-                brd.WhiteQCastle <- 0x0
-                brd.WhiteKCastle <- 0x0
+                Brd.WhiteQCastle <- 0x0
+                Brd.WhiteKCastle <- 0x0
             else
-                brd.BlackQCastle <- 0x0
-                brd.BlackKCastle <- 0x0
+                Brd.BlackQCastle <- 0x0
+                Brd.BlackKCastle <- 0x0
             let d = abs(mto - from)
             if d = 2 then
                 if mto > from then
@@ -229,76 +229,76 @@ module Board =
                 else
                     rv.SecondaryFrom <- mto - 2
                     rv.SecondaryTo <- mto + 1
-                BaseMove(&brd, rv.SecondaryFrom, rv.SecondaryTo)
+                BaseMove(rv.SecondaryFrom, rv.SecondaryTo)
         if pT = Rook then
             if cT = White then
-                if mto = A1 then brd.WhiteQCastle <- 0x0
-                if mto = H1 then brd.WhiteKCastle <- 0x0
+                if mto = A1 then Brd.WhiteQCastle <- 0x0
+                if mto = H1 then Brd.WhiteKCastle <- 0x0
             else
-                if mto = A8 then brd.BlackQCastle <- 0x0
-                if mto = H8 then brd.BlackKCastle <- 0x0
+                if mto = A8 then Brd.BlackQCastle <- 0x0
+                if mto = H8 then Brd.BlackKCastle <- 0x0
         Zobrist.HashCastlingRights(
-            &brd.ZobristHash, 
-            brd.WhiteKCastle, brd.WhiteQCastle, 
-            brd.BlackKCastle, brd.BlackQCastle
+            &Brd.ZobristHash, 
+            Brd.WhiteKCastle, Brd.WhiteQCastle, 
+            Brd.BlackKCastle, Brd.BlackQCastle
         )
-        brd.IsWtm <- not brd.IsWtm  
-        brd.Stm <- brd.Stm ^^^ 1  
-        brd.Xstm <- brd.Xstm ^^^ 1  
-        Zobrist.FlipTurnInHash(&brd.ZobristHash)
+        Brd.IsWtm <- not Brd.IsWtm  
+        Brd.Stm <- Brd.Stm ^^^ 1  
+        Brd.Xstm <- Brd.Xstm ^^^ 1  
+        Zobrist.FlipTurnInHash(&Brd.ZobristHash)
         rv
-    let UndoMove(brd:byref<BoardRec>, rv:byref<MoveRec>)=
+    let UndoMove(rv:byref<MoveRec>)=
         Zobrist.HashCastlingRights(
-            &brd.ZobristHash, 
-            brd.WhiteKCastle, brd.WhiteQCastle, 
-            brd.BlackKCastle, brd.BlackQCastle
+            &Brd.ZobristHash, 
+            Brd.WhiteKCastle, Brd.WhiteQCastle, 
+            Brd.BlackKCastle, Brd.BlackQCastle
         )
-        brd.WhiteKCastle <- rv.WhiteKCastle
-        brd.WhiteQCastle <- rv.WhiteQCastle
-        brd.BlackKCastle <- rv.BlackKCastle
-        brd.BlackQCastle <- rv.BlackQCastle
+        Brd.WhiteKCastle <- rv.WhiteKCastle
+        Brd.WhiteQCastle <- rv.WhiteQCastle
+        Brd.BlackKCastle <- rv.BlackKCastle
+        Brd.BlackQCastle <- rv.BlackQCastle
         Zobrist.HashCastlingRights(
-            &brd.ZobristHash, 
-            brd.WhiteKCastle, brd.WhiteQCastle, 
-            brd.BlackKCastle, brd.BlackQCastle
+            &Brd.ZobristHash, 
+            Brd.WhiteKCastle, Brd.WhiteQCastle, 
+            Brd.BlackKCastle, Brd.BlackQCastle
         )
-        if brd.EnPassantTarget <> Na then
-            Zobrist.HashEp(&brd.ZobristHash, brd.EnPassantTarget)
-        brd.EnPassantTarget <- rv.EnPassantTarget
-        if brd.EnPassantTarget <> Na then 
-            Zobrist.HashEp(&brd.ZobristHash, brd.EnPassantTarget)
-        brd.IsWtm <- not brd.IsWtm
-        brd.Stm <- brd.Stm ^^^ 1  
-        brd.Xstm <- brd.Xstm ^^^ 1  
-        Zobrist.FlipTurnInHash(&brd.ZobristHash)
+        if Brd.EnPassantTarget <> Na then
+            Zobrist.HashEp(&Brd.ZobristHash, Brd.EnPassantTarget)
+        Brd.EnPassantTarget <- rv.EnPassantTarget
+        if Brd.EnPassantTarget <> Na then 
+            Zobrist.HashEp(&Brd.ZobristHash, Brd.EnPassantTarget)
+        Brd.IsWtm <- not Brd.IsWtm
+        Brd.Stm <- Brd.Stm ^^^ 1  
+        Brd.Xstm <- Brd.Xstm ^^^ 1  
+        Zobrist.FlipTurnInHash(&Brd.ZobristHash)
         if rv.Promotion then
-            let color = brd.Squares.[rv.To]%2
-            Empty(&brd, rv.To)
-            InsertPiece(&brd, color, rv.To)
-        let pF = brd.Squares[rv.To]
-        let pT = brd.Squares[rv.From]
-        BaseMove(&brd, rv.To, rv.From)
+            let color = Brd.Squares.[rv.To]%2
+            Empty(rv.To)
+            InsertPiece(color, rv.To)
+        let pF = Brd.Squares[rv.To]
+        let pT = Brd.Squares[rv.From]
+        BaseMove(rv.To, rv.From)
         if rv.EnPassant then
             let insertion = if rv.CapturedPiece = WhitePawn then rv.To - 8 else rv.To + 8
-            InsertPiece(&brd, rv.CapturedPiece, insertion)
+            InsertPiece(rv.CapturedPiece, insertion)
         elif rv.CapturedPiece <> EmptyColPc then
-            InsertPiece(&brd, rv.CapturedPiece, rv.To)
-        elif rv.SecondaryFrom <> Na then BaseMove(&brd, rv.SecondaryTo, rv.SecondaryFrom) 
-    let GenerateFen(brd:BoardRec) =
+            InsertPiece(rv.CapturedPiece, rv.To)
+        elif rv.SecondaryFrom <> Na then BaseMove(rv.SecondaryTo, rv.SecondaryFrom) 
+    let GenerateFen() =
         let expandedBoardData:string array = Array.zeroCreate 8
         for v = 0 to 7 do
             let mutable rankData = ""
             let mutable h = 0
             while h < 8 do
                 let sq = v * 8 + h
-                let cpc = brd.Squares[sq]
+                let cpc = Brd.Squares[sq]
                 if cpc = EmptyColPc then
                     let mutable c = 1
                     let mutable fnd = false
                     for i = h + 1 to 7 do
                         if not fnd then
                             let sq = v * 8 + i
-                            let pc = brd.Squares[sq]
+                            let pc = Brd.Squares[sq]
                             if pc = EmptyColPc then c <- c + 1
                             else fnd <- true
                     rankData <- rankData + c.ToString()
@@ -309,17 +309,17 @@ module Board =
                     h <- h + 1
             expandedBoardData[v] <- rankData
         let boardData = String.Join("/", expandedBoardData)
-        let turnData = if brd.IsWtm then "w" else "b"
+        let turnData = if Brd.IsWtm then "w" else "b"
         let mutable castlingRight = ""
-        if (brd.WhiteKCastle = 0x0 && brd.WhiteQCastle = 0x0 && brd.BlackKCastle = 0x0 && brd.BlackQCastle = 0x0) then
+        if (Brd.WhiteKCastle = 0x0 && Brd.WhiteQCastle = 0x0 && Brd.BlackKCastle = 0x0 && Brd.BlackQCastle = 0x0) then
             castlingRight <- "-"
         else    
-            if (brd.WhiteKCastle <> 0x0) then castlingRight <- castlingRight + "K"
-            if (brd.WhiteQCastle <> 0x0) then castlingRight <- castlingRight + "Q"
-            if (brd.BlackKCastle <> 0x0) then castlingRight <- castlingRight + "k"
-            if (brd.BlackQCastle <> 0x0) then castlingRight <- castlingRight + "q"
+            if (Brd.WhiteKCastle <> 0x0) then castlingRight <- castlingRight + "K"
+            if (Brd.WhiteQCastle <> 0x0) then castlingRight <- castlingRight + "Q"
+            if (Brd.BlackKCastle <> 0x0) then castlingRight <- castlingRight + "k"
+            if (Brd.BlackQCastle <> 0x0) then castlingRight <- castlingRight + "q"
         let mutable enPassantTarget = "-"
-        if brd.EnPassantTarget <> Na then
-            enPassantTarget <- brd.EnPassantTarget.ToString().ToLower()
+        if Brd.EnPassantTarget <> Na then
+            enPassantTarget <- Brd.EnPassantTarget.ToString().ToLower()
         let fen = [| boardData; turnData; castlingRight; enPassantTarget |]
         fen|>Array.reduce (fun a b -> a + " " + b)

@@ -46,32 +46,37 @@ module BitBoardMap =
     [<Test>]
     let MoveWhitePawn() =
         let mutable useMap = Board.Default()
-        Board.BaseMove(&useMap, A2, A4)
+        Brd <- useMap
+        Board.BaseMove(A2, A4)
         WhitePawn |> should equal (useMap.Squares[A4])
 
     [<Test>]
     let MoveWhitePawnInEnemy() =
         let mutable useMap = Board.Default()
-        Board.BaseMove(&useMap, A2, A7)
+        Brd <- useMap
+        Board.BaseMove(A2, A7)
         WhitePawn |> should equal (useMap.Squares[A7])
         Bits.Count(useMap.Pieces[BlackPawn]) |> should equal 7
 
     [<Test>]
     let RemoveWhitePawn() =
         let mutable useMap = Board.Default()
-        Board.Empty(&useMap, A2)
+        Brd <- useMap
+        Board.Empty(A2)
         EmptyColPc  |> should equal (useMap.Squares[A2])
 
     [<Test>]
     let MoveKnightToA3() =
         let mutable useMap = Board.Default()
-        Board.BaseMove(&useMap, B1, A3)
+        Brd <- useMap
+        Board.BaseMove(B1, A3)
         WhiteKnight |> should equal (useMap.Squares[A3])
 
     [<Test>]
     let AddWhitePawn() =
         let mutable useMap = Board.Default()
-        Board.InsertPiece(&useMap, WhitePawn,A4)
+        Brd <- useMap
+        Board.InsertPiece(WhitePawn,A4)
         WhitePawn |> should equal (useMap.Squares[A4])
 
     [<Test>]

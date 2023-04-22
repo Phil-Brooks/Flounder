@@ -6,12 +6,12 @@ open System.Diagnostics
 open FlounderLib
 
 module Program =
-    let RunPerft(board:byref<BoardRec>, depth:int) =
+    let RunPerft(depth:int) =
         Console.WriteLine("Running PERFT @ depth " + depth.ToString() + ": ")
         let watch = Stopwatch()
         let mutable result = 0uL
         watch.Start()
-        result <- Perft.MoveGeneration(&board, depth)
+        result <- Perft.MoveGeneration(depth)
         watch.Stop()
         let output = "Searched " + result.ToString("N0") + " nodes (" + watch.ElapsedMilliseconds.ToString() + " ms)."
         Console.WriteLine(output)
@@ -19,7 +19,7 @@ module UniversalChessInterface =
     let NAME = "Flounder"
     let AUTHOR = "Phil Brooks"
     let mutable Search:MoveSearch option = None
-    let mutable EngBrd:BoardRec = EngBoard.Default()
+    EngBoard.Default()
     let mutable Busy = false
     let mutable TmCntrl = TimeControl(9999999)
     let mutable MvCount = 0
@@ -44,14 +44,14 @@ module UniversalChessInterface =
             Busy <- true
             let mutable argsParsed = 1
             if (args.[1].ToLower()="startpos") then
-                EngBrd <- EngBoard.Default()
+                EngBoard.Default()
                 argsParsed<-argsParsed+1
             elif (args.[1].ToLower()="fen") then
                 let p = args.[2]
                 let s = args.[3]
                 let c = args.[4]
                 let ep = args.[5]
-                EngBrd <- EngBoard.FromFen(p + " " + s + " " + c + " " + ep)
+                EngBoard.FromFen(p + " " + s + " " + c + " " + ep)
                 argsParsed<-argsParsed+7
             else
                 failwith("Invalid Position provided.")
@@ -66,17 +66,17 @@ module UniversalChessInterface =
                         let mutable promotion = PromNone
                         if (args.[i].Length > 4) then
                             promotion <- Promotion.FromChar(args.[i].ToLower().[4])
-                        EngBoard.GuiMove(&EngBrd,from, mto, promotion)
+                        EngBoard.GuiMove(from, mto, promotion)
                 Busy <- false
     let HandleDraw(input:string) =
         if (input.ToLower() = "draw" || input.ToLower() = "d") then
-            Console.WriteLine(EngBrd.ToString())
+            Console.WriteLine(Brd.ToString())
     let HandleGo(input:string) =
         let args = input.Split(" ")
         if (args.[0].ToLower().Equals("go")) then
             if (input.ToLower().Contains("perft")) then
                 // Just run PERFT.
-                Program.RunPerft(&EngBrd, int(args.[2]))
+                Program.RunPerft(int(args.[2]))
             else
                 let maxTime = 999_999_999
                 let maxDepth = 63
@@ -122,12 +122,12 @@ module UniversalChessInterface =
                             else
                                 getargs (argPosition+1)
                     getargs 1
-                    let stm = EngBrd.Stm
+                    let stm = Brd.Stm
                     if (time = maxTime || timeSpecified) then TmCntrl <- TimeControl(time)
                     else TmCntrl <- TimeControl(movesToGo, timeForColor, timeIncForColor, stm, MvCount)
                 let factory = TaskFactory()
                 let doSearch() =
-                    Search.Value.Reset(EngBrd, TmCntrl)
+                    Search.Value.Reset(TmCntrl)
                     Busy <- true
                     let bestMove = Search.Value.IterativeDeepening(depth)
                     Busy <- false
@@ -151,7 +151,7 @@ module UniversalChessInterface =
         UciStdInputThread.CommandReceived.Add(fun (_ ,input) -> HandleStop(input))
     let LaunchUci() =
         // Initialize default UCI parameters.
-        Search <- Some(MoveSearch(EngBoard.Default(), TmCntrl))
+        Search <- Some(MoveSearch(TmCntrl))
         // Provide identification information.
         Console.WriteLine("id name " + NAME)
         Console.WriteLine("id author " + AUTHOR)

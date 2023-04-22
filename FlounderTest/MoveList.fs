@@ -16,12 +16,14 @@ module MoveList =
 
     [<Test>]
     let CountKnightMovesAtB1() =
-        let moveList = MoveList.ForSq(&board, B1)
+        EngBoard.Default()
+        let moveList = MoveList.ForSq(B1)
         moveList.Count |> should equal 2
 
     [<Test>]
     let CountPawnMovesAtA2() =
-        let moveList = MoveList.ForSq(&board, A2)
+        EngBoard.Default()
+        let moveList = MoveList.ForSq(A2)
         moveList.Count |> should equal 2
         let movearr = Bits.ToArray(moveList.Moves)
         movearr[0]|> should equal A4
@@ -30,9 +32,10 @@ module MoveList =
     [<Test>]
     let CountKnightMovesAtA3() =
         let mutable usebd = Board.Default()
-        let res = Board.Move(&usebd, B1, A3, PromNone)
-        let res = Board.Move(&usebd, B8, A6, PromNone)
-        let moveList = MoveList.ForSq(&usebd, A3)
+        Brd <- usebd
+        let res = Board.Move(B1, A3, PromNone)
+        let res = Board.Move(B8, A6, PromNone)
+        let moveList = MoveList.ForSq(A3)
         moveList.Count |> should equal 3
         let movearr = Bits.ToArray(moveList.Moves)
         movearr[0]|> should equal B5
@@ -41,9 +44,10 @@ module MoveList =
     [<Test>]
     let CountRookMovesAtA3() =
         let mutable usebd = Board.Default()
-        let res = Board.Move(&usebd, A1, A3, PromNone)
-        let res = Board.Move(&usebd, B8, C6, PromNone)
-        let moveList = MoveList.ForSq(&usebd, A3)
+        Brd <- usebd
+        let res = Board.Move(A1, A3, PromNone)
+        let res = Board.Move(B8, C6, PromNone)
+        let moveList = MoveList.ForSq(A3)
         moveList.Count |> should equal 11
         let movearr = Bits.ToArray(moveList.Moves)
         movearr[0]|> should equal A7
@@ -51,15 +55,17 @@ module MoveList =
 
     [<Test>]
     let CountRookMovesAtA1() =
-        let moveList = MoveList.ForSq(&board, A1)
+        EngBoard.Default()
+        let moveList = MoveList.ForSq(A1)
         moveList.Count |> should equal 0
 
     [<Test>]
     let CountBishopMovesAtC3() =
         let mutable usebd = Board.Default()
-        let res = Board.Move(&usebd, C1, C3, PromNone)
-        let res = Board.Move(&usebd, B8, C6, PromNone)
-        let moveList = MoveList.ForSq(&usebd, C3)
+        Brd <- usebd
+        let res = Board.Move(C1, C3, PromNone)
+        let res = Board.Move(B8, C6, PromNone)
+        let moveList = MoveList.ForSq(C3)
         moveList.Count |> should equal 6
         let movearr = Bits.ToArray(moveList.Moves)
         movearr[0]|> should equal G7
@@ -67,10 +73,10 @@ module MoveList =
 
     [<Test>]
     let CountQueenMovesAtC3() =
-        let mutable usebd = Board.Default()
-        let res = Board.Move(&usebd, D1, C3, PromNone)
-        let res = Board.Move(&usebd, B8, A6, PromNone)
-        let moveList = MoveList.ForSq(&usebd, C3)
+        EngBoard.Default()
+        let res = Board.Move(D1, C3, PromNone)
+        let res = Board.Move(B8, A6, PromNone)
+        let moveList = MoveList.ForSq(C3)
         moveList.Count |> should equal 17
         let movearr = Bits.ToArray(moveList.Moves)
         movearr[0]|> should equal C7
@@ -78,10 +84,10 @@ module MoveList =
 
     [<Test>]
     let CountKingMovesAtC3() =
-        let mutable usebd = Board.Default()
-        let res = Board.Move(&usebd, E1, C3, PromNone)
-        let res = Board.Move(&usebd, A7, A6, PromNone)
-        let moveList = MoveList.ForSq(&usebd, C3)
+        EngBoard.Default()
+        let res = Board.Move(E1, C3, PromNone)
+        let res = Board.Move(A7, A6, PromNone)
+        let moveList = MoveList.ForSq(C3)
         moveList.Count |> should equal 5
         let movearr = Bits.ToArray(moveList.Moves)
         movearr[0]|> should equal B4
@@ -89,10 +95,10 @@ module MoveList =
 
     [<Test>]
     let CountKingMovesAtE1a() =
-        let mutable usebd = Board.Default()
-        let res = Board.Move(&usebd, F1, F3, PromNone)
-        let res = Board.Move(&usebd, G1, G3, PromNone)
-        let moveList = MoveList.ForSq(&usebd, E1)
+        EngBoard.Default()
+        let res = Board.Move(F1, F3, PromNone)
+        let res = Board.Move(G1, G3, PromNone)
+        let moveList = MoveList.ForSq(E1)
         moveList.Count |> should equal 2
         let movearr = Bits.ToArray(moveList.Moves)
         movearr[0]|> should equal F1
@@ -100,7 +106,8 @@ module MoveList =
 
     [<Test>]
     let CountPawnMovesEP() =
-        let moveList = MoveList.ForSq(&epboard, E5)
+        Brd <- epboard
+        let moveList = MoveList.ForSq(E5)
         moveList.Count |> should equal 2
         let movearr = Bits.ToArray(moveList.Moves)
         movearr[0]|> should equal D6
@@ -108,7 +115,8 @@ module MoveList =
 
     [<Test>]
     let CountPawnMovesPRM() =
-        let moveList = MoveList.ForSq(&prmboard, C7)
+        Brd <- prmboard
+        let moveList = MoveList.ForSq(C7)
         moveList.Count |> should equal 1
         let movearr = Bits.ToArray(moveList.Moves)
         movearr[0]|> should equal B8
@@ -117,14 +125,15 @@ module MoveList =
     [<Test>]
     let CountPawnCapturesAtAB6() =
         let mutable usebd = Board.Default()
-        let res = Board.Move(&usebd, B2, B6, PromNone)
+        let res = Board.Move(B2, B6, PromNone)
         // Generate pins and check bitboards.
         let stm = if board.IsWtm then 0 else 1
         let xstm = if board.IsWtm then 1 else 0
         let kingSq = if stm = White then board.WhiteKingLoc else board.BlackKingLoc
-        let (hv, d) = MoveList.PinBitBoards(board, kingSq, stm, xstm)
-        let (checks, doubleChecked) = MoveList.CheckBitBoard(board, kingSq, xstm)
-        let moveList = MoveList.ForPawns(&board, B6, hv, d, checks)
+        Brd <- board
+        let (hv, d) = MoveList.PinBitBoards(kingSq, stm, xstm)
+        let (checks, doubleChecked) = MoveList.CheckBitBoard(kingSq, xstm)
+        let moveList = MoveList.ForPawns(B6, hv, d, checks)
         moveList.Count |> should equal 2
         let movearr = Bits.ToArray(moveList.Moves)
         movearr[0]|> should equal A7

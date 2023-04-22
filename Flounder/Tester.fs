@@ -31,7 +31,7 @@ module Tester =
         |]
     let Test (argv:string array) =
         let timeControl = TimeControl(9999999)
-        let search = MoveSearch(EngBoard.Default(), timeControl)
+        let search = MoveSearch(timeControl)
         let stopwatch = new Stopwatch()
         stopwatch.Start()
         let fens =
@@ -43,8 +43,8 @@ module Tester =
             let fen = bits.[0]
             let ebm = bits.[1].Trim()
             Console.WriteLine("Position (" + (i + 1).ToString() + "/" + fens.Length.ToString() + "): " + fen)
-            let board = EngBoard.FromFen(fen)
-            search.Reset(board, timeControl)
+            EngBoard.FromFen(fen)
+            search.Reset(timeControl)
             let bestMove = search.DoTest(MaxDepth,ebm)
             let bm = OrdMove.ToStr(bestMove)
             Console.WriteLine("bestmove " + bm)

@@ -2,7 +2,7 @@
 
 [<AutoOpen>]
 module Types =
-    let VersionNo = "0.4.4.0"
+    let VersionNo = "0.4.4.1"
 
     // The type of piece.
     let WhitePawn = 0
@@ -210,7 +210,6 @@ module Types =
 
     type MoveListRec =
         {
-            Board:BoardRec
             From:int
             Hv:uint64
             D:uint64

@@ -13,6 +13,7 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
     <Compile Include="Types.fs" />
+    <Compile Include="Globals.fs" />
     <Compile Include="Bits.fs" />
     <Compile Include="Zobrist.fs" />
     <Compile Include="NNUEb.fs" />

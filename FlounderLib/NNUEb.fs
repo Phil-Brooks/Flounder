@@ -119,14 +119,14 @@ module NNUEb =
                 regs[i] <- regs[i] + NNUEin.InputWeights[o2 + i]
             for i = 0 to 15 do
                 Accumulators.[AccIndex].[view].[unrollOffset+i] <- regs[i]
-    let ApplyUpdates(map:BoardRec, move:MoveRec, view:int) =
+    let ApplyUpdates(move:MoveRec, view:int) =
         let captured = 
-            if move.EnPassant then map.Stm
+            if move.EnPassant then Brd.Stm
             else move.CapturedPiece
         let prev = Accumulators.[AccIndex-1].[view]
-        let king = Bits.ToInt(if view = White then map.Pieces[WhiteKing] else map.Pieces[BlackKing])
-        let movingSide = map.Xstm
-        let colpcto = map.Squares[move.To]
+        let king = Bits.ToInt(if view = White then Brd.Pieces[WhiteKing] else Brd.Pieces[BlackKing])
+        let movingSide = Brd.Xstm
+        let colpcto = Brd.Squares[move.To]
         let colpcfrom =
             if move.Promotion then movingSide
             else colpcto
@@ -164,25 +164,25 @@ module NNUEb =
                     regs[i] <- regs[i] + NNUEin.InputWeights[offset + i]
             for i = 0 to 15 do
                 Accumulators.[AccIndex].[perspective].[unrollOffset+i] <- regs[i]
-    let ResetAccumulator(map:BoardRec, perspective:int) =
+    let ResetAccumulator(perspective:int) =
         let mutable delta = Delta.Default()
-        let kingSq = Bits.ToInt(if perspective = White then map.Pieces[WhiteKing] else map.Pieces[BlackKing])
-        let occupied = map.Both
+        let kingSq = Bits.ToInt(if perspective = White then Brd.Pieces[WhiteKing] else Brd.Pieces[BlackKing])
+        let occupied = Brd.Both
         let sqarr = Bits.ToArray(occupied)
         for sq in sqarr do
-            let colpc = map.Squares[sq]
+            let colpc = Brd.Squares[sq]
             delta.add[delta.a] <- FeatureIdx(colpc,sq,kingSq,perspective)
             delta.a <- delta.a + 1
         let src = Array.copy NNUEin.InputBiases
         ApplyDelta(src,delta,perspective)
-    let RefreshAccumulator(map:BoardRec, perspective:int) =
+    let RefreshAccumulator(perspective:int) =
         let mutable delta = Delta.Default()
-        let kingSq = Bits.ToInt(if perspective = White then map.Pieces[WhiteKing] else map.Pieces[BlackKing])
+        let kingSq = Bits.ToInt(if perspective = White then Brd.Pieces[WhiteKing] else Brd.Pieces[BlackKing])
         let pBucket = if perspective = White then 0 else 32
         let kingBucket = KING_BUCKETS[kingSq ^^^ (56 * perspective)] + (if Square.ToFile(kingSq) > 3 then 16 else 0)
         let state = RefreshTable[pBucket + kingBucket]
         for pc = WhitePawn to BlackKing do
-            let curr = map.Pieces[pc]
+            let curr = Brd.Pieces[pc]
             let prev = state.Pcs[pc] 
             let rem = prev &&& ~~~curr
             let add = curr &&& ~~~prev
@@ -197,27 +197,27 @@ module NNUEb =
             state.Pcs[pc] <- curr
         ApplyDelta(state.AccKsValues, delta, perspective)
         RefreshTable[pBucket + kingBucket] <- {state with AccKsValues = Array.copy Accumulators.[AccIndex].[perspective]}
-    let DoUpdate(map:BoardRec, move:MoveRec) =
+    let DoUpdate(move:MoveRec) =
         let from = 
-            if not map.IsWtm then move.From
+            if not Brd.IsWtm then move.From
             else move.From ^^^ 56
         let mto = 
-            if not map.IsWtm then move.To
+            if not Brd.IsWtm then move.To
             else move.To ^^^ 56
-        let colpcto = map.Squares[move.To]
+        let colpcto = Brd.Squares[move.To]
         let colpcfrom =
-            if move.Promotion then ColPiece.FromPcCol(Pawn,map.Xstm)
+            if move.Promotion then ColPiece.FromPcCol(Pawn,Brd.Xstm)
             else colpcto
         if MoveRequiresRefresh(colpcfrom, from, mto) then
-            RefreshAccumulator(map, map.Xstm)
-            ApplyUpdates(map, move, map.Stm)
+            RefreshAccumulator(Brd.Xstm)
+            ApplyUpdates(move, Brd.Stm)
         else
-            ApplyUpdates(map, move, White)
-            ApplyUpdates(map, move, Black)
-    let OutputLayer(map:BoardRec) =
+            ApplyUpdates(move, White)
+            ApplyUpdates(move, Black)
+    let OutputLayer() =
         let mutable result = NNUEin.OutputBias
         for c = 0 to 767 do
-           result <- result + Math.Max(Accumulators.[AccIndex].[map.Stm].[c], 0) * NNUEin.OutputWeights[c]
+           result <- result + Math.Max(Accumulators.[AccIndex].[Brd.Stm].[c], 0) * NNUEin.OutputWeights[c]
         for c = 0 to 767 do
-           result <- result + Math.Max(Accumulators.[AccIndex].[map.Xstm].[c], 0) * NNUEin.OutputWeights[c + 768]
+           result <- result + Math.Max(Accumulators.[AccIndex].[Brd.Xstm].[c], 0) * NNUEin.OutputWeights[c + 768]
         result/8192
