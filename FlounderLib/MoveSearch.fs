@@ -10,8 +10,6 @@ type MoveSearch =
 #endif
     val mutable TotalNodeSearchCount:int
     val mutable SelectiveDepth:int 
-    val mutable HistTbl:HistoryTable
-    val mutable KillerMvTbl:KillerMoveTable
     val mutable SearchEffort:MoveSearchEffortTable
     val mutable PvTable:PrincipleVariationTable
     val mutable MvSrchStck:MoveSearchStack
@@ -24,8 +22,6 @@ type MoveSearch =
 #endif
             TotalNodeSearchCount = 0
             SelectiveDepth = 0
-            HistTbl = HistoryTable.Default
-            KillerMvTbl = KillerMoveTable.Default
             SearchEffort = MoveSearchEffortTable.Default
             PvTable = PrincipleVariationTable.Default
             MvSrchStck = MoveSearchStack.Default
@@ -38,8 +34,8 @@ type MoveSearch =
 #endif
         this.TotalNodeSearchCount <- 0
         this.SelectiveDepth <- 0
-        this.HistTbl.Clear()
-        this.KillerMvTbl.Clear()
+        Hist.Clear()
+        KillMv.Clear()
         this.SearchEffort.Clear()
         this.PvTable.Clear()
         this.MvSrchStck.Clear()
@@ -117,7 +113,7 @@ type MoveSearch =
                 // Allocate memory on the stack to be used for our move-list.
                 let moveSpanarr = Array.zeroCreate<OrdMoveEntryRec>(OrderedMoveList.SIZE)//stackalloc OrdMoveEntryRec[OrderedMoveList.SIZE];
                 let mutable moveSpan = new Span<OrdMoveEntryRec>(moveSpanarr)
-                let moveList = OrderedMoveList(moveSpan, plyFromRoot, this.KillerMvTbl, this.HistTbl)
+                let moveList = OrderedMoveList(moveSpan, plyFromRoot)
                 let moveCount = moveList.QSearchMoveGeneration(OrdMove.Default)
                 let mutable bestEvaluation = earlyEval
                 // Calculate next iteration variables before getting into the loop.
@@ -285,7 +281,7 @@ type MoveSearch =
                     // Allocate memory on the stack to be used for our move-list.
                     let moveSpanarr = Array.zeroCreate<OrdMoveEntryRec>(OrderedMoveList.SIZE)
                     let mutable moveSpan = new Span<OrdMoveEntryRec>(moveSpanarr)
-                    let moveList = OrderedMoveList(moveSpan, plyFromRoot, this.KillerMvTbl, this.HistTbl)
+                    let moveList = OrderedMoveList(moveSpan, plyFromRoot)
                     let moveCount = moveList.NormalMoveGeneration(transpositionMove)
                     if moveCount = 0 then
                         // If we had no moves at this depth, we should check if our king is in check. If our king is in check, it
@@ -508,16 +504,16 @@ type MoveSearch =
     [<MethodImpl(MethodImplOptions.AggressiveInlining)>]
     member this.DoQuiet(plyFromRoot:int, move:OrdMoveEntryRec, depth:int, quietMoveCounter, moveList:OrderedMoveList, i:int) =
         let historyBonus = depth * depth
-        if this.KillerMvTbl.[0, plyFromRoot] <> move then
+        if KillMv.Get(0, plyFromRoot) <> move then
             // Given this move isn't a capture move (quiet move), we store it as a killer move (cutoff move)
             // to better sort quiet moves like these in the future, allowing us to achieve a cutoff faster.
             // Also make sure we are not saving same move in both of our caches.
-            this.KillerMvTbl.ReOrder(plyFromRoot)
-            this.KillerMvTbl.[0, plyFromRoot] <- move
+            KillMv.ReOrder(plyFromRoot)
+            KillMv.Set(0, plyFromRoot, move)
         // Increment the move that caused a beta cutoff to get a historical heuristic of best quiet moves.
         let stm = if Brd.IsWtm then 0 else 1 
-        this.HistTbl.[EngBoard.PieceOnly(move.From), stm, move.To] <- this.HistTbl.[EngBoard.PieceOnly(move.From), stm, move.To] + historyBonus
+        Hist.Set(EngBoard.PieceOnly(move.From), stm, move.To, Hist.Get(EngBoard.PieceOnly(move.From), stm, move.To) + historyBonus)
         // Decrement all other quiet moves to ensure a branch local history heuristic.
         for j = 1 to quietMoveCounter-1 do
             let otherMove = moveList.[i - j]
-            this.HistTbl.[EngBoard.PieceOnly(otherMove.From), stm, otherMove.To] <- this.HistTbl.[EngBoard.PieceOnly(otherMove.From), stm, otherMove.To] - historyBonus
+            Hist.Set(EngBoard.PieceOnly(otherMove.From), stm, otherMove.To, Hist.Get(EngBoard.PieceOnly(otherMove.From), stm, otherMove.To) - historyBonus)

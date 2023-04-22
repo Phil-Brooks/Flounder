@@ -24,8 +24,8 @@
     <Compile Include="Attacks.fs" />
     <Compile Include="MoveList.fs" />
     <Compile Include="EngBoard.fs" />
-    <Compile Include="KillerMoveTable.fs" />
-    <Compile Include="HistoryTable.fs" />
+    <Compile Include="KillMv.fs" />
+    <Compile Include="Hist.fs" />
     <Compile Include="OrderedMoveList.fs" />
     <Compile Include="MoveSearchEffortTable.fs" />
     <Compile Include="MoveSearchStack.fs" />

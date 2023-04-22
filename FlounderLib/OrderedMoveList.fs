@@ -22,16 +22,14 @@ type OrderedMoveList =
         val mutable Internal:Span<OrdMoveEntryRec>
         val mutable KillerMoveOne:OrdMoveEntryRec
         val mutable KillerMoveTwo:OrdMoveEntryRec
-        val mutable HistTbl:HistoryTable
         // Technically; there do exist positions where we'd have 218 legal moves.
         // However; they are so unlikely that 128 seems like an okay number.
-        new(memory:Span<OrdMoveEntryRec>, ply:int, killerMoveTable:KillerMoveTable, historyTable:HistoryTable) =
+        new(memory:Span<OrdMoveEntryRec>, ply:int) =
             {
                 PRIORITY = Int32.MaxValue
                 Internal = memory
-                KillerMoveOne =  killerMoveTable.[0, ply]
-                KillerMoveTwo =  killerMoveTable.[1, ply]
-                HistTbl =  historyTable
+                KillerMoveOne =  KillMv.Get(0, ply)
+                KillerMoveTwo =  KillMv.Get(1, ply)
             }
         member this.ScoreMove(pieceToMove:int, move:OrdMoveEntryRec, tableMove:OrdMoveEntryRec) =
             // Compare our move with the one found from transposition table. There's no guarantee the transposition move
@@ -64,7 +62,7 @@ type OrderedMoveList =
                 // Check if move is a rank 2 killer move (less local, might've been updated long time ago).
                 elif move.From = this.KillerMoveTwo.From && move.To = this.KillerMoveTwo.To && move.Promotion = this.KillerMoveTwo.Promotion then 800000
                 // Return the updated history score for the move.
-                else this.HistTbl.[pieceToMove, (if Brd.IsWtm then 0 else 1), move.To]
+                else Hist.Get(pieceToMove, (if Brd.IsWtm then 0 else 1), move.To)
         member this.NormalMoveGeneration(transpositionMove:OrdMoveEntryRec) =
             // Generate pins and check bitboards.
             let stm = if Brd.IsWtm then 0 else 1 
