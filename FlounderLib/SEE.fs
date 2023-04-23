@@ -1,14 +1,12 @@
 ﻿namespace FlounderLib
 
 module SEE =
-    let Internal = [| 82;337;365;477;1025;0;0 |]
-    let inline Approximate(move:OrdMoveEntryRec) =
-        let from = EngBoard.PieceOnly(move.From)
-        let mutable mto = EngBoard.PieceOnly(move.To)
-        // In case of En Passant, we set the target piece to a pawn.
-        if (from = Pawn && move.To = Brd.EnPassantTarget) then mto <- Pawn
-        let mutable value = Internal.[mto]
+    let Vals = [| 82;337;365;477;1025;0;0 |]
+    let Approx(move:OrdMoveEntryRec) =
+        let pfrom = EngBoard.PieceOnly(move.From)
+        let mutable pto = EngBoard.PieceOnly(move.To)
+        if pfrom = Pawn && move.To = Brd.EnPassantTarget then pto <- Pawn
+        let mutable value = Vals[pto]
         if move.Promotion <> PromNone then
-            // In the case of a promotion, increment with the difference of the promotion and pawn.
-            value <- value + Internal.[move.Promotion] - Internal.[Pawn]
-        value - Internal.[from]
+            value <- value + Vals[move.Promotion] - Vals[Pawn]
+        value - Vals[pfrom]

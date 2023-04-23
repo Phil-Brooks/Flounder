@@ -29,3 +29,20 @@ module Globals =
             StartTime = 0L
             Time = 0
         }
+
+    let mutable Srch =
+        let om = 
+            {
+                From = Na
+                To = Na
+                Promotion = PromNone
+                Score = 0
+            }
+        {
+#if DEBUG
+            CutoffCount = 0
+#endif
+            NodeCount = 0
+            SelDepth = 0
+            RedTimeMove = om
+        }

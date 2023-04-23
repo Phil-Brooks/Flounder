@@ -18,7 +18,6 @@ module Program =
 module UniversalChessInterface =
     let NAME = "Flounder"
     let AUTHOR = "Phil Brooks"
-    let mutable Search:MoveSearch option = None
     EngBoard.Default()
     let mutable Busy = false
     TimeCntrl.FromTime(9999999)
@@ -127,13 +126,13 @@ module UniversalChessInterface =
                     else TimeCntrl.FromMoves(movesToGo, timeForColor, timeIncForColor, stm, MvCount)
                 let factory = TaskFactory()
                 let doSearch() =
-                    Search.Value.Reset()
+                    Search.Reset()
                     Busy <- true
-                    let bestMove = Search.Value.IterativeDeepening(depth)
+                    let bestMove = Search.IterativeDeepening(depth)
                     Busy <- false
                     Console.WriteLine("bestmove " + OrdMove.ToStr(bestMove))
         #if DEBUG
-                    Console.WriteLine("TT Count: " +  Search.Value.TableCutoffCount.ToString())
+                    Console.WriteLine("TT Count: " +  Srch.CutoffCount.ToString())
         #endif
                     MvCount <- MvCount + 1
                 factory.StartNew(doSearch, Tc.Token)|>ignore
@@ -151,7 +150,6 @@ module UniversalChessInterface =
         UciStdInputThread.CommandReceived.Add(fun (_ ,input) -> HandleStop(input))
     let LaunchUci() =
         // Initialize default UCI parameters.
-        Search <- Some(MoveSearch())
         // Provide identification information.
         Console.WriteLine("id name " + NAME)
         Console.WriteLine("id author " + AUTHOR)

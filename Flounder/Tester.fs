@@ -31,7 +31,6 @@ module Tester =
         |]
     let Test (argv:string array) =
         TimeCntrl.FromTime(9999999)
-        let search = MoveSearch()
         let stopwatch = new Stopwatch()
         stopwatch.Start()
         let fens =
@@ -44,8 +43,8 @@ module Tester =
             let ebm = bits.[1].Trim()
             Console.WriteLine("Position (" + (i + 1).ToString() + "/" + fens.Length.ToString() + "): " + fen)
             EngBoard.FromFen(fen)
-            search.Reset()
-            let bestMove = search.DoTest(MaxDepth,ebm)
+            Search.Reset()
+            let bestMove = Search.DoTest(MaxDepth, ebm)
             let bm = OrdMove.ToStr(bestMove)
             Console.WriteLine("bestmove " + bm)
             if bm <> ebm then failwith("Test " + (i + 1).ToString() + " failed with wrong best move: " + bm)

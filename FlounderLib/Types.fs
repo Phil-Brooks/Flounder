@@ -3,7 +3,7 @@ open System.Threading
 
 [<AutoOpen>]
 module Types =
-    let VersionNo = "0.4.4.5"
+    let VersionNo = "0.4.4.7"
 
     // The type of piece.
     let WhitePawn = 0
@@ -233,6 +233,16 @@ module Types =
             mutable Token:CancellationToken
             mutable StartTime:int64
             mutable Time:int
+        }
+
+    type SearchRec =
+        {
+#if DEBUG
+            mutable CutoffCount:int
+#endif
+            mutable NodeCount:int
+            mutable SelDepth:int 
+            mutable RedTimeMove:OrdMoveEntryRec
         }
 
 module Piece =

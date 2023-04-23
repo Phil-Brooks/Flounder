@@ -32,7 +32,7 @@
     <Compile Include="PrincVars.fs" />
     <Compile Include="TimeCntrl.fs" />
     <Compile Include="SEE.fs" />
-    <Compile Include="MoveSearch.fs" />
+    <Compile Include="Search.fs" />
     <Compile Include="Perft.fs" />
   </ItemGroup>
 
