@@ -2,6 +2,7 @@
 open System.Reflection
 open System.IO
 open System
+open System.Numerics
 
 module NNUEb =
     let NNUEin = 
@@ -216,8 +217,9 @@ module NNUEb =
             ApplyUpdates(move, Black)
     let OutputLayer() =
         let mutable result = NNUEin.OutputBias
+        let AccS = Accumulators.[AccIndex].[Brd.Stm]
+        let AccX = Accumulators.[AccIndex].[Brd.Xstm]
         for c = 0 to 767 do
-           result <- result + Math.Max(Accumulators.[AccIndex].[Brd.Stm].[c], 0) * NNUEin.OutputWeights[c]
-        for c = 0 to 767 do
-           result <- result + Math.Max(Accumulators.[AccIndex].[Brd.Xstm].[c], 0) * NNUEin.OutputWeights[c + 768]
+           result <- result + Math.Max(AccS[c], 0) * NNUEin.OutputWeights[c] 
+                            + Math.Max(AccX[c], 0) * NNUEin.OutputWeights[c + 768]
         result/8192
