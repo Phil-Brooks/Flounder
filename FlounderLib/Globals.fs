@@ -39,9 +39,6 @@ module Globals =
                 Score = 0
             }
         {
-#if DEBUG
-            CutoffCount = 0
-#endif
             NodeCount = 0
             SelDepth = 0
             RedTimeMove = om

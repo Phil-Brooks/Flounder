@@ -22,13 +22,6 @@ module UniversalChessInterface =
     let mutable Busy = false
     TimeCntrl.FromTime(9999999)
     let mutable MvCount = 0
-    let HandleSetOption(input:string) =
-        if (input.ToLower().Contains("setoption")) then
-            let args = input.Split(" ")
-            if (args.[2] = "Hash") then
-                Busy <- true
-                TranTable.megabyteSize <- int(args.[4])
-                Busy <- false
     let HandleIsReady(input:string) =
         if (input.ToLower().Equals("isready")) then
             Console.WriteLine("readyok")
@@ -57,7 +50,6 @@ module UniversalChessInterface =
             if (args.Length < argsParsed + 1) then
                 Busy <- false
             else
-                // Once we've loaded the position, we can apply moves.
                 if (args.[argsParsed].ToLower().Equals("moves")) then
                     let MoveCount = args.Length - (argsParsed + 1)
                     for i = argsParsed + 1 to args.Length-1 do
@@ -74,7 +66,6 @@ module UniversalChessInterface =
         let args = input.Split(" ")
         if (args.[0].ToLower().Equals("go")) then
             if (input.ToLower().Contains("perft")) then
-                // Just run PERFT.
                 Program.RunPerft(int(args.[2]))
             else
                 let maxTime = 999_999_999
@@ -121,9 +112,8 @@ module UniversalChessInterface =
                             else
                                 getargs (argPosition+1)
                     getargs 1
-                    let stm = Brd.Stm
                     if (time = maxTime || timeSpecified) then TimeCntrl.FromTime(time)
-                    else TimeCntrl.FromMoves(movesToGo, timeForColor, timeIncForColor, stm, MvCount)
+                    else TimeCntrl.FromMoves(movesToGo, timeForColor, timeIncForColor, Brd.Stm, MvCount)
                 let factory = TaskFactory()
                 let doSearch() =
                     Search.Reset()
@@ -131,9 +121,6 @@ module UniversalChessInterface =
                     let bestMove = Search.IterativeDeepening(depth)
                     Busy <- false
                     Console.WriteLine("bestmove " + OrdMove.ToStr(bestMove))
-        #if DEBUG
-                    Console.WriteLine("TT Count: " +  Srch.CutoffCount.ToString())
-        #endif
                     MvCount <- MvCount + 1
                 factory.StartNew(doSearch, Tc.Token)|>ignore
     let HandleStop(input:string) =
@@ -141,7 +128,6 @@ module UniversalChessInterface =
             TimeCntrl.ChangeTime(0)
     let Setup() =
         Busy <- false
-        UciStdInputThread.CommandReceived.Add(fun (_ ,input) -> HandleSetOption(input))
         UciStdInputThread.CommandReceived.Add(fun (_ ,input) -> HandleIsReady(input))
         UciStdInputThread.CommandReceived.Add(fun (thread ,input) -> HandleQuit(thread, input))
         UciStdInputThread.CommandReceived.Add(fun (_ ,input) -> HandlePosition(input))
@@ -149,14 +135,9 @@ module UniversalChessInterface =
         UciStdInputThread.CommandReceived.Add(fun (_ ,input) -> HandleGo(input))
         UciStdInputThread.CommandReceived.Add(fun (_ ,input) -> HandleStop(input))
     let LaunchUci() =
-        // Initialize default UCI parameters.
-        // Provide identification information.
         Console.WriteLine("id name " + NAME)
         Console.WriteLine("id author " + AUTHOR)
-        Console.WriteLine("option name Hash type spin default 16 min 4 max 512")
-        // Let GUI know engine is ready in UCI mode.
         Console.WriteLine("uciok")
-        // Start an input thread.
         let inputThread = Thread(UciStdInputThread.StartAcceptingInput)
         inputThread.Start()
     

@@ -5,9 +5,6 @@ open System.Text
 
 module Search =
     let Reset() =
-#if DEBUG
-        Srch.CutoffCount <- 0
-#endif
         Srch.NodeCount <- 0
         Srch.SelDepth <- 0
         Hist.Clear()
@@ -167,9 +164,6 @@ module Search =
                     elif storedEntry.Type = AlphaUnchanged then
                             beta <- Math.Min(beta, storedEntry.BestMove.Score)
                     if alpha >= beta then
-#if DEBUG
-                        Srch.CutoffCount <- Srch.CutoffCount+1
-#endif
                         ans <- storedEntry.BestMove.Score|>Some
             if ans.IsSome then 
                 ans.Value
