@@ -165,21 +165,34 @@ module NNUEb =
         else
             ApplySubAdd(prev, from, mto, view)    
     let ApplyDelta(src:int array, delta:DeltaRec, perspective:int) =
-        let regs:int array = Array.zeroCreate 16
-        for c = 0 to 768/16-1 do
-            let unrollOffset = c * 16
-            for i = 0 to 15 do
-                regs[i] <- src[i+unrollOffset]
-            for r = 0 to delta.r-1 do
-                let offset = delta.rem[r] * 768 + unrollOffset
-                for i = 0 to 15 do
+        let regs:int array = Array.zeroCreate 768
+        let chunkSize = Vector<int>.Count
+        let rec fast (i:int) =
+            if i > 768 - chunkSize then slow i
+            else
+                let mutable VecAns = Vector(src, i)
+                for r = 0 to delta.r-1 do
+                    let offset = delta.rem[r] * 768
+                    let VecN = Vector(NNUEin.InputWeights, offset + i)
+                    VecAns <- VecAns - VecN
+                for a = 0 to delta.a-1 do
+                    let offset = delta.add[a] * 768
+                    let VecN = Vector(NNUEin.InputWeights, offset + i)
+                    VecAns <- VecAns + VecN
+                VecAns.CopyTo(regs, i)
+                fast (i + chunkSize)
+        and slow (i:int) =
+            if i < 768 then
+                regs[i] <- src[i]
+                for r = 0 to delta.r-1 do
+                    let offset = delta.rem[r] * 768
                     regs[i] <- regs[i] - NNUEin.InputWeights[offset + i]
-            for a = 0 to delta.a-1 do
-                let offset = delta.add[a] * 768 + unrollOffset
-                for i = 0 to 15 do
+                for a = 0 to delta.a-1 do
+                    let offset = delta.add[a] * 768
                     regs[i] <- regs[i] + NNUEin.InputWeights[offset + i]
-            for i = 0 to 15 do
-                Accumulators.[AccIndex].[perspective].[unrollOffset+i] <- regs[i]
+                slow (i + 1)
+        fast 0
+        Accumulators.[AccIndex].[perspective] <- regs
     let ResetAccumulator(perspective:int) =
         let mutable delta = Delta.Default()
         let kingSq = Bits.ToInt(if perspective = White then Brd.Pieces[WhiteKing] else Brd.Pieces[BlackKing])
