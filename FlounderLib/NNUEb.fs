@@ -70,56 +70,71 @@ module NNUEb =
         let oSq = (7 * if (kingsq &&& 4) = 0 then 1 else 0) ^^^ (56 * view) ^^^ sq
         KING_BUCKETS[oK] * 12 * 64 + oP * 64 + oSq
     let ApplySubSubAddAdd(src:int array, f1:int, f2:int, f3:int, f4:int, view:int) =
-        let regs:int array = Array.zeroCreate 16
-        for c = 0 to 768/16-1 do
-            let unrollOffset = c * 16
-            for i = 0 to 15 do
-                regs[i] <- src[i+unrollOffset]
-            let o1 = f1 * 768 + unrollOffset
-            for i = 0 to 15 do
-                regs[i] <- regs[i] - NNUEin.InputWeights[o1 + i]
-            let o2 = f2 * 768 + unrollOffset
-            for i = 0 to 15 do
-                regs[i] <- regs[i] - NNUEin.InputWeights[o2 + i]
-            let o3 = f3 * 768 + unrollOffset
-            for i = 0 to 15 do
-                regs[i] <- regs[i] + NNUEin.InputWeights[o3 + i]
-            let o4 = f4 * 768 + unrollOffset
-            for i = 0 to 15 do
-                regs[i] <- regs[i] + NNUEin.InputWeights[o4 + i]
-            for i = 0 to 15 do
-                Accumulators.[AccIndex].[view].[unrollOffset+i] <- regs[i]
+        let o1 = f1 * 768
+        let o2 = f2 * 768
+        let o3 = f3 * 768
+        let o4 = f4 * 768
+        let regs:int array = Array.zeroCreate 768
+        let chunkSize = Vector<int>.Count
+        let rec fast (i:int) =
+            if i > 768 - chunkSize then slow i
+            else
+                let VecS = Vector(src, i)
+                let Vec1 = Vector(NNUEin.InputWeights, o1 + i)
+                let Vec2 = Vector(NNUEin.InputWeights, o2 + i)
+                let Vec3 = Vector(NNUEin.InputWeights, o3 + i)
+                let Vec4 = Vector(NNUEin.InputWeights, o4 + i)
+                let VecAns = VecS - Vec1 - Vec2 + Vec3 + Vec4
+                VecAns.CopyTo(regs, i)
+                fast (i + chunkSize)
+        and slow (i:int) =
+            if i < 768 then
+                regs[i] <- src[i] - NNUEin.InputWeights[o1 + i] - NNUEin.InputWeights[o2 + i] + NNUEin.InputWeights[o3 + i] + NNUEin.InputWeights[o4 + i]
+                slow (i + 1)
+        slow 0
+        Accumulators.[AccIndex].[view] <- regs
     let ApplySubSubAdd(src:int array, f1:int, f2:int, f3:int, view:int) =
-        let regs:int array = Array.zeroCreate 16
-        for c = 0 to 768/16-1 do
-            let unrollOffset = c * 16
-            for i = 0 to 15 do
-                regs[i] <- src[i+unrollOffset]
-            let o1 = f1 * 768 + unrollOffset
-            for i = 0 to 15 do
-                regs[i] <- regs[i] - NNUEin.InputWeights[o1 + i]
-            let o2 = f2 * 768 + unrollOffset
-            for i = 0 to 15 do
-                regs[i] <- regs[i] - NNUEin.InputWeights[o2 + i]
-            let o3 = f3 * 768 + unrollOffset
-            for i = 0 to 15 do
-                regs[i] <- regs[i] + NNUEin.InputWeights[o3 + i]
-            for i = 0 to 15 do
-                Accumulators.[AccIndex].[view].[unrollOffset+i] <- regs[i]
+        let o1 = f1 * 768
+        let o2 = f2 * 768
+        let o3 = f3 * 768
+        let regs:int array = Array.zeroCreate 768
+        let chunkSize = Vector<int>.Count
+        let rec fast (i:int) =
+            if i > 768 - chunkSize then slow i
+            else
+                let VecS = Vector(src, i)
+                let Vec1 = Vector(NNUEin.InputWeights, o1 + i)
+                let Vec2 = Vector(NNUEin.InputWeights, o2 + i)
+                let Vec3 = Vector(NNUEin.InputWeights, o3 + i)
+                let VecAns = VecS - Vec1 - Vec2 + Vec3
+                VecAns.CopyTo(regs, i)
+                fast (i + chunkSize)
+        and slow (i:int) =
+            if i < 768 then
+                regs[i] <- src[i] - NNUEin.InputWeights[o1 + i] - NNUEin.InputWeights[o2 + i] + NNUEin.InputWeights[o3 + i]
+                slow (i + 1)
+        slow 0
+        Accumulators.[AccIndex].[view] <- regs
     let ApplySubAdd(src:int array, f1:int, f2:int, view:int) =
-        let regs:int array = Array.zeroCreate 16
-        for c = 0 to 768/16-1 do
-            let unrollOffset = c * 16
-            for i = 0 to 15 do
-                regs[i] <- src[i+unrollOffset]
-            let o1 = f1 * 768 + unrollOffset
-            for i = 0 to 15 do
-                regs[i] <- regs[i] - NNUEin.InputWeights[o1 + i]
-            let o2 = f2 * 768 + unrollOffset
-            for i = 0 to 15 do
-                regs[i] <- regs[i] + NNUEin.InputWeights[o2 + i]
-            for i = 0 to 15 do
-                Accumulators.[AccIndex].[view].[unrollOffset+i] <- regs[i]
+        let o1 = f1 * 768
+        let o2 = f2 * 768
+        let regs:int array = Array.zeroCreate 768
+        let chunkSize = Vector<int>.Count
+        let rec fast (i:int) =
+            if i > 768 - chunkSize then slow i
+            else
+                let VecS = Vector(src, i)
+                let Vec1 = Vector(NNUEin.InputWeights, o1 + i)
+                let Vec2 = Vector(NNUEin.InputWeights, o2 + i)
+                let VecAns = VecS - Vec1 + Vec2
+                VecAns.CopyTo(regs, i)
+                fast (i + chunkSize)
+        and slow (i:int) =
+            if i < 768 then
+                regs[i] <- src[i] - NNUEin.InputWeights[o1 + i] + NNUEin.InputWeights[o2 + i]
+                slow (i + 1)
+        fast 0
+        Accumulators.[AccIndex].[view] <- regs
     let ApplyUpdates(move:MoveRec, view:int) =
         let captured = 
             if move.EnPassant then Brd.Stm
