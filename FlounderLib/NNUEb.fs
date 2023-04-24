@@ -166,32 +166,14 @@ module NNUEb =
             ApplySubAdd(prev, from, mto, view)    
     let ApplyDelta(src:int array, delta:DeltaRec, perspective:int) =
         let regs:int array = Array.zeroCreate 768
-        let chunkSize = Vector<int>.Count
-        let rec fast (i:int) =
-            if i > 768 - chunkSize then slow i
-            else
-                let mutable VecAns = Vector(src, i)
-                for r = 0 to delta.r-1 do
-                    let offset = delta.rem[r] * 768
-                    let VecN = Vector(NNUEin.InputWeights, offset + i)
-                    VecAns <- VecAns - VecN
-                for a = 0 to delta.a-1 do
-                    let offset = delta.add[a] * 768
-                    let VecN = Vector(NNUEin.InputWeights, offset + i)
-                    VecAns <- VecAns + VecN
-                VecAns.CopyTo(regs, i)
-                fast (i + chunkSize)
-        and slow (i:int) =
-            if i < 768 then
-                regs[i] <- src[i]
-                for r = 0 to delta.r-1 do
-                    let offset = delta.rem[r] * 768
-                    regs[i] <- regs[i] - NNUEin.InputWeights[offset + i]
-                for a = 0 to delta.a-1 do
-                    let offset = delta.add[a] * 768
-                    regs[i] <- regs[i] + NNUEin.InputWeights[offset + i]
-                slow (i + 1)
-        fast 0
+        for i = 0 to 767 do
+            regs[i] <- src[i]
+            for r = 0 to delta.r-1 do
+                let offset = delta.rem[r] * 768
+                regs[i] <- regs[i] - NNUEin.InputWeights[offset + i]
+            for a = 0 to delta.a-1 do
+                let offset = delta.add[a] * 768
+                regs[i] <- regs[i] + NNUEin.InputWeights[offset + i]
         Accumulators.[AccIndex].[perspective] <- regs
     let ResetAccumulator(perspective:int) =
         let mutable delta = Delta.Default()
