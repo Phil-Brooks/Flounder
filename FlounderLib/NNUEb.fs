@@ -219,7 +219,21 @@ module NNUEb =
         let mutable result = NNUEin.OutputBias
         let AccS = Accumulators.[AccIndex].[Brd.Stm]
         let AccX = Accumulators.[AccIndex].[Brd.Xstm]
-        for c = 0 to 767 do
-           result <- result + Math.Max(AccS[c], 0) * NNUEin.OutputWeights[c] 
-                            + Math.Max(AccX[c], 0) * NNUEin.OutputWeights[c + 768]
+        let chunkSize = Vector<int>.Count
+        let rec fast (i:int) =
+            if i > 768 - chunkSize then slow i
+            else
+                let VecS = Vector(AccS, i)
+                let VecX = Vector(AccX, i)
+                let VecWtS = Vector(NNUEin.OutputWeights, i)
+                let VecWtX = Vector(NNUEin.OutputWeights, i + 768)
+                let VecAns = Vector.Max(VecS,Vector.Zero) * VecWtS + Vector.Max(VecX,Vector.Zero) * VecWtX
+                result <- result + Vector.Sum(VecAns)
+                fast (i + chunkSize)
+        and slow (i:int) =
+            if i < 768 then
+                result <- result + Math.Max(AccS[i], 0) * NNUEin.OutputWeights[i] 
+                                 + Math.Max(AccX[i], 0) * NNUEin.OutputWeights[i + 768]
+                slow (i + 1)
+        fast 0
         result/8192
