@@ -134,7 +134,6 @@ module NNUEb =
                 regs[i] <- src[i] - NNUEin.InputWeights[o1 + i] + NNUEin.InputWeights[o2 + i]
                 slow (i + 1)
         fast 0
-        //Accumulators.[AccIndex].[view] <- regs
     let ApplyUpdates(move:MoveRec, view:int) =
         let captured = 
             if move.EnPassant then Brd.Stm
