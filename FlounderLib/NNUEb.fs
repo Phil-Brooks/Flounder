@@ -225,7 +225,6 @@ module NNUEb =
             ApplyUpdates(move, Black)
     let MultiplyAddAdjacent(a:Vector<int16>, b:Vector<int16>) =
         let SoftwareFallback() =
-            failwith "No"
             let a1,a2 = Vector.Widen(a)
             let b1,b2 = Vector.Widen(b)
             let c1 = a1 * b1
