@@ -3,6 +3,8 @@ open System.Reflection
 open System.IO
 open System
 open System.Numerics
+open System.Runtime.Intrinsics
+open System.Runtime.Intrinsics.X86
 
 module NNUEb =
     let NNUEin = 
@@ -14,15 +16,15 @@ module NNUEb =
         let iwlen = 9437184
         let iw = Array.zeroCreate iwlen
         for i = 0 to iwlen-1 do
-            iw[i] <- int(reader.ReadInt16())
+            iw[i] <- reader.ReadInt16()
         let iblen = 768
         let ib = Array.zeroCreate iblen
         for i = 0 to iblen-1 do
-            ib[i] <- int(reader.ReadInt16())
+            ib[i] <- reader.ReadInt16()
         let owlen = 1536
         let ow = Array.zeroCreate owlen
         for i = 0 to owlen-1 do
-            ow[i] <- int(reader.ReadInt16())
+            ow[i] <- reader.ReadInt16()
         let ob = reader.ReadInt32()
         let nnue =
             {
@@ -32,7 +34,7 @@ module NNUEb =
                 OutputBias = ob
             }
         nnue
-    let Accumulators:int array array array =
+    let Accumulators:int16 array array array =
         let ans = Array.zeroCreate 252
         for i = 0 to 251 do
             let accs = 
@@ -69,13 +71,13 @@ module NNUEb =
         let oK = (7 * if (kingsq &&& 4) = 0 then 1 else 0) ^^^ (56 * view) ^^^ kingsq
         let oSq = (7 * if (kingsq &&& 4) = 0 then 1 else 0) ^^^ (56 * view) ^^^ sq
         KING_BUCKETS[oK] * 12 * 64 + oP * 64 + oSq
-    let ApplySubSubAddAdd(src:int array, f1:int, f2:int, f3:int, f4:int, view:int) =
+    let ApplySubSubAddAdd(src:int16 array, f1:int, f2:int, f3:int, f4:int, view:int) =
         let o1 = f1 * 768
         let o2 = f2 * 768
         let o3 = f3 * 768
         let o4 = f4 * 768
         let regs = Accumulators.[AccIndex].[view]
-        let chunkSize = Vector<int>.Count
+        let chunkSize = Vector<int16>.Count
         let rec fast (i:int) =
             if i > 768 - chunkSize then slow i
             else
@@ -92,12 +94,12 @@ module NNUEb =
                 regs[i] <- src[i] - NNUEin.InputWeights[o1 + i] - NNUEin.InputWeights[o2 + i] + NNUEin.InputWeights[o3 + i] + NNUEin.InputWeights[o4 + i]
                 slow (i + 1)
         fast 0
-    let ApplySubSubAdd(src:int array, f1:int, f2:int, f3:int, view:int) =
+    let ApplySubSubAdd(src:int16 array, f1:int, f2:int, f3:int, view:int) =
         let o1 = f1 * 768
         let o2 = f2 * 768
         let o3 = f3 * 768
         let regs = Accumulators.[AccIndex].[view]
-        let chunkSize = Vector<int>.Count
+        let chunkSize = Vector<int16>.Count
         let rec fast (i:int) =
             if i > 768 - chunkSize then slow i
             else
@@ -113,11 +115,11 @@ module NNUEb =
                 regs[i] <- src[i] - NNUEin.InputWeights[o1 + i] - NNUEin.InputWeights[o2 + i] + NNUEin.InputWeights[o3 + i]
                 slow (i + 1)
         fast 0
-    let ApplySubAdd(src:int array, f1:int, f2:int, view:int) =
+    let ApplySubAdd(src:int16 array, f1:int, f2:int, view:int) =
         let o1 = f1 * 768
         let o2 = f2 * 768
         let regs = Accumulators.[AccIndex].[view]
-        let chunkSize = Vector<int>.Count
+        let chunkSize = Vector<int16>.Count
         let rec fast (i:int) =
             if i > 768 - chunkSize then slow i
             else
@@ -162,8 +164,8 @@ module NNUEb =
             ApplySubSubAdd(prev, from, capturedTo, mto, view)
         else
             ApplySubAdd(prev, from, mto, view)    
-    let ApplyDelta(src:int array, delta:DeltaRec, perspective:int) =
-        let regs:int array = Array.zeroCreate 768
+    let ApplyDelta(src:int16 array, delta:DeltaRec, perspective:int) =
+        let regs = Accumulators.[AccIndex].[perspective]
         for i = 0 to 767 do
             regs[i] <- src[i]
             for r = 0 to delta.r-1 do
@@ -172,7 +174,6 @@ module NNUEb =
             for a = 0 to delta.a-1 do
                 let offset = delta.add[a] * 768
                 regs[i] <- regs[i] + NNUEin.InputWeights[offset + i]
-        Accumulators.[AccIndex].[perspective] <- regs
     let ResetAccumulator(perspective:int) =
         let mutable delta = Delta.Default()
         let kingSq = Bits.ToInt(if perspective = White then Brd.Pieces[WhiteKing] else Brd.Pieces[BlackKing])
@@ -223,25 +224,44 @@ module NNUEb =
         else
             ApplyUpdates(move, White)
             ApplyUpdates(move, Black)
+    let MultiplyAddAdjacent(a:Vector<int16>, b:Vector<int16>) =
+        let SoftwareFallback() =
+            failwith "No"
+            let a1,a2 = Vector.Widen(a)
+            let b1,b2 = Vector.Widen(b)
+            let c1 = a1 * b1
+            let c2 = a2 * b2
+            c1 + c2
+        if (Avx.IsSupported) then
+            if (Avx2.IsSupported) then
+                let one = a.AsVector256()
+                let two = b.AsVector256()
+                Avx2.MultiplyAddAdjacent(one, two).AsVector()
+            else
+                SoftwareFallback()
+        else
+            SoftwareFallback()
     let OutputLayer() =
         let mutable result = NNUEin.OutputBias
         let AccS = Accumulators.[AccIndex].[Brd.Stm]
         let AccX = Accumulators.[AccIndex].[Brd.Xstm]
-        let chunkSize = Vector<int>.Count
+        let chunkSize = Vector<int16>.Count
         let rec fast (i:int) =
             if i > 768 - chunkSize then slow i
             else
-                let VecS = Vector(AccS, i)
-                let VecX = Vector(AccX, i)
+                let VecS = Vector.Max(Vector(AccS, i), Vector.Zero)
+                let VecX = Vector.Max(Vector(AccX, i), Vector.Zero)
                 let VecWtS = Vector(NNUEin.OutputWeights, i)
                 let VecWtX = Vector(NNUEin.OutputWeights, i + 768)
-                let VecAns = Vector.Max(VecS,Vector.Zero) * VecWtS + Vector.Max(VecX,Vector.Zero) * VecWtX
+                let VecAnsS = MultiplyAddAdjacent(VecS, VecWtS)
+                let VecAnsX = MultiplyAddAdjacent(VecX, VecWtX)
+                let VecAns = VecAnsS + VecAnsX
                 result <- result + Vector.Sum(VecAns)
                 fast (i + chunkSize)
         and slow (i:int) =
             if i < 768 then
-                result <- result + Math.Max(AccS[i], 0) * NNUEin.OutputWeights[i] 
-                                 + Math.Max(AccX[i], 0) * NNUEin.OutputWeights[i + 768]
+                result <- result + int(Math.Max(AccS[i], 0s)) * int(NNUEin.OutputWeights[i])
+                                 + int(Math.Max(AccX[i], 0s)) * int(NNUEin.OutputWeights[i + 768])
                 slow (i + 1)
         fast 0
         result/8192

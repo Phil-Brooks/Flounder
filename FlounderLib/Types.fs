@@ -3,7 +3,7 @@ open System.Threading
 
 [<AutoOpen>]
 module Types =
-    let VersionNo = "0.4.5.3"
+    let VersionNo = "0.4.5.4"
 
     // The type of piece.
     let WhitePawn = 0
@@ -149,15 +149,15 @@ module Types =
 
     type NNUEinRec =
         {
-            InputWeights:int array
-            InputBiases:int array
-            OutputWeights:int array
+            InputWeights:int16 array
+            InputBiases:int16 array
+            OutputWeights:int16 array
             OutputBias:int
         }
 
     type AccKingStateRec =
         {
-            AccKsValues:int array
+            AccKsValues:int16 array
             Pcs:uint64 array
         }
 
