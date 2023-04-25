@@ -74,7 +74,7 @@ module NNUEb =
         let o2 = f2 * 768
         let o3 = f3 * 768
         let o4 = f4 * 768
-        let regs:int array = Array.zeroCreate 768
+        let regs = Accumulators.[AccIndex].[view]
         let chunkSize = Vector<int>.Count
         let rec fast (i:int) =
             if i > 768 - chunkSize then slow i
@@ -91,13 +91,12 @@ module NNUEb =
             if i < 768 then
                 regs[i] <- src[i] - NNUEin.InputWeights[o1 + i] - NNUEin.InputWeights[o2 + i] + NNUEin.InputWeights[o3 + i] + NNUEin.InputWeights[o4 + i]
                 slow (i + 1)
-        slow 0
-        Accumulators.[AccIndex].[view] <- regs
+        fast 0
     let ApplySubSubAdd(src:int array, f1:int, f2:int, f3:int, view:int) =
         let o1 = f1 * 768
         let o2 = f2 * 768
         let o3 = f3 * 768
-        let regs:int array = Array.zeroCreate 768
+        let regs = Accumulators.[AccIndex].[view]
         let chunkSize = Vector<int>.Count
         let rec fast (i:int) =
             if i > 768 - chunkSize then slow i
@@ -113,12 +112,11 @@ module NNUEb =
             if i < 768 then
                 regs[i] <- src[i] - NNUEin.InputWeights[o1 + i] - NNUEin.InputWeights[o2 + i] + NNUEin.InputWeights[o3 + i]
                 slow (i + 1)
-        slow 0
-        Accumulators.[AccIndex].[view] <- regs
+        fast 0
     let ApplySubAdd(src:int array, f1:int, f2:int, view:int) =
         let o1 = f1 * 768
         let o2 = f2 * 768
-        let regs:int array = Array.zeroCreate 768
+        let regs = Accumulators.[AccIndex].[view]
         let chunkSize = Vector<int>.Count
         let rec fast (i:int) =
             if i > 768 - chunkSize then slow i
@@ -134,7 +132,7 @@ module NNUEb =
                 regs[i] <- src[i] - NNUEin.InputWeights[o1 + i] + NNUEin.InputWeights[o2 + i]
                 slow (i + 1)
         fast 0
-        Accumulators.[AccIndex].[view] <- regs
+        //Accumulators.[AccIndex].[view] <- regs
     let ApplyUpdates(move:MoveRec, view:int) =
         let captured = 
             if move.EnPassant then Brd.Stm
