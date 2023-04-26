@@ -79,8 +79,7 @@ module NNUEb =
         let regs = Accumulators.[AccIndex].[view]
         let chunkSize = Vector<int16>.Count
         let rec fast (i:int) =
-            if i > 768 - chunkSize then slow i
-            else
+            if i < 768 then
                 let VecS = Vector(src, i)
                 let Vec1 = Vector(NNUEin.InputWeights, o1 + i)
                 let Vec2 = Vector(NNUEin.InputWeights, o2 + i)
@@ -89,10 +88,6 @@ module NNUEb =
                 let VecAns = VecS - Vec1 - Vec2 + Vec3 + Vec4
                 VecAns.CopyTo(regs, i)
                 fast (i + chunkSize)
-        and slow (i:int) =
-            if i < 768 then
-                regs[i] <- src[i] - NNUEin.InputWeights[o1 + i] - NNUEin.InputWeights[o2 + i] + NNUEin.InputWeights[o3 + i] + NNUEin.InputWeights[o4 + i]
-                slow (i + 1)
         fast 0
     let ApplySubSubAdd(src:int16 array, f1:int, f2:int, f3:int, view:int) =
         let o1 = f1 * 768
@@ -101,8 +96,7 @@ module NNUEb =
         let regs = Accumulators.[AccIndex].[view]
         let chunkSize = Vector<int16>.Count
         let rec fast (i:int) =
-            if i > 768 - chunkSize then slow i
-            else
+            if i < 768 then
                 let VecS = Vector(src, i)
                 let Vec1 = Vector(NNUEin.InputWeights, o1 + i)
                 let Vec2 = Vector(NNUEin.InputWeights, o2 + i)
@@ -110,10 +104,6 @@ module NNUEb =
                 let VecAns = VecS - Vec1 - Vec2 + Vec3
                 VecAns.CopyTo(regs, i)
                 fast (i + chunkSize)
-        and slow (i:int) =
-            if i < 768 then
-                regs[i] <- src[i] - NNUEin.InputWeights[o1 + i] - NNUEin.InputWeights[o2 + i] + NNUEin.InputWeights[o3 + i]
-                slow (i + 1)
         fast 0
     let ApplySubAdd(src:int16 array, f1:int, f2:int, view:int) =
         let o1 = f1 * 768
@@ -121,18 +111,13 @@ module NNUEb =
         let regs = Accumulators.[AccIndex].[view]
         let chunkSize = Vector<int16>.Count
         let rec fast (i:int) =
-            if i > 768 - chunkSize then slow i
-            else
+            if i < 768 then 
                 let VecS = Vector(src, i)
                 let Vec1 = Vector(NNUEin.InputWeights, o1 + i)
                 let Vec2 = Vector(NNUEin.InputWeights, o2 + i)
                 let VecAns = VecS - Vec1 + Vec2
                 VecAns.CopyTo(regs, i)
                 fast (i + chunkSize)
-        and slow (i:int) =
-            if i < 768 then
-                regs[i] <- src[i] - NNUEin.InputWeights[o1 + i] + NNUEin.InputWeights[o2 + i]
-                slow (i + 1)
         fast 0
     let ApplyUpdates(move:MoveRec, view:int) =
         let captured = 
@@ -165,14 +150,29 @@ module NNUEb =
             ApplySubAdd(prev, from, mto, view)    
     let ApplyDelta(src:int16 array, delta:DeltaRec, perspective:int) =
         let regs = Accumulators.[AccIndex].[perspective]
-        for i = 0 to 767 do
-            regs[i] <- src[i]
-            for r = 0 to delta.r-1 do
-                let offset = delta.rem[r] * 768
-                regs[i] <- regs[i] - NNUEin.InputWeights[offset + i]
-            for a = 0 to delta.a-1 do
-                let offset = delta.add[a] * 768
-                regs[i] <- regs[i] + NNUEin.InputWeights[offset + i]
+
+        let chunkSize = Vector<int16>.Count
+        let rec fast (i:int) =
+            if i < 768 then 
+                let mutable VecAns = Vector(src, i)
+                for r = 0 to delta.r-1 do
+                    let offset = delta.rem[r] * 768
+                    VecAns <- VecAns - Vector(NNUEin.InputWeights, offset + i)
+                for a = 0 to delta.a-1 do
+                    let offset = delta.add[a] * 768
+                    VecAns<- VecAns + Vector(NNUEin.InputWeights, offset + i)
+                VecAns.CopyTo(regs, i)
+                fast (i + chunkSize)
+        fast 0
+
+        //for i = 0 to 767 do
+        //    regs[i] <- src[i]
+        //    for r = 0 to delta.r-1 do
+        //        let offset = delta.rem[r] * 768
+        //        regs[i] <- regs[i] - NNUEin.InputWeights[offset + i]
+        //    for a = 0 to delta.a-1 do
+        //        let offset = delta.add[a] * 768
+        //        regs[i] <- regs[i] + NNUEin.InputWeights[offset + i]
     let ResetAccumulator(perspective:int) =
         let mutable delta = Delta.Default()
         let kingSq = Bits.ToInt(if perspective = White then Brd.Pieces[WhiteKing] else Brd.Pieces[BlackKing])
@@ -223,43 +223,23 @@ module NNUEb =
         else
             ApplyUpdates(move, White)
             ApplyUpdates(move, Black)
-    let MultiplyAddAdjacent(a:Vector<int16>, b:Vector<int16>) =
-        let SoftwareFallback() =
-            let a1,a2 = Vector.Widen(a)
-            let b1,b2 = Vector.Widen(b)
-            let c1 = a1 * b1
-            let c2 = a2 * b2
-            c1 + c2
-        if (Avx.IsSupported) then
-            if (Avx2.IsSupported) then
-                let one = a.AsVector256()
-                let two = b.AsVector256()
-                Avx2.MultiplyAddAdjacent(one, two).AsVector()
-            else
-                SoftwareFallback()
-        else
-            SoftwareFallback()
     let OutputLayer() =
         let mutable result = NNUEin.OutputBias
         let AccS = Accumulators.[AccIndex].[Brd.Stm]
         let AccX = Accumulators.[AccIndex].[Brd.Xstm]
         let chunkSize = Vector<int16>.Count
         let rec fast (i:int) =
-            if i > 768 - chunkSize then slow i
-            else
-                let VecS = Vector.Max(Vector(AccS, i), Vector.Zero)
-                let VecX = Vector.Max(Vector(AccX, i), Vector.Zero)
-                let VecWtS = Vector(NNUEin.OutputWeights, i)
-                let VecWtX = Vector(NNUEin.OutputWeights, i + 768)
-                let VecAnsS = MultiplyAddAdjacent(VecS, VecWtS)
-                let VecAnsX = MultiplyAddAdjacent(VecX, VecWtX)
-                let VecAns = VecAnsS + VecAnsX
+            if i < 768 then
+                let VecS1,VecS2 = Vector.Widen(Vector.Max(Vector(AccS, i), Vector.Zero))
+                let VecX1,VecX2 = Vector.Widen(Vector.Max(Vector(AccX, i), Vector.Zero))
+                let VecWtS1,VecWtS2 = Vector.Widen(Vector(NNUEin.OutputWeights, i))
+                let VecWtX1,VecWtX2 = Vector.Widen(Vector(NNUEin.OutputWeights, i + 768))
+                let VecAnsS1 = VecS1 * VecWtS1
+                let VecAnsS2 = VecS2 * VecWtS2
+                let VecAnsX1 = VecX1 * VecWtX1
+                let VecAnsX2 = VecX2 * VecWtX2
+                let VecAns = VecAnsS1 + VecAnsS2 + VecAnsX1 + VecAnsX2
                 result <- result + Vector.Sum(VecAns)
                 fast (i + chunkSize)
-        and slow (i:int) =
-            if i < 768 then
-                result <- result + int(Math.Max(AccS[i], 0s)) * int(NNUEin.OutputWeights[i])
-                                 + int(Math.Max(AccX[i], 0s)) * int(NNUEin.OutputWeights[i + 768])
-                slow (i + 1)
         fast 0
         result/8192

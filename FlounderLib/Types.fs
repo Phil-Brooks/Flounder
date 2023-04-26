@@ -3,7 +3,7 @@ open System.Threading
 
 [<AutoOpen>]
 module Types =
-    let VersionNo = "0.4.5.4"
+    let VersionNo = "0.4.5.5"
 
     // The type of piece.
     let WhitePawn = 0
