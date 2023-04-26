@@ -150,7 +150,6 @@ module NNUEb =
             ApplySubAdd(prev, from, mto, view)    
     let ApplyDelta(src:int16 array, delta:DeltaRec, perspective:int) =
         let regs = Accumulators.[AccIndex].[perspective]
-
         let chunkSize = Vector<int16>.Count
         let rec fast (i:int) =
             if i < 768 then 
@@ -164,15 +163,6 @@ module NNUEb =
                 VecAns.CopyTo(regs, i)
                 fast (i + chunkSize)
         fast 0
-
-        //for i = 0 to 767 do
-        //    regs[i] <- src[i]
-        //    for r = 0 to delta.r-1 do
-        //        let offset = delta.rem[r] * 768
-        //        regs[i] <- regs[i] - NNUEin.InputWeights[offset + i]
-        //    for a = 0 to delta.a-1 do
-        //        let offset = delta.add[a] * 768
-        //        regs[i] <- regs[i] + NNUEin.InputWeights[offset + i]
     let ResetAccumulator(perspective:int) =
         let mutable delta = Delta.Default()
         let kingSq = Bits.ToInt(if perspective = White then Brd.Pieces[WhiteKing] else Brd.Pieces[BlackKing])
