@@ -1,10 +1,7 @@
 ﻿namespace FlounderLib
 open System.Reflection
 open System.IO
-open System
 open System.Numerics
-open System.Runtime.Intrinsics
-open System.Runtime.Intrinsics.X86
 
 module NNUEb =
     let NNUEin = 
@@ -26,14 +23,12 @@ module NNUEb =
         for i = 0 to owlen-1 do
             ow[i] <- reader.ReadInt16()
         let ob = reader.ReadInt32()
-        let nnue =
-            {
-                InputWeights = iw
-                InputBiases = ib
-                OutputWeights = ow
-                OutputBias = ob
-            }
-        nnue
+        {
+            InputWeights = iw
+            InputBiases = ib
+            OutputWeights = ow
+            OutputBias = ob
+        }
     let Accumulators:int16 array array array =
         let ans = Array.zeroCreate 252
         for i = 0 to 251 do
