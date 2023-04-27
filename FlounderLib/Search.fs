@@ -38,7 +38,7 @@ module Search =
         if ans.IsSome then 
             ans.Value
         else
-            let earlyEval = NNUEb.OutputLayer()
+            let earlyEval = NNUE.Evaluate(Brd.Stm)
             if earlyEval >= beta then ans <- beta|>Some
             if ans.IsSome then ans.Value
             else
@@ -174,7 +174,7 @@ module Search =
                 let kingSq = if icolor = White then Brd.WhiteKingLoc else Brd.BlackKingLoc
                 let mutable inCheck = MoveList.UnderAttack(kingSq, ioppositeColor)
                 let mutable improving = false
-                let positionalEvaluation = if tranHit then tranMove.Score else NNUEb.OutputLayer()
+                let positionalEvaluation = if tranHit then tranMove.Score else NNUE.Evaluate(Brd.Stm)
                 SrchStack.Set(plyFromRoot, positionalEvaluation)
                 if not isPvNode && not inCheck then
                     improving <- plyFromRoot >= 2 && positionalEvaluation >= SrchStack.Get(plyFromRoot - 2)
@@ -285,7 +285,7 @@ module Search =
             getbm -100000000 1                    
         with
             | :? OperationCanceledException -> ()
-        NNUEb.AccIndex<-0
+        NNUE.ResetAccumulator()
         bestMove
     let DoTest(selectedDepth:int, bm:string) =
         let mutable bestMove = OrdMove.Default
@@ -303,6 +303,6 @@ module Search =
             getbm -100000000 1                    
         with
             | :? OperationCanceledException -> ()
-        NNUEb.AccIndex<-0
+        NNUE.ResetAccumulator()
         bestMove
             

@@ -183,10 +183,12 @@ module Board =
         let mutable rv = ToMove()
         if cpcT <> EmptyColPc then
             rv.CapturedPiece <- cpcT
+            NNUE.EfficientlyUpdateAccumulator(false, pT, cT, mto)
         if Brd.EnPassantTarget = mto && pF = Pawn then
             let epPieceSq = if cF = White then Brd.EnPassantTarget + 8 else Brd.EnPassantTarget - 8
             let oppositeColor = cF ^^^ 1
             Empty(epPieceSq)
+            NNUE.EfficientlyUpdateAccumulator(false, Pawn, oppositeColor, epPieceSq)
             rv.EnPassant <- true
             rv.CapturedPiece <- oppositeColor
         if Brd.EnPassantTarget<> Na then Zobrist.HashEp(&Brd.ZobristHash, Brd.EnPassantTarget)
@@ -195,11 +197,14 @@ module Board =
             Zobrist.HashEp(&Brd.ZobristHash, Brd.EnPassantTarget)
         else Brd.EnPassantTarget <- Na
         BaseMove(from, mto)
+        NNUE.EfficientlyUpdateAccumulatorPc(pF, cF, from, mto)
         if promotion <> PromNone then
             Empty(mto)
             let prompc = promotion*2 + cF
             InsertPiece(prompc, mto)
             rv.Promotion <- true
+            NNUE.EfficientlyUpdateAccumulator(false, pF, cF, mto)
+            NNUE.EfficientlyUpdateAccumulator(true, promotion, cF, mto)
         rv.From <- from
         rv.To <- mto
         Zobrist.HashCastlingRights(
@@ -230,6 +235,7 @@ module Board =
                     rv.SecondaryFrom <- mto - 2
                     rv.SecondaryTo <- mto + 1
                 BaseMove(rv.SecondaryFrom, rv.SecondaryTo)
+                NNUE.EfficientlyUpdateAccumulatorPc(Rook, cF, rv.SecondaryFrom, rv.SecondaryTo)
         if pT = Rook then
             if cT = White then
                 if mto = A1 then Brd.WhiteQCastle <- 0x0

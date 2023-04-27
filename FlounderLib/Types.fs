@@ -3,7 +3,7 @@ open System.Threading
 
 [<AutoOpen>]
 module Types =
-    let VersionNo = "0.4.5.6"
+    let VersionNo = "0.4.5.7"
 
     // The type of piece.
     let WhitePawn = 0
@@ -270,6 +270,10 @@ module Square =
         let num = (8 - r).ToString()
         let ltr = ("abcdefgh"[f]).ToString()
         ltr + num
+    let OldInt(i:int) =
+        let r = i/8
+        let c = i%8
+        8*(7-r) + c
 
 module Promotion =
     let ToStr(prm:int) = PromChars[prm].ToString()
