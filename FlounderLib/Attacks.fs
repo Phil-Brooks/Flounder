@@ -2,7 +2,7 @@
 
 module Attacks =
     // Attack tables & BM bitboards for fast move-generation.
-    let WhitePawnAttacks:uint64 array = 
+    let BlackPawnAttacks:uint64 array = 
         [|
             0x0000000000000200uL; 0x0000000000000500uL; 0x0000000000000a00uL; 0x0000000000001400uL; 
             0x0000000000002800uL; 0x0000000000005000uL; 0x000000000000a000uL; 0x0000000000004000uL; 
@@ -21,7 +21,7 @@ module Attacks =
             0x0000000000000000uL; 0x0000000000000000uL; 0x0000000000000000uL; 0x0000000000000000uL; 
             0x0000000000000000uL; 0x0000000000000000uL; 0x0000000000000000uL; 0x0000000000000000uL
         |]
-    let BlackPawnAttacks:uint64 array = 
+    let WhitePawnAttacks:uint64 array = 
         [|
             0x0000000000000000uL; 0x0000000000000000uL; 0x0000000000000000uL; 0x0000000000000000uL; 
             0x0000000000000000uL; 0x0000000000000000uL; 0x0000000000000000uL; 0x0000000000000000uL;
@@ -273,10 +273,10 @@ module Attacks =
         slidingMoves
     let Between =
         let between:uint64 array array = Array.zeroCreate 64
-        for fromSq = A1 to H8 do
+        for fromSq = A8 to H1 do
             let fromH, fromV = fromSq % 8, fromSq / 8
             between[fromSq] <- Array.zeroCreate 64
-            for toSq = A1 to H8 do
+            for toSq = A8 to H1 do
                 between[fromSq][toSq] <- 0UL
                 if fromSq <> toSq then 
                     let mutable occ = 0UL

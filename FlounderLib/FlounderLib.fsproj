@@ -9,27 +9,14 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <EmbeddedResource Include="BasicNNUEf-0334adf934-FeatureBias.txt">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </EmbeddedResource>
-    <EmbeddedResource Include="BasicNNUEf-0334adf934-FeatureWeight.txt">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </EmbeddedResource>
-    <EmbeddedResource Include="BasicNNUEf-0334adf934-FlippedFeatureWeight.txt">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </EmbeddedResource>
-    <EmbeddedResource Include="BasicNNUEf-0334adf934-OutBias.txt">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </EmbeddedResource>
-    <EmbeddedResource Include="BasicNNUEf-0334adf934-OutWeight.txt">
+    <EmbeddedResource Include="berserk-e3f526b26f50.nn">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
     <Compile Include="Types.fs" />
     <Compile Include="Globals.fs" />
     <Compile Include="Bits.fs" />
     <Compile Include="Zobrist.fs" />
-    <Compile Include="NN.fs" />
-    <Compile Include="NNUE.fs" />
+    <Compile Include="NNUEb.fs" />
     <Compile Include="Board.fs" />
     <Compile Include="OrdMove.fs" />
     <Compile Include="TranTable.fs" />

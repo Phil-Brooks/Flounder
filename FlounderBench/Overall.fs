@@ -10,9 +10,9 @@ type Overall() =
      
     [<Benchmark>]
     member _.Overall() = 
-        EngBoard.Default()
+        Brd <- Board.Default()
         Perft.MoveGeneration(4)|>ignore
-        NNUE.ResetAccumulator()
-        NNUE.RefreshAccumulator()
-        NNUE.Evaluate(Brd.Stm)|>ignore
+        NNUEb.ResetAccumulator(0)
+        NNUEb.ResetAccumulator(1)
+        NNUEb.OutputLayer()|>ignore
 

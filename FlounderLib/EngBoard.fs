@@ -5,8 +5,9 @@ module EngBoard =
     let FromFen(fen:string) = 
         Brd <- Board.FromFen(fen)
         RepHist.Reset()
-        NNUE.ResetAccumulator()
-        NNUE.RefreshAccumulator()
+        NNUEb.AccIndex<-0
+        NNUEb.ResetAccumulator(White)
+        NNUEb.ResetAccumulator(Black)
     let Default() = 
         let DEFAULT_FEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
         FromFen(DEFAULT_FEN)
@@ -39,11 +40,12 @@ module EngBoard =
         Zobrist.FlipTurnInHash(&Brd.ZobristHash)
     let Move(move:byref<OrdMoveEntryRec>) =
         let rv:MoveRec =
-            NNUE.PushAccumulator()
+            NNUEb.AccIndex<-NNUEb.AccIndex+1
             Board.Move(move.From, move.To, move.Promotion)
+        NNUEb.DoUpdate(rv)
         RepHist.Append(Brd.ZobristHash)
         rv
     let UndoMove(rv:byref<MoveRec>) =
         Board.UndoMove(&rv)
-        NNUE.PullAccumulator()
+        NNUEb.AccIndex<-NNUEb.AccIndex-1
         RepHist.RemoveLast()

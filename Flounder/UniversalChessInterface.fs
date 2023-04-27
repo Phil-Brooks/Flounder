@@ -18,7 +18,6 @@ module Program =
 module UniversalChessInterface =
     let NAME = "Flounder"
     let AUTHOR = "Phil Brooks"
-    EngBoard.Default()
     let mutable Busy = false
     TimeCntrl.FromTime(9999999)
     let mutable MvCount = 0
@@ -36,14 +35,16 @@ module UniversalChessInterface =
             Busy <- true
             let mutable argsParsed = 1
             if (args.[1].ToLower()="startpos") then
-                EngBoard.Default()
+                Brd <- Board.Default()
+                RepHist.Reset()
                 argsParsed<-argsParsed+1
             elif (args.[1].ToLower()="fen") then
                 let p = args.[2]
                 let s = args.[3]
                 let c = args.[4]
                 let ep = args.[5]
-                EngBoard.FromFen(p + " " + s + " " + c + " " + ep)
+                Brd <- Board.FromFen(p + " " + s + " " + c + " " + ep)
+                RepHist.Reset()
                 argsParsed<-argsParsed+7
             else
                 failwith("Invalid Position provided.")
@@ -116,6 +117,10 @@ module UniversalChessInterface =
                     else TimeCntrl.FromMoves(movesToGo, timeForColor, timeIncForColor, Brd.Stm, MvCount)
                 let factory = TaskFactory()
                 let doSearch() =
+                    NNUEb.ResetRefreshTable()
+                    NNUEb.AccIndex<-0
+                    NNUEb.ResetAccumulator(White)
+                    NNUEb.ResetAccumulator(Black)
                     Search.Reset()
                     Busy <- true
                     let bestMove = Search.IterativeDeepening(depth)

@@ -5,6 +5,8 @@ open System.IO
 
 [<EntryPoint>]
 let main argv =
+    NNUEb.ResetRefreshTable()
+    EngBoard.Default()
     let command = Environment.CommandLine
     if (command.ToLower().Contains("test")) then
         Tester.Test(argv)

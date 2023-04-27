@@ -226,23 +226,23 @@ module BitBoard =
 
     [<Test>]
     let FromSq() =
-        let ans = Bits.FromSq(A1)
+        let ans = Bits.FromSq(A8)
         ans|>should equal 1UL
 
     [<Test>]
     let ToSq() =
         let ans:int = Bits.ToInt(BlackB)
-        ans|>should equal A1
+        ans|>should equal A8
 
     [<Test>]
     let ToSqs() =
         let ans:int array = Bits.ToArray(BlackB)
-        ans.[0]|>should equal A1
+        ans.[0]|>should equal A8
         ans.Length|>should equal 16
 
     [<Test>]
     let GetEnum() =
         let ans = Bits.ToSeq(BlackB)
-        ans|>Seq.head|>should equal A1
+        ans|>Seq.head|>should equal A8
 
        

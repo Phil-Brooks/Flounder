@@ -8,7 +8,7 @@ module Perft =
     let D5 = 4865609uL
     let D6 = 119060324uL
     let D7 = 3195901860uL
-    EngBoard.Default()
+    Brd <- Board.Default()
     let rec MoveGeneration(depth) =
         let colored = if Brd.IsWtm then Brd.White else Brd.Black
         let kingSq = if Brd.IsWtm then Brd.WhiteKingLoc else Brd.BlackKingLoc
