@@ -266,9 +266,9 @@ module MoveList =
                     failwith "Cannot generate move for empty piece" 
             FromFields(from, horizontalVertical, diagonal, checks, moves, promotion)
     let ForSq(from:int) =
-        let piece, color = ColPiece.ToPcCol(Brd.Squares[from])
-        let oppositeColor = color ^^^ 1
-        let kingSq = if color = White then Brd.WhiteKingLoc else Brd.BlackKingLoc
+        let color = Brd.Stm
+        let oppositeColor = Brd.Xstm
+        let kingSq = if Brd.IsWtm then Brd.WhiteKingLoc else Brd.BlackKingLoc
         let (horizontalVertical, diagonal) = PinBitBoards(kingSq, color, oppositeColor)
         let (checks, doubleChecked) = CheckBitBoard(kingSq, oppositeColor)
         Double(from, horizontalVertical, diagonal, checks, doubleChecked)

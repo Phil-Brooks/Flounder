@@ -10,29 +10,25 @@ module VSize =
     let Short = Vector<int16>.Count
 
 module NN =
+    let inline SoftwareFallback(a:Vector<int16>, b:Vector<int16>) =
+        let c = a * b
+        let bufferSpanarr = Array.zeroCreate<int>(VSize.Int)
+        let mutable buffer = new Span<int>(bufferSpanarr)
+        let mutable vectorIndex = 0
+        for i = 0 to VSize.Int-1 do
+            buffer.[i] <- int(c.[vectorIndex]) + int(c.[vectorIndex + 1])
+            vectorIndex <- vectorIndex + 2
+        new Vector<int>(buffer)
     let MultiplyAddAdjacent(a:Vector<int16>, b:Vector<int16>) =
-        let SoftwareFallback() =
-            let c = a * b
-            let bufferSpanarr = Array.zeroCreate<int>(VSize.Int)
-            let mutable buffer = new Span<int>(bufferSpanarr)
-            let mutable vectorIndex = 0
-            for i = 0 to VSize.Int-1 do
-                buffer.[i] <- int(c.[vectorIndex]) + int(c.[vectorIndex + 1])
-                vectorIndex <- vectorIndex + 2
-            new Vector<int>(buffer)
         if (Avx.IsSupported) then
             if (Avx2.IsSupported) then
                 let one = a.AsVector256()
                 let two = b.AsVector256()
                 Avx2.MultiplyAddAdjacent(one, two).AsVector()
             else
-                SoftwareFallback()
-        elif (Sse2.IsSupported) then
-            let one = a.AsVector128()
-            let two = b.AsVector128()
-            Sse2.MultiplyAddAdjacent(one, two).AsVector()
+                SoftwareFallback(a,b)
         else
-            SoftwareFallback()
+            SoftwareFallback(a,b)
     let Clamp(value:Vector<int16>, min:byref<Vector<int16>>, max:byref<Vector<int16>>) =
         Vector.Max(min, Vector.Min(max, value))
     let ToArray(vector:Vector<int16>, array:int16 array, offset:int) =
