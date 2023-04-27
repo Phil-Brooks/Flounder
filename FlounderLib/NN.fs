@@ -11,14 +11,9 @@ module VSize =
 
 module NN =
     let inline SoftwareFallback(a:Vector<int16>, b:Vector<int16>) =
-        let c = a * b
-        let bufferSpanarr = Array.zeroCreate<int>(VSize.Int)
-        let mutable buffer = new Span<int>(bufferSpanarr)
-        let mutable vectorIndex = 0
-        for i = 0 to VSize.Int-1 do
-            buffer.[i] <- int(c.[vectorIndex]) + int(c.[vectorIndex + 1])
-            vectorIndex <- vectorIndex + 2
-        new Vector<int>(buffer)
+        let a1,a2 = Vector.Widen(a)
+        let b1,b2 = Vector.Widen(b)
+        a1 * b1 + a2 * b2
     let MultiplyAddAdjacent(a:Vector<int16>, b:Vector<int16>) =
         if (Avx.IsSupported) then
             if (Avx2.IsSupported) then
