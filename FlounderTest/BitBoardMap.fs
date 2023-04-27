@@ -88,9 +88,9 @@ module BitBoardMap =
         Bits.Count(Map.Pieces.[1]) |> should equal 8
 
         Map.Squares.Length |> should equal 64
-        Map.Squares.[0] |> should equal BlackRook
-        Map.Squares.[63] |> should equal WhiteRook
-        Map.Squares.[8] |> should equal BlackPawn
+        Map.Squares.[0] |> should equal WhiteRook
+        Map.Squares.[63] |> should equal BlackRook
+        Map.Squares.[8] |> should equal WhitePawn
 
         Bits.Count(Map.White) |> should equal 16
         Bits.Count(Map.Black) |> should equal 16
@@ -100,7 +100,7 @@ module BitBoardMap =
         Map.WhiteKCastle |> should equal 0x1
         Map.WhiteQCastle |> should equal 0x2
         Map.EnPassantTarget |> should equal Na
-        Map.ZobristHash |> should equal 2506267901269816621UL
+        Map.ZobristHash |> should equal 6845746135957128455UL
 
     [<Test>]
     let ItemE1() =

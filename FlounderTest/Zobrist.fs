@@ -13,4 +13,4 @@ module Zobrist =
 
     [<Test>]
     let Hash() =
-        Zobrist.Hash(Map) |> should equal 2506267901269816621UL
+        Zobrist.Hash(Map) |> should equal 6845746135957128455UL

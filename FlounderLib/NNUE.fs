@@ -94,10 +94,10 @@ module NNUE =
             let oppositeColor = color ^^^ 1
             let piece = pc/2
             for sq in sqarr do
-                let index = color * colorStride + piece * pieceStride + Square.OldInt(sq)
+                let index = color * colorStride + piece * pieceStride + sq
                 NNUEout.WhitePOV[index] <- 1s
             for sq in sqarr do
-                let index = oppositeColor * colorStride + piece * pieceStride + (Square.OldInt(sq) ^^^ 56)
+                let index = oppositeColor * colorStride + piece * pieceStride + (sq ^^^ 56)
                 NNUEout.BlackPOV.[index] <- 1s
         let accumulatorA = NNUEout.AccumulatorA.[NNUEout.CurrentAccumulator]
         let accumulatorB = NNUEout.AccumulatorB.[NNUEout.CurrentAccumulator]
@@ -108,10 +108,10 @@ module NNUE =
         let colorStride = 64 * 6
         let pieceStride = 64
         let opPieceStride = piece * pieceStride
-        let whiteIndexFrom = color * colorStride + opPieceStride + Square.OldInt(from)
-        let blackIndexFrom = (color ^^^ 1) * colorStride + opPieceStride + (Square.OldInt(from) ^^^ 56)
-        let whiteIndexTo = color * colorStride + opPieceStride + Square.OldInt(mto)
-        let blackIndexTo = (color ^^^ 1) * colorStride + opPieceStride + (Square.OldInt(mto) ^^^ 56)
+        let whiteIndexFrom = color * colorStride + opPieceStride + from
+        let blackIndexFrom = (color ^^^ 1) * colorStride + opPieceStride + (from ^^^ 56)
+        let whiteIndexTo = color * colorStride + opPieceStride + mto
+        let blackIndexTo = (color ^^^ 1) * colorStride + opPieceStride + (mto ^^^ 56)
         let accumulatorA = NNUEout.AccumulatorA.[NNUEout.CurrentAccumulator]
         let accumulatorB = NNUEout.AccumulatorB.[NNUEout.CurrentAccumulator]
         NNUEout.WhitePOV.[whiteIndexFrom] <- 0s
@@ -125,8 +125,8 @@ module NNUE =
         let colorStride = 64 * 6
         let pieceStride = 64
         let opPieceStride = int(piece) * pieceStride
-        let whiteIndex = color * colorStride + opPieceStride + Square.OldInt(sq)
-        let blackIndex = (color ^^^ 1) * colorStride + opPieceStride + (Square.OldInt(sq) ^^^ 56)
+        let whiteIndex = color * colorStride + opPieceStride + sq
+        let blackIndex = (color ^^^ 1) * colorStride + opPieceStride + (sq ^^^ 56)
         let accumulatorA = NNUEout.AccumulatorA.[NNUEout.CurrentAccumulator]
         let accumulatorB = NNUEout.AccumulatorB.[NNUEout.CurrentAccumulator]
         if isActivate then

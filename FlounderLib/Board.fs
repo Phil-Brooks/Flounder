@@ -12,7 +12,7 @@ module Board =
         let squares:int array = Array.zeroCreate 64
         for i = 0 to 63 do
             squares[i] <- EmptyColPc
-        let expandedBoardData = boardFen.Split("/")
+        let expandedBoardData = boardFen.Split("/")|>Array.rev
         if expandedBoardData.Length <> 8 then 
             failwith ("Wrong board data provided: " + boardFen)
         let mutable wkloc = -1
@@ -185,7 +185,7 @@ module Board =
             rv.CapturedPiece <- cpcT
             NNUE.EfficientlyUpdateAccumulator(false, pT, cT, mto)
         if Brd.EnPassantTarget = mto && pF = Pawn then
-            let epPieceSq = if cF = White then Brd.EnPassantTarget + 8 else Brd.EnPassantTarget - 8
+            let epPieceSq = if cF = White then Brd.EnPassantTarget - 8 else Brd.EnPassantTarget + 8
             let oppositeColor = cF ^^^ 1
             Empty(epPieceSq)
             NNUE.EfficientlyUpdateAccumulator(false, Pawn, oppositeColor, epPieceSq)
@@ -193,7 +193,7 @@ module Board =
             rv.CapturedPiece <- oppositeColor
         if Brd.EnPassantTarget<> Na then Zobrist.HashEp(&Brd.ZobristHash, Brd.EnPassantTarget)
         if pF = Pawn && abs(mto - from) = 16 then
-            Brd.EnPassantTarget <- if cF = White then from - 8 else from + 8
+            Brd.EnPassantTarget <- if cF = White then from + 8 else from - 8
             Zobrist.HashEp(&Brd.ZobristHash, Brd.EnPassantTarget)
         else Brd.EnPassantTarget <- Na
         BaseMove(from, mto)
@@ -285,7 +285,7 @@ module Board =
         let pT = Brd.Squares[rv.From]
         BaseMove(rv.To, rv.From)
         if rv.EnPassant then
-            let insertion = if rv.CapturedPiece = WhitePawn then rv.To - 8 else rv.To + 8
+            let insertion = if rv.CapturedPiece = WhitePawn then rv.To + 8 else rv.To - 8
             InsertPiece(rv.CapturedPiece, insertion)
         elif rv.CapturedPiece <> EmptyColPc then
             InsertPiece(rv.CapturedPiece, rv.To)
@@ -314,7 +314,7 @@ module Board =
                     rankData <- rankData + input
                     h <- h + 1
             expandedBoardData[v] <- rankData
-        let boardData = String.Join("/", expandedBoardData)
+        let boardData = String.Join("/", expandedBoardData|>Array.rev)
         let turnData = if Brd.IsWtm then "w" else "b"
         let mutable castlingRight = ""
         if (Brd.WhiteKCastle = 0x0 && Brd.WhiteQCastle = 0x0 && Brd.BlackKCastle = 0x0 && Brd.BlackQCastle = 0x0) then

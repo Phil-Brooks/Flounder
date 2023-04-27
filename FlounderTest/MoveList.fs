@@ -26,8 +26,8 @@ module MoveList =
         let moveList = MoveList.ForSq(A2)
         moveList.Count |> should equal 2
         let movearr = Bits.ToArray(moveList.Moves)
-        movearr[0]|> should equal A4
-        movearr[1]|> should equal A3
+        movearr[0]|> should equal A3
+        movearr[1]|> should equal A4
 
     [<Test>]
     let CountKnightMovesAtA3() =
@@ -38,7 +38,7 @@ module MoveList =
         let moveList = MoveList.ForSq(A3)
         moveList.Count |> should equal 3
         let movearr = Bits.ToArray(moveList.Moves)
-        movearr[0]|> should equal B5
+        movearr[0]|> should equal B1
         movearr[1]|> should equal C4
 
     [<Test>]
@@ -50,8 +50,8 @@ module MoveList =
         let moveList = MoveList.ForSq(A3)
         moveList.Count |> should equal 11
         let movearr = Bits.ToArray(moveList.Moves)
-        movearr[0]|> should equal A7
-        movearr[1]|> should equal A6
+        movearr[0]|> should equal B3
+        movearr[1]|> should equal C3
 
     [<Test>]
     let CountRookMovesAtA1() =
@@ -68,8 +68,8 @@ module MoveList =
         let moveList = MoveList.ForSq(C3)
         moveList.Count |> should equal 6
         let movearr = Bits.ToArray(moveList.Moves)
-        movearr[0]|> should equal G7
-        movearr[1]|> should equal F6
+        movearr[0]|> should equal B4
+        movearr[1]|> should equal D4
 
     [<Test>]
     let CountQueenMovesAtC3() =
@@ -79,8 +79,8 @@ module MoveList =
         let moveList = MoveList.ForSq(C3)
         moveList.Count |> should equal 17
         let movearr = Bits.ToArray(moveList.Moves)
-        movearr[0]|> should equal C7
-        movearr[1]|> should equal G7
+        movearr[0]|> should equal A3
+        movearr[1]|> should equal B3
 
     [<Test>]
     let CountKingMovesAtC3() =
@@ -90,8 +90,8 @@ module MoveList =
         let moveList = MoveList.ForSq(C3)
         moveList.Count |> should equal 5
         let movearr = Bits.ToArray(moveList.Moves)
-        movearr[0]|> should equal B4
-        movearr[1]|> should equal C4
+        movearr[0]|> should equal B3
+        movearr[1]|> should equal D3
 
     [<Test>]
     let CountKingMovesAtE1a() =

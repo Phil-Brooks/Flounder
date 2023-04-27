@@ -2,10 +2,10 @@
 open System
 
 module MoveList =
-    let BLACK_KING_CASTLE = 96UL
-    let WHITE_KING_CASTLE = BLACK_KING_CASTLE <<< 56
-    let BLACK_QUEEN_CASTLE = 14UL
-    let WHITE_QUEEN_CASTLE = BLACK_QUEEN_CASTLE <<< 56
+    let WHITE_KING_CASTLE = 96UL
+    let BLACK_KING_CASTLE = WHITE_KING_CASTLE <<< 56
+    let WHITE_QUEEN_CASTLE = 14UL
+    let BLACK_QUEEN_CASTLE = WHITE_QUEEN_CASTLE <<< 56
     let UnderAttack(sq:int, by:int) =
         let pawnAttack = if by = White then Attacks.BlackPawnAttacks[sq] else Attacks.WhitePawnAttacks[sq]
         if (pawnAttack &&& Brd.Pieces[by]) <> 0UL then true
@@ -77,10 +77,10 @@ module MoveList =
             let oppColor = Brd.Xstm
             let opposite = if Brd.IsWtm then Brd.Black else Brd.White
             let mutable epPieceSq = Na
-            let promotion = color = White && from < A6 &&  from > H8 || 
-                            color = Black && from < A1 && from > H3
+            let promotion = color = White && from > H6 &&  from < A8 || 
+                            color = Black && from > H1 && from < A3
             if Brd.EnPassantTarget <> Na then
-                epPieceSq <- if Brd.IsWtm then Brd.EnPassantTarget + 8 else Brd.EnPassantTarget - 8
+                epPieceSq <- if Brd.IsWtm then Brd.EnPassantTarget - 8 else Brd.EnPassantTarget + 8
                 let epTargetPieceExists =  Bits.IsSet(Brd.Pieces[oppColor], epPieceSq)
                 let reverseCorner = if Brd.IsWtm then Attacks.BlackPawnAttacks[Brd.EnPassantTarget] else Attacks.WhitePawnAttacks[Brd.EnPassantTarget]
                 if (epTargetPieceExists && Bits.IsSet(reverseCorner, from)) then
@@ -111,10 +111,10 @@ module MoveList =
         let colBoard = if Brd.IsWtm then Brd.White else Brd.Black
         let opposite = if Brd.IsWtm then Brd.Black else Brd.White
         let mutable epPieceSq = Na
-        let promotion = color = White && from < A6 &&  from > H8 || 
-                        color = Black && from < A1 && from > H3
+        let promotion = color = White && from > H6 &&  from < A8 || 
+                        color = Black && from > H1 && from < A3
         if Brd.EnPassantTarget <> Na then
-            epPieceSq <- if Brd.IsWtm then Brd.EnPassantTarget + 8 else Brd.EnPassantTarget - 8
+            epPieceSq <- if Brd.IsWtm then Brd.EnPassantTarget - 8 else Brd.EnPassantTarget + 8
             let epTargetPieceExists = Bits.IsSet(Brd.Pieces[oppColor], epPieceSq)
             let reverseCorner = if Brd.IsWtm then Attacks.BlackPawnAttacks[Brd.EnPassantTarget] else Attacks.WhitePawnAttacks[Brd.EnPassantTarget]
             if (epTargetPieceExists && Bits.IsSet(reverseCorner, from)) then
@@ -126,9 +126,9 @@ module MoveList =
             moves,promotion
         else
             let mutable pushes = 0UL
-            pushes <- pushes ||| (if Brd.IsWtm then Bits.FromSq(from) >>> 8 else Bits.FromSq(from) <<< 8) &&& ~~~Brd.Both
-            if ((from < A1 && from > H3 || from < A6 && from > H8) && pushes <> 0UL) then
-                pushes <- pushes ||| if Brd.IsWtm then Bits.FromSq(from) >>> 16 else Bits.FromSq(from) <<< 16
+            pushes <- pushes ||| (if Brd.IsWtm then Bits.FromSq(from) <<< 8 else Bits.FromSq(from) >>> 8) &&& ~~~Brd.Both
+            if ((from > H1 && from < A3 || from > H6 && from < A8) && pushes <> 0UL) then
+                pushes <- pushes ||| if Brd.IsWtm then Bits.FromSq(from) <<< 16 else Bits.FromSq(from) >>> 16
             pushes <- pushes &&& ~~~(opposite) &&& ~~~(colBoard)
             moves <- moves ||| (pushes &&& c)
             if Bits.IsSet(hv, from) then
