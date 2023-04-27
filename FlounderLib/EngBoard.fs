@@ -38,14 +38,14 @@ module EngBoard =
         Brd.Stm <- Brd.Stm ^^^ 1  
         Brd.Xstm <- Brd.Xstm ^^^ 1  
         Zobrist.FlipTurnInHash(&Brd.ZobristHash)
-    let Move(move:byref<OrdMoveEntryRec>) =
+    let Move(move:OrdMoveEntryRec) =
         let rv:MoveRec =
             NNUEb.AccIndex<-NNUEb.AccIndex+1
             Board.Move(move.From, move.To, move.Promotion)
         NNUEb.DoUpdate(rv)
         RepHist.Append(Brd.ZobristHash)
         rv
-    let UndoMove(rv:byref<MoveRec>) =
-        Board.UndoMove(&rv)
+    let UndoMove(rv:MoveRec) =
+        Board.UndoMove(rv)
         NNUEb.AccIndex<-NNUEb.AccIndex-1
         RepHist.RemoveLast()

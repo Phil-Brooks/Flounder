@@ -247,7 +247,7 @@ module Board =
         Brd.Xstm <- Brd.Xstm ^^^ 1  
         Zobrist.FlipTurnInHash(&Brd.ZobristHash)
         rv
-    let UndoMove(rv:byref<MoveRec>)=
+    let UndoMove(rv:MoveRec)=
         Zobrist.HashCastlingRights(
             &Brd.ZobristHash, 
             Brd.WhiteKCastle, Brd.WhiteQCastle, 

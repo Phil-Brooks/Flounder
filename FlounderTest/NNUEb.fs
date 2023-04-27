@@ -226,6 +226,6 @@ module NNUEb =
         NNUEb.ResetAccumulator(1)
         NNUEb.ResetRefreshTable()
         let mutable mv = OrdMove.Create(E4, D3, PromNone)
-        let mutable rv = EngBoard.Move(&mv)
+        let mutable rv = EngBoard.Move(mv)
         let ans = NNUEb.OutputLayer()
         ans|>should equal -45

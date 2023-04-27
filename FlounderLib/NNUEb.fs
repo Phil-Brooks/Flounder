@@ -219,11 +219,7 @@ module NNUEb =
                 let VecX1,VecX2 = Vector.Widen(Vector.Max(Vector(AccX, i), Vector.Zero))
                 let VecWtS1,VecWtS2 = Vector.Widen(Vector(NNUEin.OutputWeights, i))
                 let VecWtX1,VecWtX2 = Vector.Widen(Vector(NNUEin.OutputWeights, i + 768))
-                let VecAnsS1 = VecS1 * VecWtS1
-                let VecAnsS2 = VecS2 * VecWtS2
-                let VecAnsX1 = VecX1 * VecWtX1
-                let VecAnsX2 = VecX2 * VecWtX2
-                let VecAns = VecAnsS1 + VecAnsS2 + VecAnsX1 + VecAnsX2
+                let VecAns = VecS1 * VecWtS1 + VecS2 * VecWtS2 + VecX1 * VecWtX1 + VecX2 * VecWtX2
                 result <- result + Vector.Sum(VecAns)
                 fast (i + chunkSize)
         fast 0

@@ -31,14 +31,14 @@ module Perft =
                 for mv in mvs do
                     let mutable rv = Board.Move(sq, mv, PromNone)
                     if rv.Promotion then
-                        Board.UndoMove(&rv)
+                        Board.UndoMove(rv)
                         for pr = PromKnight to PromQueen do 
                             rv <- Board.Move(sq, mv, pr)
                             tot <- tot + (MoveGeneration(nextDepth))
-                            Board.UndoMove(&rv)
+                            Board.UndoMove(rv)
                     else 
                         tot <- tot + MoveGeneration(nextDepth)
-                        Board.UndoMove(&rv)
+                        Board.UndoMove(rv)
             tot
     let Depth1() = (D1, MoveGeneration(1))
     let Depth2() = (D2, MoveGeneration(2))

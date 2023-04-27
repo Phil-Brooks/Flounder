@@ -60,10 +60,10 @@ module Search =
                         bestEvaluation <- seeEval
                         keepgoing <- false
                     else
-                        let mutable rv = EngBoard.Move(&move)
+                        let mutable rv = EngBoard.Move(move)
                         Srch.NodeCount <- Srch.NodeCount + 1
                         let evaluation = -QSearch(isPvNode, nextPlyFromRoot, nextDepth, -beta, -alpha)
-                        EngBoard.UndoMove(&rv)
+                        EngBoard.UndoMove(rv)
                         if not (HandleEvalQ(evaluation,&bestEvaluation,&alpha,beta)) then 
                             keepgoing <- false
                     i <- i + 1
@@ -99,7 +99,7 @@ module Search =
             bestEvaluation <- evaluation
             bestMoveSoFar <- move
             if isPvNode then
-                PrincVars.Insert(plyFromRoot, &bestMoveSoFar)
+                PrincVars.Insert(plyFromRoot, bestMoveSoFar)
                 let mutable nextPly = plyFromRoot + 1
                 while (PrincVars.PlyInitialized(plyFromRoot, nextPly)) do
                     PrincVars.Copy(plyFromRoot, nextPly)
@@ -216,7 +216,7 @@ module Search =
                             let lmpTest = not isPvNode && lmp && bestEvaluation > -100000000 && quietCount > lmpQuietThreshold
                             if lmpTest then keepgoing <- false
                             else
-                                let mutable rv = EngBoard.Move(&move)
+                                let mutable rv = EngBoard.Move(move)
                                 Srch.NodeCount <- Srch.NodeCount + 1
                                 let mutable evaluation = 
                                     if i = 0 then
@@ -225,7 +225,7 @@ module Search =
                                         alpha + 1
                                 if i > 0 && evaluation > alpha then
                                     PvSearch(&evaluation, nextPly, nextDepth, alpha, beta)
-                                EngBoard.UndoMove(&rv)
+                                EngBoard.UndoMove(rv)
                                 if not (HandleEval(evaluation, move, &bestEvaluation,&bestMoveSoFar,isPvNode,plyFromRoot,&alpha,beta,&tranType)) then
                                     if quietMove then
                                         DoQuiet(plyFromRoot,move,depth,quietCount,moveList,i)
@@ -235,7 +235,7 @@ module Search =
                                 i <- i + 1
                         bestMoveSoFar.Score <- bestEvaluation
                         let mutable entry = {Hash=Brd.ZobristHash;Type=tranType;BestMove=bestMoveSoFar;Depth=depth}
-                        TranTable.InsertEntry(Brd.ZobristHash, &entry)
+                        TranTable.InsertEntry(Brd.ZobristHash, entry)
                         bestEvaluation
     and NullMovePrune(nextPly:int, idepth:int, beta:int) =        
         let reducedDepth = idepth - 4 - (idepth / 3 - 1)

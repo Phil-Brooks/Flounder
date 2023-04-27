@@ -24,7 +24,7 @@ module TranTable =
         let index = int(zobristHash) &&& tt.HashFilter
         let ans = &(tt.Internal[index])
         ans
-    let InsertEntry(zobristHash:uint64, entry:byref<TranEntryRec>) =
+    let InsertEntry(zobristHash:uint64, entry:TranEntryRec) =
         let REPLACEMENT_DEPTH_THRESHOLD = 3
         let index = int(zobristHash) &&& tt.HashFilter
         let oldEntry = &(tt.Internal[index])
