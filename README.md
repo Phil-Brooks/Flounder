@@ -1,8 +1,16 @@
 # Flounder
 
-An attempt at a Chess Engine in F#. This was initially was just a conversion from the excellent [StockNemo](https://github.com/TheBlackPlague/StockNemo).
+<img src="flounder.png" alt="Berserk" width="400" />
 
-The code has then been significantly re-factored to be more in line with standard F# coding.
+An attempt at a Chess Engine in F#. This was initially just a conversion from the excellent [StockNemo](https://github.com/TheBlackPlague/StockNemo).
+
+The code was then been significantly re-factored to be more in line with standard F# coding.
+
+The code has now been completely revisited with removal of such features as Classes and Inheritance. Instead extensive use is made of F# Record Types and Modules.
+
+Furthermore, the NNUE has been replaced with that from the brilliant [Berserk Engine](https://github.com/jhonnold/berserk).
+
+THe result seems a pretty strong engine.
 
 ## Features
 
