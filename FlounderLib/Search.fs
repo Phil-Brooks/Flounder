@@ -169,20 +169,16 @@ module Search =
                 ans.Value
             else
                 let nextPly = plyFromRoot + 1
-                let icolor = if Brd.IsWtm then 0 else 1
-                let ioppositeColor = if Brd.IsWtm then 1 else 0
-                let kingSq = if icolor = White then Brd.WhiteKingLoc else Brd.BlackKingLoc
-                let mutable inCheck = MoveList.UnderAttack(kingSq, ioppositeColor)
+                let kingSq = if Brd.IsWtm then Brd.WhiteKingLoc else Brd.BlackKingLoc
+                let mutable inCheck = MoveList.UnderAttack(kingSq, Brd.Xstm)
                 let mutable improving = false
-                let positionalEvaluation = if tranHit then tranMove.Score else NNUEb.OutputLayer()
-                SrchStack.Set(plyFromRoot, positionalEvaluation)
+                let eval = if tranHit then tranMove.Score else NNUEb.OutputLayer()
+                SrchStack.Set(plyFromRoot, eval)
                 if not isPvNode && not inCheck then
-                    improving <- plyFromRoot >= 2 && positionalEvaluation >= SrchStack.Get(plyFromRoot - 2)
+                    improving <- plyFromRoot >= 2 && eval >= SrchStack.Get(plyFromRoot - 2)
                     let improvingInt = if improving then 1 else 0
-                    if idepth < 7 && Math.Abs(beta) < 99999999 && positionalEvaluation - 67 * idepth + 76 * improvingInt >= beta then
+                    if idepth < 7 && Math.Abs(beta) < 99999999 && eval - 67 * idepth + 76 * improvingInt >= beta then
                         ans <- beta|>Some
-                    elif idepth = 1 && positionalEvaluation + 150 < alpha then
-                        ans <- QSearch(false, plyFromRoot, 15, alpha, beta)|>Some
                     elif not rootNode && idepth > 2 then
                         let evaluation = NullMovePrune(nextPly, idepth, beta)
                         if evaluation >= beta then ans <- beta|>Some
@@ -210,7 +206,7 @@ module Search =
                             OrdMoves.SortNext(moveList, i, moveCount)
                             let previousNodeCount = Srch.NodeCount
                             let mutable move = OrdMoves.Get(moveList, i)
-                            let oppBoard = if ioppositeColor = White then Brd.White else Brd.Black
+                            let oppBoard = if Brd.IsWtm then Brd.Black else Brd.White
                             let quietMove = not (Bits.IsSet(oppBoard, move.To))
                             if quietMove then quietCount <- quietCount + 1
                             let lmpTest = not isPvNode && lmp && bestEvaluation > -100000000 && quietCount > lmpQuietThreshold
