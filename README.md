@@ -10,7 +10,7 @@ The code has now been completely revisited with removal of such features as Clas
 
 Furthermore, the NNUE has been replaced with that from the brilliant [Berserk Engine](https://github.com/jhonnold/berserk).
 
-THe result seems a pretty strong engine.
+The result seems a pretty strong engine.
 
 ## Features
 
