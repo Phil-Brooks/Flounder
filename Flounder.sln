@@ -5,6 +5,7 @@ VisualStudioVersion = 17.5.33209.295
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "docs", "docs", "{A52385A0-0EB3-40CF-8BCE-9AC2B7E311E0}"
 	ProjectSection(SolutionItems) = preProject
+		flounder.png = flounder.png
 		README.md = README.md
 	EndProjectSection
 EndProject
