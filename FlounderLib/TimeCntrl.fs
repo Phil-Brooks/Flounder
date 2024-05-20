@@ -30,7 +30,8 @@ module TimeCntrl =
         if (movesToGo <> -1 && movesToGo < BASE_DIV) then
             time <- Math.Max(time, timeForColor[colorToMove] / movesToGo - 100)
         if (moveCount >= INCREMENT_MOVE_BOUND) then time <- time + timeIncForColor[colorToMove] / INCREMENT_DIV
-        if (moveCount >= DELTA_MOVE_BOUND) then
+        //this is bad if other time is negative!
+        if (moveCount >= DELTA_MOVE_BOUND) && timeForColor[colorToMove^^^1] > 0 then
             let dTime = timeForColor[colorToMove] - timeForColor[colorToMove^^^1]
             if (dTime >= DELTA_THRESHOLD) then time <- time + dTime / DELTA_DIV
         FromTime(time)
