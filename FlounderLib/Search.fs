@@ -56,7 +56,7 @@ module Search =
                     let mutable move = OrdMoves.Get(moveList, i)
                     let see = SEE.Approx(move)
                     let seeEval = see + earlyEval
-                    if (seeEval > beta) then 
+                    if seeEval > beta then 
                         bestEvaluation <- seeEval
                         keepgoing <- false
                     else
@@ -94,7 +94,7 @@ module Search =
             + " pv " + PvLine() + "\n"
         )
     let HandleEval(evaluation:int, move:OrdMoveEntryRec, bestEvaluation:byref<int>, bestMoveSoFar:byref<OrdMoveEntryRec>, isPvNode:bool, plyFromRoot:int, alpha:byref<int>, beta:int, tranType:byref<TranType>) =
-        if (evaluation <= bestEvaluation) then true
+        if evaluation <= bestEvaluation then true
         else
             bestEvaluation <- evaluation
             bestMoveSoFar <- move
@@ -103,7 +103,7 @@ module Search =
                 let mutable nextPly = plyFromRoot + 1
                 while (PrincVars.PlyInitialized(plyFromRoot, nextPly)) do
                     PrincVars.Copy(plyFromRoot, nextPly)
-                    nextPly <- nextPly+1
+                    nextPly <- nextPly + 1
                 PrincVars.UpdateLength(plyFromRoot)
             if evaluation <= alpha then true
             else
@@ -115,11 +115,10 @@ module Search =
         if KillMv.Get(0, plyFromRoot) <> move then
             KillMv.ReOrder(plyFromRoot)
             KillMv.Set(0, plyFromRoot, move)
-        let stm = if Brd.IsWtm then 0 else 1 
-        Hist.Set(EngBoard.PieceOnly(move.From), stm, move.To, Hist.Get(EngBoard.PieceOnly(move.From), stm, move.To) + historyBonus)
+        Hist.Set(EngBoard.PieceOnly(move.From), Brd.Stm, move.To, Hist.Get(EngBoard.PieceOnly(move.From), Brd.Stm, move.To) + historyBonus)
         for j = 1 to quietCount - 1 do
             let otherMove = OrdMoves.Get(moveList, i - j)
-            Hist.Set(EngBoard.PieceOnly(otherMove.From), stm, otherMove.To, Hist.Get(EngBoard.PieceOnly(otherMove.From), stm, otherMove.To) - historyBonus)
+            Hist.Set(EngBoard.PieceOnly(otherMove.From), Brd.Stm, otherMove.To, Hist.Get(EngBoard.PieceOnly(otherMove.From), Brd.Stm, otherMove.To) - historyBonus)
     let rec AbSearch(isPvNode:bool, plyFromRoot:int, idepth:int, ialpha:int, ibeta:int) =
         let mutable alpha = ialpha
         let mutable beta = ibeta
@@ -236,7 +235,7 @@ module Search =
     and NullMovePrune(nextPly:int, idepth:int, beta:int) =        
         let reducedDepth = idepth - 4 - (idepth / 3 - 1)
         let mutable rv = EngBoard.NullMove()
-        let evaluation = -AbSearch(false, nextPly, reducedDepth, -beta, -beta + 1);
+        let evaluation = -AbSearch(false, nextPly, reducedDepth, -beta, -beta + 1)
         EngBoard.UndoNullMove(rv)
         evaluation
     and PvSearch(evaluation:byref<int>, nextPly:int, nextDepth:int, alpha:int, beta:int) =

@@ -113,7 +113,11 @@ module UniversalChessInterface =
                             else
                                 getargs (argPosition+1)
                     getargs 1
+                    //issue raised - does not work well when wtime and btime provided but nothing else - falls through to FromMoves
+                    //instead just need to check which to use and send through to FromTime
                     if (time = maxTime || timeSpecified) then TimeCntrl.FromTime(time)
+                    elif movesToGo = -1 && timeForColor.[Brd.Stm] <> 0  then
+                        TimeCntrl.FromTime(timeForColor.[Brd.Stm])
                     else TimeCntrl.FromMoves(movesToGo, timeForColor, timeIncForColor, Brd.Stm, MvCount)
                 let factory = TaskFactory()
                 let doSearch() =

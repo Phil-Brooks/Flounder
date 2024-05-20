@@ -25,12 +25,12 @@ module OrdMoves =
         elif move.Promotion <> PromNone then PRIORITY - 8 + move.Promotion
         else
             let pto = Brd.Squares[move.To]/2
-            if (pto <> EmptyPc) then 
+            if pto <> EmptyPc then 
                 let pfrom = Brd.Squares[move.From]/2
                 MvvLva(pfrom, pto) * 10000
             elif move.From = oms.KillerMoveOne.From && move.To = oms.KillerMoveOne.To && move.Promotion = oms.KillerMoveOne.Promotion then 900000
             elif move.From = oms.KillerMoveTwo.From && move.To = oms.KillerMoveTwo.To && move.Promotion = oms.KillerMoveTwo.Promotion then 800000
-            else Hist.Get(pieceToMove, (if Brd.IsWtm then 0 else 1), move.To)
+            else Hist.Get(pieceToMove, Brd.Stm, move.To)
     let NormalMoveGeneration(oms:OrdMovesRec, transpositionMove:OrdMoveEntryRec) =
         let kingSq = if Brd.IsWtm then Brd.WhiteKingLoc else Brd.BlackKingLoc
         let (hv, d) = MoveList.PinBitBoards(kingSq, Brd.Stm, Brd.Xstm)
@@ -110,10 +110,10 @@ module OrdMoves =
         i
     let Get(oms:OrdMovesRec, i:int) = oms.Internal[i]
     let Swap(oms:OrdMovesRec, firstIndex:int, secondIndex:int) = 
-        let nf = oms.Internal.[secondIndex]
-        let ns = oms.Internal.[firstIndex]
-        oms.Internal.[firstIndex] <- nf
-        oms.Internal.[secondIndex] <- ns
+        let nf = oms.Internal[secondIndex]
+        let ns = oms.Internal[firstIndex]
+        oms.Internal[firstIndex] <- nf
+        oms.Internal[secondIndex] <- ns
     let SortNext(oms:OrdMovesRec, sorted:int, maxSelection:int) =
         let mutable index = sorted
         for i = 1 + sorted to maxSelection - 1 do
