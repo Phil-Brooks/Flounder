@@ -3,7 +3,6 @@ open System
 open System.Threading
 open System.Threading.Tasks
 open System.Diagnostics
-open FlounderLib
 
 module Program =
     let RunPerft(depth:int) =
@@ -147,4 +146,5 @@ module UniversalChessInterface =
         let inputThread = Thread(UciStdInputThread.StartAcceptingInput)
         inputThread.Start()
     
+
 

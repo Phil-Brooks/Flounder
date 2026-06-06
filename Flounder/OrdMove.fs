@@ -1,4 +1,4 @@
-﻿namespace FlounderLib
+﻿namespace Flounder
 
 module OrdMove =
     let Default = 
@@ -20,3 +20,4 @@ module OrdMove =
         let mto = Square.ToStr(ome.To)
         let promotion = if ome.Promotion <> PromNone then Promotion.ToStr(ome.Promotion) else ""
         from + mto + promotion
+

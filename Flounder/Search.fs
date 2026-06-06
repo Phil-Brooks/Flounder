@@ -1,4 +1,4 @@
-﻿namespace FlounderLib
+﻿namespace Flounder
 open System
 open System.Diagnostics
 open System.Text

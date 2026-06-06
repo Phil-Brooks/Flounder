@@ -1,7 +1,7 @@
-namespace FlounderTest
+﻿namespace FlounderTest
 open NUnit.Framework
 open FsUnit
-open FlounderLib
+open Flounder
 module Perft =
 
     [<SetUp>]
@@ -42,5 +42,6 @@ module Perft =
     //let Depth7() =
     //    let (ans1,ans2) = Perft.Depth7()
     //    ans1 |> should equal ans2
+
 
 

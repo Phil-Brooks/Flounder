@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 17
-VisualStudioVersion = 17.5.33209.295
+# Visual Studio Version 18
+VisualStudioVersion = 18.6.11822.322 stable
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "docs", "docs", "{A52385A0-0EB3-40CF-8BCE-9AC2B7E311E0}"
 	ProjectSection(SolutionItems) = preProject
@@ -19,8 +19,6 @@ EndProject
 Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "FlounderBench", "FlounderBench\FlounderBench.fsproj", "{9C707431-4E59-49CC-9D12-1FABE3670264}"
 EndProject
 Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "Flounder", "Flounder\Flounder.fsproj", "{20574595-0AD4-41F0-B080-A31A41DD7515}"
-EndProject
-Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "FlounderLib", "FlounderLib\FlounderLib.fsproj", "{0D347039-ED17-4159-988F-1E7F12716762}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tester", "Tester", "{BB717AFA-FA4F-4234-9636-5EF08BBA11BC}"
 	ProjectSection(SolutionItems) = preProject
@@ -49,19 +47,8 @@ Global
 		{20574595-0AD4-41F0-B080-A31A41DD7515}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{20574595-0AD4-41F0-B080-A31A41DD7515}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{20574595-0AD4-41F0-B080-A31A41DD7515}.Release|Any CPU.Build.0 = Release|Any CPU
-		{0D347039-ED17-4159-988F-1E7F12716762}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{0D347039-ED17-4159-988F-1E7F12716762}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{0D347039-ED17-4159-988F-1E7F12716762}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{0D347039-ED17-4159-988F-1E7F12716762}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
-	EndGlobalSection
-	GlobalSection(NestedProjects) = preSolution
-		{557EF1CE-2733-4642-9665-767F1796FCB5} = {A52385A0-0EB3-40CF-8BCE-9AC2B7E311E0}
-		{BB717AFA-FA4F-4234-9636-5EF08BBA11BC} = {A52385A0-0EB3-40CF-8BCE-9AC2B7E311E0}
-	EndGlobalSection
-	GlobalSection(ExtensibilityGlobals) = postSolution
-		SolutionGuid = {ECC9DCFF-DB5B-471D-8840-93EB1016831F}
 	EndGlobalSection
 EndGlobal

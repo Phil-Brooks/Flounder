@@ -1,4 +1,4 @@
-﻿namespace FlounderLib
+﻿namespace Flounder
 open System.Numerics
 
 type BitBoardIterator =
@@ -45,3 +45,4 @@ module Bits =
         let mutable bb = 0UL
         SetBit(&bb, sq)
         bb
+

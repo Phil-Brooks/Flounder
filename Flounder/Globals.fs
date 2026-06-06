@@ -1,4 +1,4 @@
-﻿namespace FlounderLib
+﻿namespace Flounder
 open System.Threading
 
 [<AutoOpen>]
@@ -43,3 +43,4 @@ module Globals =
             SelDepth = 0
             RedTimeMove = om
         }
+

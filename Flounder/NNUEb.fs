@@ -1,11 +1,11 @@
-﻿namespace FlounderLib
+﻿namespace Flounder
 open System.Reflection
 open System.IO
 open System.Numerics
 
 module NNUEb =
     let NNUEin = 
-        let NNUE_FILE = "FlounderLib.berserk"
+        let NNUE_FILE = "Flounder.berserk"
         let HASH = "e3f526b26f50"
         let resource = NNUE_FILE + "-" + HASH + ".nn"
         use stream = Assembly.GetExecutingAssembly().GetManifestResourceStream(resource)
@@ -224,3 +224,4 @@ module NNUEb =
                 fast (i + chunkSize)
         fast 0
         result/8192
+

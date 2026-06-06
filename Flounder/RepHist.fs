@@ -1,4 +1,4 @@
-﻿namespace FlounderLib
+﻿namespace Flounder
 
 module RepHist =
     let mutable Arr = Array.create 1024 0UL
@@ -14,3 +14,4 @@ module RepHist =
         for i = Idx - 1 downto 0 do
             if Arr[i] = zobristHash then count <- count + 1
         count
+

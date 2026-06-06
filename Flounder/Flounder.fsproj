@@ -10,6 +10,28 @@
 
   <ItemGroup>
     <None Include="build.bat" />
+    <Compile Include="Types.fs" />
+    <Compile Include="Globals.fs" />
+    <Compile Include="Bits.fs" />
+    <Compile Include="Zobrist.fs" />
+    <Compile Include="NNUEb.fs" />
+    <Compile Include="Board.fs" />
+    <Compile Include="OrdMove.fs" />
+    <Compile Include="TranTable.fs" />
+    <Compile Include="RepHist.fs" />
+    <Compile Include="Attacks.fs" />
+    <Compile Include="MoveList.fs" />
+    <Compile Include="EngBoard.fs" />
+    <Compile Include="KillMv.fs" />
+    <Compile Include="Hist.fs" />
+    <Compile Include="OrdMoves.fs" />
+    <Compile Include="SrchEff.fs" />
+    <Compile Include="SrchStack.fs" />
+    <Compile Include="PrincVars.fs" />
+    <Compile Include="TimeCntrl.fs" />
+    <Compile Include="SEE.fs" />
+    <Compile Include="Search.fs" />
+    <Compile Include="Perft.fs" />
     <Compile Include="UciStdInputThread.fs" />
     <Compile Include="UniversalChessInterface.fs" />
     <Compile Include="Tester.fs" />
@@ -17,7 +39,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\FlounderLib\FlounderLib.fsproj" />
+    <EmbeddedResource Include="berserk-e3f526b26f50.nn">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </EmbeddedResource>
   </ItemGroup>
 
   <ItemGroup>

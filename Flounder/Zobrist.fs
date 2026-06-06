@@ -1,4 +1,4 @@
-﻿namespace FlounderLib
+﻿namespace Flounder
 open System
 
 module Zobrist =
@@ -39,3 +39,4 @@ module Zobrist =
         if map.EnPassantTarget <> Na then zobristHash <- zobristHash ^^^ ZobristEpKeys[map.EnPassantTarget]
         zobristHash <- zobristHash ^^^ ZobristCastleKeys[map.WhiteKCastle ||| map.WhiteQCastle ||| map.BlackKCastle ||| map.BlackQCastle]
         zobristHash
+

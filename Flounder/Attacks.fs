@@ -1,4 +1,4 @@
-﻿namespace FlounderLib
+﻿namespace Flounder
 
 module Attacks =
     // Attack tables & BM bitboards for fast move-generation.
@@ -299,3 +299,4 @@ module Attacks =
                             mTo <- GetMagicIndex(Bishop, occ, toSq)
                             between[fromSq][toSq] <- (SlidingMoves[mFrom] &&& SlidingMoves[mTo])
         between
+

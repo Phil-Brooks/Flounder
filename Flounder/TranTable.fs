@@ -1,4 +1,4 @@
-﻿namespace FlounderLib
+﻿namespace Flounder
 open System.Runtime.CompilerServices
 
 module TranTable =
@@ -34,3 +34,4 @@ module TranTable =
             tt.Internal[index] <- entry
         elif entry.Depth > oldEntry.Depth - REPLACEMENT_DEPTH_THRESHOLD then
             tt.Internal[index] <- entry
+

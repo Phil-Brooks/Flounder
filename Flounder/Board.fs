@@ -1,4 +1,4 @@
-﻿namespace FlounderLib
+﻿namespace Flounder
 open System
 
 module Board =
@@ -323,3 +323,4 @@ module Board =
             enPassantTarget <- Brd.EnPassantTarget.ToString().ToLower()
         let fen = [| boardData; turnData; castlingRight; enPassantTarget |]
         fen|>Array.reduce (fun a b -> a + " " + b)
+

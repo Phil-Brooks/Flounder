@@ -14,3 +14,4 @@ module UciStdInputThread =
                 Running <- false
             else
                 commandReceived.Trigger(Thread.CurrentThread, input)
+

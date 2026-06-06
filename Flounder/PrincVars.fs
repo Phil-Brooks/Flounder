@@ -1,4 +1,4 @@
-﻿namespace FlounderLib
+﻿namespace Flounder
 
 module PrincVars =
     let Len = Array.create 128 0
@@ -14,3 +14,4 @@ module PrincVars =
     let Clear() = 
         Len.Initialize()
         Arr.Initialize()
+

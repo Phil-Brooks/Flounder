@@ -1,7 +1,7 @@
-namespace FlounderTest
+﻿namespace FlounderTest
 open NUnit.Framework
 open FsUnit
-open FlounderLib
+open Flounder
 
 module Vestion =
 
@@ -13,3 +13,4 @@ module Vestion =
     let Current() =
         let ans = VersionNo
         ans |> should equal "0.5.0.2"
+

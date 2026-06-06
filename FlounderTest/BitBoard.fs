@@ -1,7 +1,7 @@
-namespace FlounderTest
+﻿namespace FlounderTest
 open NUnit.Framework
 open FsUnit
-open FlounderLib
+open Flounder
 
 module BitBoard =
     let mutable WhiteB = 0UL

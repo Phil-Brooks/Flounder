@@ -1,5 +1,5 @@
 ﻿namespace FlounderBench
-open FlounderLib
+open Flounder
 open BenchmarkDotNet.Attributes
 
 type Overall() =
@@ -15,4 +15,5 @@ type Overall() =
         NNUEb.ResetAccumulator(0)
         NNUEb.ResetAccumulator(1)
         NNUEb.OutputLayer()|>ignore
+
 

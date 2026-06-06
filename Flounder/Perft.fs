@@ -1,4 +1,4 @@
-﻿namespace FlounderLib
+﻿namespace Flounder
 
 module Perft =
     let D1 = 20uL
@@ -47,3 +47,4 @@ module Perft =
     let Depth5() = (D5, MoveGeneration(5))
     let Depth6() = (D6, MoveGeneration(6))
     let Depth7() = (D7, MoveGeneration(7))
+

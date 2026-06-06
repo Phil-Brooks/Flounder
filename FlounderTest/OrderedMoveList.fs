@@ -1,8 +1,8 @@
-namespace FlounderTest
+﻿namespace FlounderTest
 open NUnit.Framework
 open FsUnit
 open System
-open FlounderLib
+open Flounder
 module OrderedMoveList =
 
     [<SetUp>]
@@ -22,3 +22,4 @@ module OrderedMoveList =
         let ans = OrdMoves.Get(moveList, 19)
         ans.From |> should equal G1
         ans.Score |> should equal 0
+

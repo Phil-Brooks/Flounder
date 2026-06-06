@@ -1,7 +1,7 @@
-namespace FlounderTest
+﻿namespace FlounderTest
 open NUnit.Framework
 open FsUnit
-open FlounderLib
+open Flounder
 
 module Zobrist =
 
@@ -14,3 +14,4 @@ module Zobrist =
     [<Test>]
     let Hash() =
         Zobrist.Hash(Map) |> should equal 2506267901269816621UL
+

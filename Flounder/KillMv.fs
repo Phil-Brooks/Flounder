@@ -1,4 +1,4 @@
-﻿namespace FlounderLib
+﻿namespace Flounder
 
 module KillMv =
     let Arr = Array.create 256 OrdMove.Default
@@ -9,4 +9,5 @@ module KillMv =
 
 
     
+
 

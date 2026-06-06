@@ -1,4 +1,4 @@
-﻿namespace FlounderLib
+﻿namespace Flounder
 open System.Threading
 
 [<AutoOpen>]
@@ -288,4 +288,5 @@ module Delta =
             rem = Array.zeroCreate 32
             add = Array.zeroCreate 32
         }
+
 

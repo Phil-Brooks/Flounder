@@ -1,7 +1,7 @@
-namespace FlounderTest
+﻿namespace FlounderTest
 open NUnit.Framework
 open FsUnit
-open FlounderLib
+open Flounder
 
 module MoveList =
     let mutable board = Board.Default()
@@ -138,3 +138,4 @@ module MoveList =
         let movearr = Bits.ToArray(moveList.Moves)
         movearr[0]|> should equal A7
         movearr[1]|> should equal C7
+

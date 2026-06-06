@@ -1,4 +1,4 @@
-﻿namespace FlounderLib
+﻿namespace Flounder
 open System
 
 module MoveList =
@@ -272,3 +272,4 @@ module MoveList =
         let (horizontalVertical, diagonal) = PinBitBoards(kingSq, color, oppositeColor)
         let (checks, doubleChecked) = CheckBitBoard(kingSq, oppositeColor)
         Double(from, horizontalVertical, diagonal, checks, doubleChecked)
+

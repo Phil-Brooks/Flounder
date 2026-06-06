@@ -1,7 +1,7 @@
-namespace FlounderTest
+﻿namespace FlounderTest
 open NUnit.Framework
 open FsUnit
-open FlounderLib
+open Flounder
 
 module NNUEb =
 
@@ -229,3 +229,4 @@ module NNUEb =
         let mutable rv = EngBoard.Move(mv)
         let ans = NNUEb.OutputLayer()
         ans|>should equal -45
+

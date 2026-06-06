@@ -1,4 +1,4 @@
-﻿namespace FlounderLib
+﻿namespace Flounder
 open System
 
 module EngBoard =
@@ -49,3 +49,4 @@ module EngBoard =
         Board.UndoMove(rv)
         NNUEb.AccIndex<-NNUEb.AccIndex-1
         RepHist.RemoveLast()
+

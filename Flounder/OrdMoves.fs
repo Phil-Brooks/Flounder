@@ -1,4 +1,4 @@
-﻿namespace FlounderLib
+﻿namespace Flounder
 open System
 
 module OrdMoves =
@@ -119,3 +119,4 @@ module OrdMoves =
         for i = 1 + sorted to maxSelection - 1 do
             if oms.Internal[i].Score > oms.Internal[index].Score then index <- i
         Swap(oms, index, sorted)
+

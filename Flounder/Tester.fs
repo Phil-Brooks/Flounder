@@ -1,7 +1,6 @@
 ﻿namespace Flounder
 open System
 open System.IO
-open FlounderLib
 open System.Diagnostics
 
 module Tester =

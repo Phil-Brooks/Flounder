@@ -1,7 +1,7 @@
-namespace FlounderTest
+﻿namespace FlounderTest
 open NUnit.Framework
 open FsUnit
-open FlounderLib
+open Flounder
 
 module BitBoardMap =
 
@@ -126,3 +126,4 @@ module BitBoardMap =
     let ColorOnlyE1() =
         let ans = Map.Squares.[E1]%2
         ans |> should equal 0
+
