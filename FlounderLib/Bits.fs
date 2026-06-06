@@ -18,7 +18,7 @@ type BitBoardIterator =
             this.Value <- this.Value &&& (this.Value - 1UL)
             i
     end
- module Bits =
+module Bits =
     let ToInt(bb:uint64) = BitOperations.TrailingZeroCount(bb)
     let rec ToSeq (bb:uint64) =
         seq{
