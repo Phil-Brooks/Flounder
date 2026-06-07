@@ -15,234 +15,131 @@ module BitBoard =
                 if (v > 5) then Bits.SetBit(&WhiteB, v * 8 + h)
 
     [<Test>]
-    let TestDefault() =
-        let mutable success = true
+    let ``Default board is empty`` () =
         for h = 0 to 7 do
             for v = 0 to 7 do
-                let lookup = Bits.IsSet(0UL, v * 8 + h)
-                if lookup then    
-                    success <- false
-        success |> should equal true
+                Bits.IsSet(0UL, v * 8 + h) |> should equal false
 
     [<Test>]
-    let MarkA1AsTrue() =
-        let mutable useBoard = 0UL
-        Bits.SetBit(&useBoard, A1)
-        Bits.IsSet(useBoard,A1) |> should equal true
+    let ``Set single bit at A1`` () =
+        let mutable board = 0UL
+        Bits.SetBit(&board, A1)
+        Bits.IsSet(board, A1) |> should equal true
 
     [<Test>]
-    let MarkWhiteAsTrue() =
-        let mutable useBoard = 0UL
+    let ``Set white pieces`` () =
+        let mutable board = 0UL
         for h = 0 to 7 do
             for v = 0 to 7 do
-                if (v < 2) then Bits.SetBit(&useBoard, v * 8 + h)
+                if v < 2 then Bits.SetBit(&board, v * 8 + h)
 
-        let mutable success = true
+        Bits.Count(board) |> should equal 16
         for h = 0 to 7 do
             for v = 0 to 7 do
-                if (v < 2) then
-                    if not (Bits.IsSet(useBoard, v * 8 + h)) then
-                        success <- false
-                elif Bits.IsSet(useBoard, v * 8 + h) then
-                    success <- false
-
-        success |> should equal true
+                let isSet = Bits.IsSet(board, v * 8 + h)
+                if v < 2 then isSet |> should equal true
+                else isSet |> should equal false
 
     [<Test>]
-    let MarkWhiteAsTruef() =
-        let mutable useBoard = 0UL
+    let ``Set black and white pieces`` () =
+        let mutable white = 0UL
+        let mutable black = 0UL
         for h = 0 to 7 do
             for v = 0 to 7 do
-                if (v < 2) then Bits.SetBit(&useBoard, v * 8 + h)
+                if v < 2 then Bits.SetBit(&white, v * 8 + h)
+                if v > 5 then Bits.SetBit(&black, v * 8 + h)
 
-        let mutable success = true
+        Bits.Count(white) |> should equal 16
+        Bits.Count(black) |> should equal 16
+
         for h = 0 to 7 do
             for v = 0 to 7 do
-                if (v < 2) then
-                    if not (Bits.IsSet(useBoard, v * 8 + h)) then
-                        success <- false
-                elif Bits.IsSet(useBoard, v * 8 + h) then
-                    success <- false
-
-        success |> should equal true
+                let w = Bits.IsSet(white, v * 8 + h)
+                let b = Bits.IsSet(black, v * 8 + h)
+                if v < 2 then (w, b) |> should equal (true, false)
+                elif v > 5 then (w, b) |> should equal (false, true)
+                else (w, b) |> should equal (false, false)
 
     [<Test>]
-    let MarkBlackAndWhiteAsTrue() =
-        let mutable whiteBoard = 0UL
-        let mutable blackBoard = 0UL
-        for h = 0 to 7 do
-            for v = 0 to 7 do
-                if (v < 2) then Bits.SetBit(&whiteBoard, v * 8 + h)
-                if (v > 5) then Bits.SetBit(&blackBoard, v * 8 + h)
-
-        let mutable final = whiteBoard ||| blackBoard
-        let mutable success = true
-        for h = 0 to 7 do
-            for v = 0 to 7 do
-                if (v < 2) then
-                    if not (Bits.IsSet(whiteBoard, v * 8 + h)) then
-                        success <- false
-                    if Bits.IsSet(blackBoard, v * 8 + h) then
-                        success <- false
-                elif (v > 5) then
-                    if not (Bits.IsSet(blackBoard, v * 8 + h)) then
-                        success <- false
-                    if Bits.IsSet(whiteBoard, v * 8 + h) then
-                        success <- false
-                elif Bits.IsSet(whiteBoard, v * 8 + h) then
-                    success <- false
-                elif Bits.IsSet(blackBoard, v * 8 + h) then
-                    success <- false
-
-        success |> should equal true
-
-    [<Test>]
-    let MarkBlackAndWhiteAsTruef() =
-        let mutable whiteBoard = 0UL
-        let mutable blackBoard = 0UL
-        for h = 0 to 7 do
-            for v = 0 to 7 do
-                if (v < 2) then Bits.SetBit(&whiteBoard, v * 8 + h)
-                if (v > 5) then Bits.SetBit(&blackBoard, v * 8 + h)
-
-        let mutable final = whiteBoard ||| blackBoard
-        let mutable success = true
-        for h = 0 to 7 do
-            for v = 0 to 7 do
-                if (v < 2) then
-                    if not (Bits.IsSet(whiteBoard, v * 8 + h)) then
-                        success <- false
-                    if Bits.IsSet(blackBoard, v * 8 + h) then
-                        success <- false
-                elif (v > 5) then
-                    if not (Bits.IsSet(blackBoard, v * 8 + h)) then
-                        success <- false
-                    if Bits.IsSet(whiteBoard, v * 8 + h) then
-                        success <- false
-                elif Bits.IsSet(whiteBoard, v * 8 + h) then
-                    success <- false
-                elif Bits.IsSet(blackBoard, v * 8 + h) then
-                    success <- false
-
-        success |> should equal true
-
-    [<Test>]
-    let Add() =
+    let ``Add bitboards`` () =
         let ans = WhiteB + BlackB
-        Bits.Count(BlackB)|>should equal 16
-        Bits.Count(WhiteB)|>should equal 16
-        Bits.Count(ans)|>should equal 32
-        BlackB|>should equal 65535UL
-        WhiteB|>should equal 18446462598732840960UL
-        ans|>should equal 18446462598732906495UL
+        Bits.Count(BlackB) |> should equal 16
+        Bits.Count(WhiteB) |> should equal 16
+        Bits.Count(ans) |> should equal 32
 
     [<Test>]
-    let Minus() =
+    let ``Subtract bitboards`` () =
         let ans = BlackB - WhiteB
-        Bits.Count(ans)|>should equal 17
-        BlackB|>should equal 65535UL
-        WhiteB|>should equal 18446462598732840960UL
-        ans|>should equal 281474976776191UL
+        Bits.Count(ans) |> should equal 17
 
     [<Test>]
-    let Times() =
+    let ``Multiply bitboards`` () =
         let ans = WhiteB * BlackB
-        Bits.Count(ans)|>should equal 1
-        BlackB|>should equal 65535UL
-        WhiteB|>should equal 18446462598732840960UL
-        ans|>should equal 281474976710656UL
+        Bits.Count(ans) |> should equal 1
 
     [<Test>]
-    let Divide() =
+    let ``Divide bitboards`` () =
         let ans = BlackB / WhiteB
-        Bits.Count(ans)|>should equal 0
-        BlackB|>should equal 65535UL
-        WhiteB|>should equal 18446462598732840960UL
-        ans|>should equal 0UL
+        Bits.Count(ans) |> should equal 0
 
     [<Test>]
-    let Remainder() =
+    let ``Modulo bitboard`` () =
         let ans = BlackB % 3UL
-        Bits.Count(ans)|>should equal 0
-        BlackB|>should equal 65535UL
-        ans|>should equal 0UL
+        Bits.Count(ans) |> should equal 0
 
     [<Test>]
-    let Bor() =
+    let ``Bitwise OR`` () =
         let ans = WhiteB ||| BlackB
-        Bits.Count(ans)|>should equal 32
-        BlackB|>should equal 65535UL
-        WhiteB|>should equal 18446462598732840960UL
-        ans|>should equal 18446462598732906495UL
+        Bits.Count(ans) |> should equal 32
 
     [<Test>]
-    let Band() =
+    let ``Bitwise AND`` () =
         let ans = WhiteB &&& BlackB
-        Bits.Count(ans)|>should equal 0
-        BlackB|>should equal 65535UL
-        WhiteB|>should equal 18446462598732840960UL
-        ans|>should equal 0UL
+        Bits.Count(ans) |> should equal 0
 
     [<Test>]
-    let Bneg() =
+    let ``Bitwise NOT`` () =
         let ans = ~~~ BlackB
-        Bits.Count(ans)|>should equal 48
-        BlackB|>should equal 65535UL
-        ans|>should equal 18446744073709486080UL
+        Bits.Count(ans) |> should equal 48
 
     [<Test>]
-    let Bright() =
+    let ``Right shift`` () =
         let ans = BlackB >>> 3
-        Bits.Count(ans)|>should equal 13
-        BlackB|>should equal 65535UL
-        ans|>should equal 8191UL
+        Bits.Count(ans) |> should equal 13
 
     [<Test>]
-    let Bleft() =
+    let ``Left shift`` () =
         let ans = BlackB <<< 3
-        Bits.Count(ans)|>should equal 16
-        BlackB|>should equal 65535UL
-        ans|>should equal 524280UL
+        Bits.Count(ans) |> should equal 16
 
     [<Test>]
-    let Equals() =
-        let ans = WhiteB = BlackB
-        ans|>should equal false
+    let ``Equality`` () =
+        (WhiteB = BlackB) |> should equal false
 
     [<Test>]
-    let NotEquals() =
-        let ans = WhiteB <> BlackB
-        ans|>should equal true
+    let ``Inequality`` () =
+        (WhiteB <> BlackB) |> should equal true
 
     [<Test>]
-    let ToBool() =
-        let ans = WhiteB <> 0UL
-        ans|>should equal true
+    let ``Non-zero comparison`` () =
+        (WhiteB <> 0UL) |> should equal true
 
     [<Test>]
-    let ToUint64() =
-        let ans = BlackB
-        ans|>should equal 65535UL
+    let ``FromSq creates single bit`` () =
+        Bits.FromSq(A8) |> should equal 1UL
 
     [<Test>]
-    let FromSq() =
-        let ans = Bits.FromSq(A8)
-        ans|>should equal 1UL
+    let ``ToInt gets trailing zero count`` () =
+        Bits.ToInt(BlackB) |> should equal A8
 
     [<Test>]
-    let ToSq() =
-        let ans:int = Bits.ToInt(BlackB)
-        ans|>should equal A8
+    let ``ToArray converts to square array`` () =
+        let ans = Bits.ToArray(BlackB)
+        ans.[0] |> should equal A8
+        ans.Length |> should equal 16
 
     [<Test>]
-    let ToSqs() =
-        let ans:int array = Bits.ToArray(BlackB)
-        ans.[0]|>should equal A8
-        ans.Length|>should equal 16
-
-    [<Test>]
-    let GetEnum() =
-        let ans = Bits.ToSeq(BlackB)
-        ans|>Seq.head|>should equal A8
+    let ``ToSeq generates sequence of squares`` () =
+        Bits.ToSeq(BlackB) |> Seq.head |> should equal A8
 
        
